@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useAppContext } from '../AppContext';
-import { geminiCall } from '../lib/api';
+import { aiCall, geminiCall } from '../lib/api';
 import { Mic, Check, AlertTriangle, AlertCircle, ArrowRight, ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
 
 const DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -103,17 +103,19 @@ export default function Diario() {
 
     setIsProcessing(true);
 
-    const srvJson = JSON.stringify(state.servicos.filter(s => s.status_atual !== 'concluido').map(s => ({ id: s.id_servico, nome: s.nome, avanco: s.avanco_atual, status: s.status_atual })));
+    const srvJson = JSON.stringify(state.servicos.map(s => ({ id: s.id_servico, nome: s.nome, avanco: s.avanco_atual, status: s.status_atual, data_inicio: s.data_inicio || null, data_fim: s.data_fim || null })));
     const pendJson = JSON.stringify(state.pendencias.filter(p => p.status === 'ABERTA').map(p => ({ id: p.id, desc: p.descricao })));
     const equipeHoje = (state.presenca[currentDay] || []).join(', ') || 'não registrada';
+    const equipesDisponiveis = state.equipes.map(e => `${e.cod} (${e.nome})`).join(', ') || 'nenhuma cadastrada';
 
-    const prompt = `Você é o Engenheiro de Dados do sistema de acompanhamento de obra.
-Analise o relato diário e cruze com os dados atuais.
+    const prompt = `Você é o Engenheiro de Dados do sistema EVIS de acompanhamento de obra.
+Analise o relato diário e cruze com os dados atuais do sistema para gerar as atualizações corretas.
 
-DATA: ${currentDay}
-EQUIPE PRESENTE: ${equipeHoje}
+DATA DO RELATO: ${currentDay}
+EQUIPE JÁ MARCADA MANUALMENTE: ${equipeHoje}
+EQUIPES CADASTRADAS NO SISTEMA: ${equipesDisponiveis}
 
-SERVIÇOS EM ANDAMENTO/NÃO INICIADOS:
+TODOS OS SERVIÇOS DO ESCOPO:
 ${srvJson}
 
 PENDÊNCIAS ABERTAS:
@@ -122,19 +124,25 @@ ${pendJson}
 RELATO DO DIA:
 "${txt}"
 
-Seu objetivo é gerar um mapa de atualizações para o sistema.
-Retorne APENAS um JSON válido, sem markdown, com esta estrutura exata:
+INSTRUÇÕES IMPORTANTES:
+1. Se o relato mencionar uma equipe pelo nome (ex: "EQ-OBR-01", "Valdeci", "Pro Ar"), inclua o código correto em equipes_presentes.
+2. A narrativa deve começar com a data "${currentDay} —" e mencionar os avanços, equipes presentes e próximos passos.
+3. Se um serviço mencionado não tiver data_inicio, defina uma data razoável com base no contexto (formato YYYY-MM-DD).
+4. Os status válidos são: nao_iniciado, em_andamento, concluido.
+5. Retorne APENAS um JSON válido, sem markdown, nenhum texto fora do JSON.
+
 {
-  "resumo": "Resumo técnico do dia em 2-3 frases para ficar no histórico",
-  "narrativa": "Narrativa detalhada e técnica da visita para o relatório, mencionando avanços, equipes e próximos passos.",
+  "resumo": "Resumo técnico do dia em 2-3 frases para o histórico",
+  "narrativa": "Narrativa detalhada e técnica para o relatório. DEVE começar com a data ${currentDay}.",
+  "equipes_presentes": ["COD-EQUIPE-01"],
   "servicos_atualizar": [
-    {"id_servico": "SRV-XXX", "avanco_novo": 85, "status_novo": "em_andamento", "obs": "motivo"}
+    {"id_servico": "SRV-XXX", "avanco_novo": 85, "status_novo": "em_andamento", "data_inicio": null, "data_fim": null}
   ],
   "pendencias_novas": [
     {"descricao": "...", "prioridade": "alta|media|baixa"}
   ],
   "pendencias_resolver": [
-    {"id": "id_da_pendencia_existente", "justificativa": "..."}
+    {"id": "id_da_pendencia_existente"}
   ],
   "notas_adicionar": [
     {"tipo": "observacao|decisao|alerta|lembrete", "texto": "..."}
@@ -142,7 +150,7 @@ Retorne APENAS um JSON válido, sem markdown, com esta estrutura exata:
 }`;
 
     try {
-      let raw = await geminiCall([prompt], 0.15, 2048, config);
+      let raw = await aiCall(prompt, 0.15, 3000, config);
       raw = raw.replace(/```json\n?|```/g, '').trim();
       const ia = JSON.parse(raw);
       
@@ -167,7 +175,13 @@ Retorne APENAS um JSON válido, sem markdown, com esta estrutura exata:
     (ia.servicos_atualizar || []).forEach((u: any) => {
       const idx = newServicos.findIndex(x => x.id_servico === u.id_servico);
       if (idx >= 0) {
-        newServicos[idx] = { ...newServicos[idx], avanco_atual: u.avanco_novo, status_atual: u.status_novo };
+        newServicos[idx] = { 
+          ...newServicos[idx], 
+          avanco_atual: u.avanco_novo, 
+          status_atual: u.status_novo,
+          ...(u.data_inicio ? { data_inicio: u.data_inicio } : {}),
+          ...(u.data_fim ? { data_fim: u.data_fim } : {}),
+        };
         markPending('servicos', newServicos[idx]);
       }
     });
@@ -199,16 +213,35 @@ Retorne APENAS um JSON válido, sem markdown, com esta estrutura exata:
       markPending('notas', nota);
     });
 
+    const currentPresenca = [...(state.presenca[currentDay] || [])];
+    (ia.equipes_presentes || []).forEach((eqCod: string) => {
+      // Find the proper equip by ID if they only supplied the name
+      const eqObj = state.equipes.find(e => e.cod === eqCod || e.nome.toLowerCase().includes(eqCod.toLowerCase()));
+      const codeToMark = eqObj ? eqObj.cod : eqCod;
+      if (!currentPresenca.includes(codeToMark)) {
+        currentPresenca.push(codeToMark);
+        markPending('equipes_presenca', { equipe: codeToMark, dia: currentDay });
+      }
+    });
+
     markPending('brain_narrativas', { entrada: entry.texto, resposta_ia: ia });
     
     setState(prev => {
       const nd = { ...prev.diario };
       nd[currentDay].confirmado = true;
       const nn = { ...prev.narrativas, [currentDay]: ia.narrativa || '' };
-      return { ...prev, servicos: newServicos, pendencias: newPendencias, notas: newNotas, diario: nd, narrativas: nn };
+      return { 
+        ...prev, 
+        servicos: newServicos, 
+        pendencias: newPendencias, 
+        notas: newNotas, 
+        diario: nd, 
+        narrativas: nn,
+        presenca: { ...prev.presenca, [currentDay]: currentPresenca }
+      };
     });
     
-    toast('Aplicado! Clique em Sync para enviar ao Supabase.', 'success');
+    toast('Aplicado e presença atualizada automativamente! Clique em Sync para enviar.', 'success');
   };
 
   const changeWeek = (offset: number) => {
@@ -233,10 +266,17 @@ Retorne APENAS um JSON válido, sem markdown, com esta estrutura exata:
 
   const dateLabel = `${DAYS[localDd.getDay()]}, ${localDd.getDate()} de ${MONTHS[localDd.getMonth()]} de ${localDd.getFullYear()}`;
 
-  // KPIs
+  // KPIs estilo Excel / Gerenciais
   const srv = state.servicos;
-  const pct = srv.length ? Math.round(srv.reduce((a, s) => a + (s.avanco_atual || 0), 0) / srv.length) : 0;
-  const done = srv.filter(s => s.status_atual === 'concluido' || s.avanco_atual >= 100).length;
+  const total = srv.length || 1; // prevent div/0
+  const doneSrv = srv.filter(s => s.status_atual === 'concluido' || s.avanco_atual >= 100);
+  const done = doneSrv.length;
+  // Físico Concluído absoluto = Serviços Concluídos / Total Escopo
+  const pctConcluido = Math.round((done / total) * 100);
+  
+  // Físico Ponderado/Médio (Considera peso igual para todos os serviços, como Excel =MÉDIA())
+  const pctMedia = Math.round(srv.reduce((acc, s) => acc + (s.avanco_atual || 0), 0) / total);
+  
   const wip = srv.filter(s => s.status_atual === 'em_andamento').length;
   const pend = state.pendencias.filter(p => p.status === 'ABERTA').length;
 
@@ -250,15 +290,17 @@ Retorne APENAS um JSON válido, sem markdown, com esta estrutura exata:
       </div>
 
       <div className="grid grid-cols-4 gap-2.5 mb-6">
-        <div className="bg-s1 border border-b1 rounded-[10px] p-4">
-          <div className="font-mono text-[9px] text-t3 uppercase tracking-[0.12em] mb-2">Progresso geral</div>
-          <div className="text-[28px] font-extrabold leading-none text-t1">{pct}%</div>
-          <div className="font-mono text-[10px] text-t3 mt-1.5">média dos serviços</div>
+        <div className="bg-s1 border border-b1 rounded-[10px] p-4 relative overflow-hidden">
+          <div className="font-mono text-[9px] text-t3 uppercase tracking-[0.12em] mb-2">Avanço Físico Absoluto</div>
+          <div className="text-[28px] font-extrabold leading-none text-brand-green">{pctConcluido}%</div>
+          <div className="font-mono text-[10px] text-t3 mt-1.5">{done} de {srv.length} Serv. Concluídos</div>
+          <div className="absolute right-[-10px] bottom-[-20px] text-[80px] text-brand-green/5 font-extrabold">%</div>
         </div>
-        <div className="bg-s1 border border-b1 rounded-[10px] p-4">
-          <div className="font-mono text-[9px] text-t3 uppercase tracking-[0.12em] mb-2">Concluídos</div>
-          <div className="text-[28px] font-extrabold leading-none text-t1">{done}</div>
-          <div className="font-mono text-[10px] text-t3 mt-1.5">de <span>{srv.length}</span></div>
+        <div className="bg-s1 border border-b1 rounded-[10px] p-4 relative overflow-hidden">
+          <div className="font-mono text-[9px] text-t3 uppercase tracking-[0.12em] mb-2">Progresso Ponderado</div>
+          <div className="text-[28px] font-extrabold leading-none text-t1">{pctMedia}%</div>
+          <div className="font-mono text-[10px] text-t3 mt-1.5">Média linear</div>
+          <div className="absolute right-[-5px] bottom-[-20px] text-[80px] text-t3/10 font-extrabold">~</div>
         </div>
         <div className="bg-s1 border border-b1 rounded-[10px] p-4">
           <div className="font-mono text-[9px] text-t3 uppercase tracking-[0.12em] mb-2">Em andamento</div>

@@ -22,7 +22,7 @@ export async function sbFetch(path: string, opts: any = {}, cfg: Config) {
 
 export async function geminiCall(parts: any[], temp = 0.2, maxTokens = 2048, cfg: Config) {
   if (!cfg.gemini) throw new Error('API Key não configurada.');
-  const model = cfg.model || 'gemini-2.0-flash';
+  const model = cfg.model || 'gemini-1.5-flash';
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${cfg.gemini}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -34,4 +34,39 @@ export async function geminiCall(parts: any[], temp = 0.2, maxTokens = 2048, cfg
   const data = await res.json();
   if (data.error) throw new Error(data.error.message);
   return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+export async function aiCall(prompt: string, temp = 0.2, maxTokens = 2048, cfg: Config): Promise<string> {
+  const openrouterKey = (import.meta as any).env.VITE_OPENROUTER_API_KEY || '';
+  
+  // Prioridade: OpenRouter (MiniMax) > Gemini
+  if (openrouterKey) {
+    const model = 'minimax/minimax-m1';
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openrouterKey}`,
+        'HTTP-Referer': 'https://evis-app.vercel.app',
+        'X-Title': 'EVIS Diário de Obra'
+      },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: temp,
+        max_tokens: maxTokens,
+        stream: false
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(typeof data.error === 'string' ? data.error : data.error.message || JSON.stringify(data.error));
+    return data.choices?.[0]?.message?.content || '';
+  }
+  
+  // Fallback: Gemini
+  if (cfg.gemini) {
+    return geminiCall([prompt], temp, maxTokens, cfg);
+  }
+  
+  throw new Error('Nenhuma API de IA configurada. Adicione VITE_OPENROUTER_API_KEY ou VITE_GEMINI_API_KEY no .env');
 }

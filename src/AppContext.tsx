@@ -35,12 +35,12 @@ const defaultState: AppState = {
 };
 
 const defaultConfig: Config = {
-  url: '',
-  key: '',
-  obraId: '',
-  gemini: '',
-  model: 'gemini-2.0-flash',
-  imgbbKey: ''
+  url: (import.meta as any).env.VITE_SUPABASE_URL || '',
+  key: (import.meta as any).env.VITE_SUPABASE_ANON_KEY || '',
+  obraId: '3c7ade92-5078-4db3-996c-1390a9a2bb27',
+  gemini: (import.meta as any).env.VITE_GEMINI_API_KEY || '',
+  model: 'gemini-1.5-flash',
+  imgbbKey: (import.meta as any).env.VITE_IMGBB_API_KEY || ''
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -81,7 +81,16 @@ export const AppProvider: React.FC<{children: React.ReactNode}> = ({ children })
   const [config, setConfig] = useState<Config>(() => {
     try {
       const c = localStorage.getItem('badida_cfg');
-      return c ? { ...defaultConfig, ...JSON.parse(c) } : defaultConfig;
+      if (c) {
+        const parsed = JSON.parse(c);
+        return {
+          ...defaultConfig,
+          ...parsed,
+          gemini: parsed.gemini || defaultConfig.gemini,
+          imgbbKey: parsed.imgbbKey || defaultConfig.imgbbKey
+        };
+      }
+      return defaultConfig;
     } catch {
       return defaultConfig;
     }

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AppProvider, useAppContext } from './AppContext';
 import { Book, CheckSquare, FileText, Image as ImageIcon, FileBarChart, Settings, CloudDownload, CloudUpload, Calendar, TrendingUp, MessageSquare } from 'lucide-react';
 import Diario from './components/Diario';
+import Equipes from './components/Equipes';
 import Servicos from './components/Servicos';
 import Notas from './components/Notas';
 import Fotos from './components/Fotos';
@@ -29,11 +30,13 @@ function Main() {
     }
     setLoading(true);
     try {
-      const [srvs, pends, diarios, notasDb] = await Promise.all([
+      const [srvs, pends, diarios, notasDb, eqCad, eqPres] = await Promise.all([
         sbFetch(`servicos?obra_id=eq.${config.obraId}&select=id,id_servico,nome,categoria,avanco_atual,status_atual,data_inicio,data_fim,equipe&order=id_servico`, {}, config),
         sbFetch(`pendencias?obra_id=eq.${config.obraId}&status=eq.ABERTA&order=created_at.desc`, {}, config),
         sbFetch(`diario_obra?obra_id=eq.${config.obraId}&order=created_at.desc&limit=30`, {}, config),
         sbFetch(`notas?obra_id=eq.${config.obraId}&order=data_nota.desc`, {}, config),
+        sbFetch(`equipes_cadastro?obra_id=eq.${config.obraId}&order=nome`, {}, config),
+        sbFetch(`equipes_presenca?obra_id=eq.${config.obraId}&order=data_presenca.desc`, {}, config),
       ]);
       
       const newDiario = { ...state.diario };
@@ -46,6 +49,13 @@ function Main() {
         if (d.narrativa) newNarrativas[day] = d.narrativa;
       });
 
+      const newPresenca: Record<string, string[]> = {};
+      (eqPres || []).forEach((p: any) => {
+         const day = (p.data_presenca || '').split('T')[0];
+         if (!newPresenca[day]) newPresenca[day] = [];
+         if (!newPresenca[day].includes(p.nome_equipe)) newPresenca[day].push(p.nome_equipe);
+      });
+
       setState(prev => ({
         ...prev,
         servicos: srvs || [],
@@ -53,6 +63,8 @@ function Main() {
         diario: newDiario,
         narrativas: newNarrativas,
         notas: notasDb || [],
+        equipes: eqCad || prev.equipes,
+        presenca: Object.keys(newPresenca).length > 0 ? newPresenca : prev.presenca,
         pendingChanges: []
       }));
       toast('Dados carregados com sucesso!', 'success');
@@ -108,6 +120,13 @@ function Main() {
         if (ch.table === 'equipes_presenca') {
           await sbFetch('equipes_presenca', { method: 'POST', body: JSON.stringify({ obra_id: config.obraId, nome_equipe: ch.data.equipe, quantidade: 1, data_presenca: ch.data.dia }) }, config);
         }
+        if (ch.table === 'equipes_cadastro') {
+          if (ch.data.id) {
+             await sbFetch(`equipes_cadastro?id=eq.${ch.data.id}`, { method: 'PATCH', body: JSON.stringify(ch.data) }, config);
+          } else {
+             await sbFetch('equipes_cadastro', { method: 'POST', body: JSON.stringify({ ...ch.data, obra_id: config.obraId }) }, config);
+          }
+        }
         if (ch.table === 'notas') {
           await sbFetch('notas', { method: 'POST', body: JSON.stringify({ ...ch.data, obra_id: config.obraId }) }, config);
         }
@@ -131,6 +150,7 @@ function Main() {
 
   const tabs = [
     { id: 'diario', label: 'Diário', icon: Book },
+    { id: 'equipes', label: 'Equipes', icon: CheckSquare },
     { id: 'orcamento', label: 'Orçamento', icon: FileText },
     { id: 'cronograma', label: 'Cronograma', icon: Calendar },
     { id: 'notas', label: 'Notas', icon: MessageSquare },
@@ -200,6 +220,7 @@ function Main() {
       {/* Pages */}
       <div className="overflow-y-auto p-8 flex-1 bg-[radial-gradient(circle_at_top_right,rgba(63,185,80,0.03),transparent_40%)]">
         {activeTab === 'diario' && <Diario />}
+        {activeTab === 'equipes' && <Equipes />}
         {activeTab === 'orcamento' && <Servicos />}
         {activeTab === 'cronograma' && <Cronograma />}
         {activeTab === 'notas' && <Notas />}

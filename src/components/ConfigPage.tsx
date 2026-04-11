@@ -13,7 +13,7 @@ export default function ConfigPage() {
   const testConn = async () => {
     setTestStatus('Testando...');
     try {
-      const res = await fetch(`${config.url}/rest/v1/obras?limit=1`, {
+      const res = await fetch(`${config.url}/rest/v1/servicos?limit=1`, {
         headers: {
           'apikey': config.key,
           'Authorization': `Bearer ${config.key}`,

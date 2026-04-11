@@ -27,6 +27,12 @@ export type Equipe = {
   id?: string;
   cod: string;
   nome: string;
+  especialidade?: string;
+  telefone?: string;
+  email?: string;
+  pix?: string;
+  obs_obras?: string;
+  ativo?: boolean;
 };
 
 export type Nota = {
