@@ -1,6 +1,10 @@
 import { Config } from '../types';
 
-export async function sbFetch(path: string, opts: any = {}, cfg: Config) {
+export type SbFetchOptions = RequestInit & {
+  prefer?: string;
+};
+
+export async function sbFetch(path: string, opts: SbFetchOptions = {}, cfg: Config) {
   if (!cfg.url || !cfg.key) throw new Error('Configure Supabase nas Configurações.');
   const res = await fetch(`${cfg.url}/rest/v1/${path}`, {
     ...opts,
@@ -20,7 +24,9 @@ export async function sbFetch(path: string, opts: any = {}, cfg: Config) {
   return res.json().catch(() => null);
 }
 
-export async function geminiCall(parts: any[], temp = 0.2, maxTokens = 2048, cfg: Config) {
+export type GeminiPart = { text: string } | { inline_data: { mime_type: string, data: string } };
+
+export async function geminiCall(parts: (string | GeminiPart)[], temp = 0.2, maxTokens = 2048, cfg: Config) {
   if (!cfg.gemini) throw new Error('API Key não configurada.');
   const model = cfg.model || 'gemini-1.5-flash';
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${cfg.gemini}`, {
@@ -39,7 +45,6 @@ export async function geminiCall(parts: any[], temp = 0.2, maxTokens = 2048, cfg
 export async function aiCall(prompt: string, temp = 0.2, maxTokens = 2048, cfg: Config): Promise<string> {
   const openrouterKey = (import.meta as any).env.VITE_OPENROUTER_API_KEY || '';
   
-  // Prioridade: OpenRouter (MiniMax) > Gemini
   if (openrouterKey) {
     const model = 'minimax/minimax-m1';
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -59,11 +64,10 @@ export async function aiCall(prompt: string, temp = 0.2, maxTokens = 2048, cfg: 
       })
     });
     const data = await res.json();
-    if (data.error) throw new Error(typeof data.error === 'string' ? data.error : data.error.message || JSON.stringify(data.error));
+    if (data.error) throw new Error(typeof data.error === 'string' ? data.error : (data.error as any).message || JSON.stringify(data.error));
     return data.choices?.[0]?.message?.content || '';
   }
   
-  // Fallback: Gemini
   if (cfg.gemini) {
     return geminiCall([prompt], temp, maxTokens, cfg);
   }

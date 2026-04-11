@@ -22,9 +22,10 @@ export default function ConfigPage() {
       if (!res.ok) throw new Error(await res.text());
       setTestStatus('✓ Supabase conectado');
       toast('Conexão com Supabase bem-sucedida!', 'success');
-    } catch (e: any) {
-      setTestStatus('✗ ' + e.message);
-      toast('Erro na conexão: ' + e.message, 'error');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setTestStatus('✗ ' + msg);
+      toast('Erro na conexão: ' + msg, 'error');
     }
   };
 
@@ -47,7 +48,7 @@ export default function ConfigPage() {
 
   const handleImportJSON = () => {
     try {
-      const data = JSON.parse(jsonText);
+      const data = JSON.parse(jsonText) as any;
       
       const newServicos = (data.servicos || []).map((s: any) => ({
         id: crypto.randomUUID(),
@@ -87,7 +88,7 @@ export default function ConfigPage() {
         nome: f.nome
       }));
 
-      const newNarrativas = { ...state.narrativas };
+      const newNarrativas: Record<string, string> = { ...state.narrativas };
       if (data.narrativa_visita) {
         const day = new Date().toISOString().split('T')[0];
         newNarrativas[day] = data.narrativa_visita;
@@ -109,8 +110,9 @@ export default function ConfigPage() {
 
       toast(`Projeto inicializado: ${newServicos.length} serviços, ${newPendencias.length} pendências, ${newNotas.length} notas, ${newFotos.length} fotos.`, 'success');
       setJsonText('');
-    } catch (e: any) {
-      toast('Erro ao importar JSON: ' + e.message, 'error');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast('Erro ao importar JSON: ' + msg, 'error');
     }
   };
 

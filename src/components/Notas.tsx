@@ -14,6 +14,18 @@ import {
 import { format, startOfWeek, endOfWeek, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+import { Nota, Pendencia } from '../types';
+
+interface AccordionProps {
+  num?: string;
+  title: string;
+  subtitle: string;
+  isOpen: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+}
+
 function Accordion({ 
   num, 
   title, 
@@ -22,7 +34,7 @@ function Accordion({
   onToggle, 
   children,
   icon
-}: any) {
+}: AccordionProps) {
   return (
     <div className="border border-b1 mb-3 rounded-lg overflow-hidden bg-bg">
       <button 
@@ -55,7 +67,7 @@ export default function Notas() {
     pendencias: false,
     historico: false
   });
-  const [tipo, setTipo] = useState('observacao');
+  const [tipo, setTipo] = useState<Nota['tipo']>('observacao');
   const [texto, setTexto] = useState('');
   const [expandedWeeks, setExpandedWeeks] = useState<Record<string, boolean>>({});
 
@@ -67,7 +79,7 @@ export default function Notas() {
   // ---- FUNÇÕES DE NOTAS ----
   const addNota = () => {
     if (!texto.trim()) return;
-    const n = { id: crypto.randomUUID(), tipo: tipo as any, texto, data_nota: new Date().toISOString() };
+    const n: Nota = { id: crypto.randomUUID(), tipo, texto, data_nota: new Date().toISOString() };
     setState(prev => ({ ...prev, notas: [n, ...prev.notas] }));
     markPending('notas', n);
     setTexto('');
@@ -114,10 +126,11 @@ export default function Notas() {
     return weeks;
   }, [state.narrativas, state.notas]);
 
-  const updatePendencia = (id: string, field: string, value: string) => {
+  const updatePendencia = <K extends keyof Pendencia>(id: string, field: K, value: Pendencia[K]) => {
     setState(prev => {
       const newPend = prev.pendencias.map(p => p.id === id ? { ...p, [field]: value } : p);
-      markPending('pendencias', newPend.find(p => p.id === id));
+      const updated = newPend.find(p => p.id === id);
+      if (updated) markPending('pendencias', updated);
       return { ...prev, pendencias: newPend };
     });
   };
@@ -149,7 +162,7 @@ export default function Notas() {
                 <div className="flex items-center gap-2">
                   <select 
                     value={p.prioridade} 
-                    onChange={e => updatePendencia(p.id, 'prioridade', e.target.value)}
+                    onChange={e => updatePendencia(p.id, 'prioridade', e.target.value as any)}
                     className="bg-s2 border border-b1 text-t2 text-[10px] rounded px-2 py-1 outline-none uppercase font-bold tracking-wider"
                   >
                     <option value="baixa">Baixa</option>
@@ -163,7 +176,7 @@ export default function Notas() {
               </div>
               <select 
                 value={p.status} 
-                onChange={e => updatePendencia(p.id, 'status', e.target.value)}
+                onChange={e => updatePendencia(p.id, 'status', e.target.value as any)}
                 className="bg-s3 border border-b1 text-[11px] font-bold uppercase tracking-wider rounded p-1.5 outline-none text-t1"
               >
                 <option value="ABERTA">EM ANDAMENTO</option>
@@ -224,7 +237,7 @@ export default function Notas() {
               <div className="flex gap-2 mt-2">
                 <select 
                   value={tipo} 
-                  onChange={e => setTipo(e.target.value)} 
+                  onChange={e => setTipo(e.target.value as any)} 
                   className="bg-bg border border-b1 rounded-lg px-2 text-[11px] text-t2 outline-none uppercase font-bold tracking-wider shrink-0"
                 >
                   <option value="observacao">Observação</option>

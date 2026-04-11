@@ -21,10 +21,13 @@ export default function Servicos() {
   };
 
   const isPending = (id_servico: string) => {
-    return state.pendingChanges.some(p => p.table === 'servicos' && p.data.id_servico === id_servico);
+    return state.pendingChanges.some(p => {
+      const d = p.data as any;
+      return p.table === 'servicos' && d.id_servico === id_servico;
+    });
   };
 
-  const inlineEdit = (idx: number, field: keyof Servico, val: any) => {
+  const inlineEdit = <K extends keyof Servico>(idx: number, field: K, val: Servico[K]) => {
     const newServicos = [...state.servicos];
     newServicos[idx] = { ...newServicos[idx], [field]: val };
     setState({ ...state, servicos: newServicos });

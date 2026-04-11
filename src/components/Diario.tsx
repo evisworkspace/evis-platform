@@ -1,13 +1,16 @@
 import React, { useState, useRef } from 'react';
 import { useAppContext } from '../AppContext';
 import { aiCall, geminiCall } from '../lib/api';
+import { Pendencia, Nota, IAResult } from '../types';
 import { Mic, Check, AlertTriangle, AlertCircle, ArrowRight, ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 
 const DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const MONTHS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 export default function Diario() {
   const { state, setState, config, markPending, toast } = useAppContext();
+  const queryClient = useQueryClient();
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [micLabel, setMicLabel] = useState('Toque para gravar');
@@ -38,12 +41,12 @@ export default function Diario() {
     const ts = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     setState(prev => {
       const nd = { ...prev.diario };
-      if (!nd[currentDay]) nd[currentDay] = {};
+      if (!nd[currentDay]) nd[currentDay] = { texto: '' };
       nd[currentDay].texto = text;
-      nd[currentDay].ts = ts;
+      nd[currentDay].ts = ts as any; // Cast until ts is in type
       return { ...prev, diario: nd };
     });
-    markPending('diario_obra', { transcricao: text, day: currentDay, db_id: entry.db_id || null });
+    markPending('diario_obra', { transcricao: text, day: currentDay, db_id: (entry as any).db_id || null });
   };
 
   const toggleRec = () => {
@@ -82,7 +85,7 @@ export default function Diario() {
       try {
         const res = await geminiCall([
           { text: 'Transcreva o áudio de registro de obra a seguir. Retorne apenas a transcrição limpa:' },
-          { inlineData: { mimeType: 'audio/webm', data: b64 } } // Note: Gemini API uses inlineData
+          { inline_data: { mime_type: 'audio/webm', data: b64 } }
         ], 0.1, 2048, config);
         
         const newText = (entry.texto ? entry.texto + '\n\n' : '') + res;
@@ -127,7 +130,11 @@ RELATO DO DIA:
 INSTRUÇÕES IMPORTANTES:
 1. Se o relato mencionar uma equipe pelo nome (ex: "EQ-OBR-01", "Valdeci", "Pro Ar"), inclua o código correto em equipes_presentes.
 2. A narrativa deve começar com a data "${currentDay} —" e mencionar os avanços, equipes presentes e próximos passos.
-3. Se um serviço mencionado não tiver data_inicio, defina uma data razoável com base no contexto (formato YYYY-MM-DD).
+3. CRÍTICO: SEMPRE retorne data_inicio e data_fim (formato YYYY-MM-DD) para cada serviço atualizado. Use estas regras de inferência temporal:
+   - Se status="nao_iniciado": data_inicio = NULL, data_fim = hoje + 30 dias
+   - Se status="em_andamento": data_inicio = hoje - 1 dia (se não mencionada), data_fim = hoje + 30 dias
+   - Se status="concluido": data_inicio = hoje - 1 dia, data_fim = hoje (data do relato)
+   Sempre forneça datas explícitas, nunca deixe NULL.
 4. Os status válidos são: nao_iniciado, em_andamento, concluido.
 5. Retorne APENAS um JSON válido, sem markdown, nenhum texto fora do JSON.
 
@@ -156,66 +163,89 @@ INSTRUÇÕES IMPORTANTES:
       
       setState(prev => {
         const nd = { ...prev.diario };
-        if (!nd[currentDay]) nd[currentDay] = {};
-        nd[currentDay].iaResult = ia;
+        if (!nd[currentDay]) nd[currentDay] = { texto: '' };
+        nd[currentDay].iaResult = ia as IAResult;
         return { ...prev, diario: nd };
       });
-    } catch (e: any) {
-      toast('Erro IA: ' + e.message, 'error');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast('Erro IA: ' + msg, 'error');
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const confirmIA = () => {
-    const ia = entry.iaResult;
-    if (!ia) return;
-    
-    const newServicos = [...state.servicos];
-    (ia.servicos_atualizar || []).forEach((u: any) => {
-      const idx = newServicos.findIndex(x => x.id_servico === u.id_servico);
-      if (idx >= 0) {
-        newServicos[idx] = { 
-          ...newServicos[idx], 
-          avanco_atual: u.avanco_novo, 
-          status_atual: u.status_novo,
-          ...(u.data_inicio ? { data_inicio: u.data_inicio } : {}),
-          ...(u.data_fim ? { data_fim: u.data_fim } : {}),
-        };
-        markPending('servicos', newServicos[idx]);
-      }
-    });
+   // Função helper para garantir datas completas em serviços
+   const ensureDates = (update: any, servico: any): any => {
+     const today = new Date().toISOString().split('T')[0];
+     const in30Days = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
+     
+     // Se status é "concluido", força data_fim para hoje
+     const isConcluido = update.status_novo === 'concluido';
+     
+     return {
+       ...update,
+       data_inicio: update.data_inicio || servico.data_inicio || today,
+       data_fim: isConcluido ? today : (update.data_fim || servico.data_fim || in30Days)
+     };
+   };
+
+   const confirmIA = () => {
+     const ia = entry.iaResult;
+     if (!ia) return;
+     
+     const newServicos = [...state.servicos];
+     (ia.servicos_atualizar || []).forEach(u => {
+       const idx = newServicos.findIndex(x => x.id_servico === u.id_servico);
+       if (idx >= 0) {
+         const validated = ensureDates(u, newServicos[idx]);
+         
+         newServicos[idx] = { 
+           ...newServicos[idx], 
+           avanco_atual: u.avanco_novo, 
+           status_atual: u.status_novo,
+           data_inicio: validated.data_inicio,
+           data_fim: validated.data_fim,
+         };
+         markPending('servicos', newServicos[idx]);
+       }
+     });
 
     const newPendencias = [...state.pendencias];
-    (ia.pendencias_novas || []).forEach((p: any) => {
-      const pend = { id: crypto.randomUUID(), descricao: p.descricao, prioridade: p.prioridade || 'media', status: 'ABERTA', obra_id: config.obraId };
+    (ia.pendencias_novas || []).forEach(p => {
+      const pend: Pendencia = { 
+        id: crypto.randomUUID(), 
+        descricao: p.descricao, 
+        prioridade: p.prioridade as 'alta' | 'media' | 'baixa', 
+        status: 'ABERTA' as const, 
+        obra_id: config.obraId 
+      };
       newPendencias.unshift(pend);
       markPending('pendencias', pend);
     });
 
-    (ia.pendencias_resolver || []).forEach((p: any) => {
+    (ia.pendencias_resolver || []).forEach(p => {
       const idx = newPendencias.findIndex(x => x.id === p.id);
       if (idx >= 0) {
-        newPendencias[idx] = { ...newPendencias[idx], status: 'RESOLVIDA' };
+        newPendencias[idx] = { ...newPendencias[idx], status: 'RESOLVIDA' as const };
         markPending('pendencias', newPendencias[idx]);
       }
     });
 
     const newNotas = [...state.notas];
     if (ia.resumo) {
-      const resumoNota = { id: crypto.randomUUID(), tipo: 'observacao', texto: `Resumo do dia: ${ia.resumo}`, data_nota: new Date().toISOString() };
+      const resumoNota: Nota = { id: crypto.randomUUID(), tipo: 'observacao' as const, texto: `Resumo do dia: ${ia.resumo}`, data_nota: new Date().toISOString() };
       newNotas.unshift(resumoNota);
       markPending('notas', resumoNota);
     }
-    (ia.notas_adicionar || []).forEach((n: any) => {
-      const nota = { id: crypto.randomUUID(), tipo: n.tipo || 'observacao', texto: n.texto, data_nota: new Date().toISOString() };
+    (ia.notas_adicionar || []).forEach(n => {
+      const nota: Nota = { id: crypto.randomUUID(), tipo: n.tipo as any, texto: n.texto, data_nota: new Date().toISOString() };
       newNotas.unshift(nota);
       markPending('notas', nota);
     });
 
     const currentPresenca = [...(state.presenca[currentDay] || [])];
     (ia.equipes_presentes || []).forEach((eqCod: string) => {
-      // Find the proper equip by ID if they only supplied the name
       const eqObj = state.equipes.find(e => e.cod === eqCod || e.nome.toLowerCase().includes(eqCod.toLowerCase()));
       const codeToMark = eqObj ? eqObj.cod : eqCod;
       if (!currentPresenca.includes(codeToMark)) {
@@ -241,20 +271,21 @@ INSTRUÇÕES IMPORTANTES:
       };
     });
     
-    toast('Aplicado e presença atualizada automativamente! Clique em Sync para enviar.', 'success');
+    // Invalidação de cache agendada para garantir que o Cronograma/Gantt atualize instantaneamente
+    queryClient.invalidateQueries({ queryKey: ['servicos', config.obraId] });
+    queryClient.invalidateQueries({ queryKey: ['diario_obra', config.obraId] });
+    
+    toast('Aplicado e presença atualizada automativamente! Sincronização em tempo real ativada.', 'success');
   };
 
   const changeWeek = (offset: number) => {
     const d = new Date(currentDay);
     d.setDate(d.getDate() + offset * 7);
-    // Adjust for timezone offset to avoid jumping days
     const localDate = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
     setState({ ...state, currentDay: localDate.toISOString().split('T')[0] });
   };
 
-  // Render Week
   const dd = new Date(currentDay);
-  // Adjust dd to local time to avoid timezone issues when calculating monday
   const localDd = new Date(dd.getTime() + dd.getTimezoneOffset() * 60000);
   const monday = new Date(localDd);
   monday.setDate(localDd.getDate() - (localDd.getDay() === 0 ? 6 : localDd.getDay() - 1));
@@ -266,17 +297,12 @@ INSTRUÇÕES IMPORTANTES:
 
   const dateLabel = `${DAYS[localDd.getDay()]}, ${localDd.getDate()} de ${MONTHS[localDd.getMonth()]} de ${localDd.getFullYear()}`;
 
-  // KPIs estilo Excel / Gerenciais
   const srv = state.servicos;
-  const total = srv.length || 1; // prevent div/0
+  const total = srv.length || 1;
   const doneSrv = srv.filter(s => s.status_atual === 'concluido' || s.avanco_atual >= 100);
   const done = doneSrv.length;
-  // Físico Concluído absoluto = Serviços Concluídos / Total Escopo
   const pctConcluido = Math.round((done / total) * 100);
-  
-  // Físico Ponderado/Médio (Considera peso igual para todos os serviços, como Excel =MÉDIA())
   const pctMedia = Math.round(srv.reduce((acc, s) => acc + (s.avanco_atual || 0), 0) / total);
-  
   const wip = srv.filter(s => s.status_atual === 'em_andamento').length;
   const pend = state.pendencias.filter(p => p.status === 'ABERTA').length;
 
@@ -392,22 +418,22 @@ INSTRUÇÕES IMPORTANTES:
           value={entry.texto || ''}
           onChange={e => saveDiaryLocal(e.target.value)}
           rows={6} 
-          placeholder="Cole aqui a narrativa estruturada pelo GPT, ou escreva diretamente.&#10;&#10;Ex: Semana 04 — Badida ParkShopping Barigui — Avanço 30%&#10;SRV-024 Isolamento Salão 2 em andamento, 80%, madeirites (EQ-OBR-01)..."
-          className="w-full min-h-[130px] resize-y bg-s2 border border-b1 rounded-lg text-t1 font-mono text-[12px] leading-[1.75] p-3.5 outline-none transition-colors focus:border-b2 placeholder:text-t4 placeholder:text-[11px]"
+          placeholder="Narrativa de hoje..."
+          className="w-full min-h-[130px] resize-y bg-s2 border border-b1 rounded-lg text-t1 font-mono text-[12px] leading-[1.75] p-3.5 outline-none transition-colors focus:border-b2"
         />
         
         <div className="flex items-center gap-2 mt-2.5">
           <button className="px-2.5 py-1.5 rounded-md text-[11px] font-bold tracking-[0.05em] text-t2 border border-b2 hover:border-b3 hover:text-t1 transition-colors" onClick={() => saveDiaryLocal(entry.texto || '')}>✓ Salvar</button>
           <button className="px-2.5 py-1.5 rounded-md text-[11px] font-extrabold tracking-[0.05em] bg-brand-amber text-[#0a0d0a] hover:bg-[#f59e0b] transition-colors" onClick={runIA}>★ Processar com IA</button>
           <button className="px-2.5 py-1.5 rounded-md text-[11px] font-bold tracking-[0.05em] text-t2 border border-b2 hover:border-b3 hover:text-t1 transition-colors" onClick={() => saveDiaryLocal('')}>Limpar</button>
-          <span className="font-mono text-[10px] text-t3 ml-auto">{entry.ts ? `salvo ${entry.ts}` : ''}</span>
+          <span className="font-mono text-[10px] text-t3 ml-auto">{(entry as any).ts ? `salvo ${(entry as any).ts}` : ''}</span>
         </div>
       </div>
 
       {isProcessing && (
         <div className="flex items-center gap-2.5 font-mono text-[11px] text-brand-purple py-3">
           <div className="w-3.5 h-3.5 border-2 border-s4 border-t-brand-purple rounded-full animate-spin"></div>
-          Analisando com Gemini...
+          Analisando com IA...
         </div>
       )}
 
@@ -415,7 +441,7 @@ INSTRUÇÕES IMPORTANTES:
         <div className="bg-s1 border border-brand-purple/25 rounded-xl p-6 mb-4">
           <div className="flex items-center justify-between mb-4.5">
             <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-brand-purple bg-brand-purple/10 border border-brand-purple/20 px-2.5 py-1 rounded tracking-[0.08em] uppercase">
-              ★ Sugestão Gemini — <span className="text-t3 ml-1">{currentDay}</span>
+              ★ Sugestão IA — <span className="text-t3 ml-1">{currentDay}</span>
             </span>
             <div className="flex gap-2">
               <button onClick={confirmIA} className="px-2.5 py-1.5 rounded-md text-[11px] font-extrabold tracking-[0.05em] bg-brand-green text-[#0a0d0a] hover:bg-brand-green2 transition-colors">✓ Confirmar e aplicar</button>
@@ -428,14 +454,14 @@ INSTRUÇÕES IMPORTANTES:
               <div className="font-mono text-[9px] text-t3 uppercase tracking-[0.12em] mb-2">Resumo do dia</div>
               <div className="text-[13px] text-t2 leading-[1.7]">{entry.iaResult.resumo || '—'}</div>
               
-              {entry.iaResult.servicos_atualizar?.length > 0 && (
+              {entry.iaResult.servicos_atualizar && entry.iaResult.servicos_atualizar.length > 0 && (
                 <>
                   <div className="font-mono text-[9px] text-t3 uppercase tracking-[0.12em] mb-2 mt-4">Avanços sugeridos</div>
                   <ul className="flex flex-col gap-1.5">
-                    {entry.iaResult.servicos_atualizar.map((i: any, idx: number) => (
+                    {entry.iaResult.servicos_atualizar.map((i, idx) => (
                       <li key={idx} className="flex gap-2 font-mono text-[11px] text-t2 leading-[1.5]">
                         <Check className="w-3.5 h-3.5 shrink-0 text-brand-green mt-0.5" />
-                        <span>{i.id_servico} → {i.avanco_novo}% ({i.status_novo}) — {i.obs || ''}</span>
+                        <span>{i.id_servico} → {i.avanco_novo}% ({i.status_novo})</span>
                       </li>
                     ))}
                   </ul>
@@ -443,11 +469,11 @@ INSTRUÇÕES IMPORTANTES:
               )}
             </div>
             <div>
-              {entry.iaResult.pendencias_novas?.length > 0 && (
+              {entry.iaResult.pendencias_novas && entry.iaResult.pendencias_novas.length > 0 && (
                 <>
                   <div className="font-mono text-[9px] text-t3 uppercase tracking-[0.12em] mb-2">Novas Pendências</div>
                   <ul className="flex flex-col gap-1.5 mb-4">
-                    {entry.iaResult.pendencias_novas.map((i: any, idx: number) => (
+                    {entry.iaResult.pendencias_novas.map((i, idx) => (
                       <li key={idx} className="flex gap-2 font-mono text-[11px] text-t2 leading-[1.5]">
                         <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-brand-amber mt-0.5" />
                         <span>[{i.prioridade}] {i.descricao}</span>
@@ -457,25 +483,25 @@ INSTRUÇÕES IMPORTANTES:
                 </>
               )}
               
-              {entry.iaResult.pendencias_resolver?.length > 0 && (
+              {entry.iaResult.pendencias_resolver && entry.iaResult.pendencias_resolver.length > 0 && (
                 <>
                   <div className="font-mono text-[9px] text-t3 uppercase tracking-[0.12em] mb-2">Pendências Resolvidas</div>
                   <ul className="flex flex-col gap-1.5 mb-4">
-                    {entry.iaResult.pendencias_resolver.map((i: any, idx: number) => (
+                    {entry.iaResult.pendencias_resolver.map((i, idx) => (
                       <li key={idx} className="flex gap-2 font-mono text-[11px] text-t2 leading-[1.5]">
                         <Check className="w-3.5 h-3.5 shrink-0 text-brand-green mt-0.5" />
-                        <span>{i.id} — {i.justificativa}</span>
+                        <span>{i.id}</span>
                       </li>
                     ))}
                   </ul>
                 </>
               )}
-
-              {entry.iaResult.notas_adicionar?.length > 0 && (
+ 
+              {entry.iaResult.notas_adicionar && entry.iaResult.notas_adicionar.length > 0 && (
                 <>
                   <div className="font-mono text-[9px] text-t3 uppercase tracking-[0.12em] mb-2">Notas para Histórico</div>
                   <ul className="flex flex-col gap-1.5">
-                    {entry.iaResult.notas_adicionar.map((i: any, idx: number) => (
+                    {entry.iaResult.notas_adicionar.map((i, idx) => (
                       <li key={idx} className="flex gap-2 font-mono text-[11px] text-t2 leading-[1.5]">
                         <MessageSquare className="w-3.5 h-3.5 shrink-0 text-brand-blue mt-0.5" />
                         <span>[{i.tipo}] {i.texto}</span>
@@ -485,10 +511,6 @@ INSTRUÇÕES IMPORTANTES:
                 </>
               )}
             </div>
-          </div>
-          
-          <div className="mt-3.5 p-3 bg-s2 rounded-md font-mono text-[10px] text-t3">
-            Ao confirmar: serviços serão atualizados, pendências salvas e narrativa gravada. Tudo ficará em localStorage até o próximo Sync.
           </div>
         </div>
       )}

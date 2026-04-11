@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { logger } from "./logger";
 
 // Uses the VITE_ prefix so Vite exposes this to the browser
 const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY || "";
@@ -6,7 +7,7 @@ const ai = new GoogleGenAI({ apiKey });
 
 export async function analyzeDailyLog(content: string, tasks: string[]) {
   if (!apiKey) {
-    console.error("VITE_GEMINI_API_KEY não configurada.");
+    logger.error("VITE_GEMINI_API_KEY não configurada.");
     return null;
   }
 
@@ -42,7 +43,7 @@ Importante: Apenas retorne o JSON, sem explicações extras.`;
     const jsonStr = text.replace(/```json\n?|```/g, "").trim();
     return JSON.parse(jsonStr);
   } catch (error) {
-    console.error("Erro na análise da IA:", error);
+    logger.error("Erro na análise da IA:", error);
     return null;
   }
 }

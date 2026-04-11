@@ -16,17 +16,19 @@ import {
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+import { Equipe } from '../types';
+
 export default function Equipes() {
   const { state, setState, markPending, toast } = useAppContext();
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<any>({});
+  const [formData, setFormData] = useState<Partial<Equipe>>({});
   
   // Week calculations based on active day
   const currentDd = new Date(state.currentDay);
   const startD = startOfWeek(new Date(currentDd.getTime() + currentDd.getTimezoneOffset() * 60000), { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 6 }).map((_, i) => addDays(startD, i)); // Seg a Sab
 
-  const handleEdit = (eq: any) => {
+  const handleEdit = (eq: Equipe) => {
     setEditingId(eq.cod);
     setFormData(eq);
   };
@@ -38,11 +40,11 @@ export default function Equipes() {
     const isNew = !state.equipes.find(e => e.cod === formData.cod);
     
     setState(prev => {
-      const novas = isNew ? [...prev.equipes, formData] : prev.equipes.map(e => e.cod === formData.cod ? formData : e);
+      const novas = isNew ? [...prev.equipes, formData as Equipe] : prev.equipes.map(e => e.cod === formData.cod ? formData as Equipe : e);
       return { ...prev, equipes: novas };
     });
     
-    markPending('equipes_cadastro', formData);
+    markPending('equipes_cadastro', formData as Equipe);
     setEditingId(null);
     setFormData({});
     toast('Equipe salva na fila de sincronização.', 'success');
@@ -63,7 +65,8 @@ export default function Equipes() {
 
   const popularEquipes = () => {
     // Inject all from initialData to DB queue
-    const novasEquipes = initialData.equipes.map((e: any) => ({
+    const rawEquipes = initialData?.equipes || [];
+    const novasEquipes = rawEquipes.map((e) => ({
       ...e,
       ativo: true
     }));

@@ -1,6 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { useAppContext } from '../AppContext';
 import { UploadCloud, Loader2 } from 'lucide-react';
+import { logger } from '../services/logger';
+import { Foto } from '../types';
 
 export default function Fotos() {
   const { state, setState, config, markPending, toast } = useAppContext();
@@ -25,7 +27,7 @@ export default function Fotos() {
     }
 
     setUploading(true);
-    const files = Array.from(e.target.files) as File[];
+    const files = Array.from(e.target.files);
     
     for (const f of files) {
       try {
@@ -39,23 +41,23 @@ export default function Fotos() {
         
         const data = await res.json();
         if (data.success) {
-          const newFoto = {
+          const newFoto: Foto = {
             id: crypto.randomUUID(),
             url: data.data.url,
             thumb: data.data.thumb.url,
-            data: state.currentDay,
+            data_foto: state.currentDay,
             semana: getWeekString(state.currentDay),
             legenda: f.name.replace(/\.[^.]+$/, '')
           };
           
           setState(prev => ({ ...prev, fotos: [newFoto, ...prev.fotos] }));
-          markPending('fotos', newFoto);
-        } else {
-          console.error('ImgBB Error:', data);
-        }
-      } catch (err) {
-        console.error('Upload failed:', err);
-      }
+           markPending('fotos', newFoto);
+         } else {
+           logger.error('ImgBB Error:', data);
+         }
+       } catch (err) {
+         logger.error('Upload failed:', err);
+       }
     }
     
     setUploading(false);
@@ -64,11 +66,11 @@ export default function Fotos() {
 
   // Group photos by week
   const groupedFotos = state.fotos.reduce((acc, foto) => {
-    const w = foto.semana || getWeekString(foto.data);
+    const w = foto.semana || getWeekString(foto.data_foto);
     if (!acc[w]) acc[w] = [];
     acc[w].push(foto);
     return acc;
-  }, {} as Record<string, typeof state.fotos>);
+  }, {} as Record<string, Foto[]>);
 
   const weeks = Object.keys(groupedFotos).sort().reverse();
 
@@ -106,8 +108,8 @@ export default function Fotos() {
               <div key={f.id} className="bg-s1 border border-b1 rounded-lg overflow-hidden cursor-pointer transition-all hover:border-b2 hover:-translate-y-px">
                 <img src={f.thumb || f.url} alt={f.legenda} className="w-full h-[130px] object-cover bg-s3 block" />
                 <div className="p-2.5">
-                  <div className="text-[12px] text-t2 whitespace-nowrap overflow-hidden text-ellipsis">{f.legenda || f.cap}</div>
-                  <div className="font-mono text-[10px] text-t3 mt-1">{f.data}</div>
+                  <div className="text-[12px] text-t2 whitespace-nowrap overflow-hidden text-ellipsis">{f.legenda}</div>
+                  <div className="font-mono text-[10px] text-t3 mt-1">{f.data_foto}</div>
                 </div>
               </div>
             ))}

@@ -3,6 +3,7 @@ import { useAppContext } from '../AppContext';
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Servico } from '../types';
 
 const Badge = ({ children, className }: { children: React.ReactNode, className?: string }) => (
   <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${className}`}>
@@ -56,7 +57,7 @@ export default function Cronograma() {
     return true;
   });
 
-  const handleUpdate = (idOrSrvId: string, field: string, value: any) => {
+  const handleUpdate = <K extends keyof Servico>(idOrSrvId: string, field: K, value: Servico[K]) => {
     const newServicos = [...state.servicos];
     const idx = newServicos.findIndex(s => s.id === idOrSrvId || s.id_servico === idOrSrvId);
     if (idx >= 0) {
@@ -75,8 +76,8 @@ export default function Cronograma() {
   const [viewMode, setViewMode] = useState<'gantt' | 'daily'>('gantt');
 
   const dailyTasks = useMemo(() => {
-    const map: Record<string, any[]> = {};
-    dates.forEach((d, i) => {
+    const map: Record<string, Servico[]> = {};
+    dates.forEach((_, i) => {
       const dStr = dateStrings[i];
       map[dStr] = state.servicos.filter(s => {
         if (!s.data_inicio || !s.data_fim) return false;
@@ -239,7 +240,10 @@ export default function Cronograma() {
                         if (endIdx === -1 && new Date(endStr) > dates[dates.length - 1]) endIdx = dates.length - 1;
                       }
 
-                      const isPending = state.pendingChanges.some(ch => ch.table === 'servicos' && (ch.data.id === s.id || ch.data.id_servico === s.id_servico));
+                      const isPending = state.pendingChanges.some(ch => {
+                        const d = ch.data as any;
+                        return ch.table === 'servicos' && (d.id === s.id || ('id_servico' in d && d.id_servico === s.id_servico));
+                      });
 
                       return (
                         <div key={s.id} className="flex border-b border-b2/30 group hover:bg-s1/30 w-max min-w-full">
