@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(ls -1 *.md *.txt)"
+      "Bash(ls -1 *.md *.txt)",
+      "Bash(npm run:*)",
+      "Bash(ls -lh docs/archive/*.md)"
     ]
   }
 }

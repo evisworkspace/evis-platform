@@ -130,11 +130,11 @@ RELATO DO DIA:
 INSTRUÇÕES IMPORTANTES:
 1. Se o relato mencionar uma equipe pelo nome (ex: "EQ-OBR-01", "Valdeci", "Pro Ar"), inclua o código correto em equipes_presentes.
 2. A narrativa deve começar com a data "${currentDay} —" e mencionar os avanços, equipes presentes e próximos passos.
-3. CRÍTICO: SEMPRE retorne data_inicio e data_fim (formato YYYY-MM-DD) para cada serviço atualizado. Use estas regras de inferência temporal:
-   - Se status="nao_iniciado": data_inicio = NULL, data_fim = hoje + 30 dias
-   - Se status="em_andamento": data_inicio = hoje - 1 dia (se não mencionada), data_fim = hoje + 30 dias
-   - Se status="concluido": data_inicio = hoje - 1 dia, data_fim = hoje (data do relato)
-   Sempre forneça datas explícitas, nunca deixe NULL.
+3. CRÍTICO: SEMPRE retorne data_inicio e data_fim (formato YYYY-MM-DD) para cada serviço atualizado. NUNCA retorne NULL. Use estas regras de inferência temporal:
+   - Se status="nao_iniciado": data_inicio = hoje, data_fim = hoje + 30 dias
+   - Se status="em_andamento": data_inicio = hoje - 1 dia (se não explícita no relato), data_fim = hoje + 30 dias
+   - Se status="concluido": data_inicio = hoje - 1 dia (se não explícita), data_fim = hoje (data do relato)
+   IMPORTANTE: Sempre forneça datas EXPLÍCITAS em formato YYYY-MM-DD. Nunca use null, undefined ou string vazia.
 4. Os status válidos são: nao_iniciado, em_andamento, concluido.
 5. Retorne APENAS um JSON válido, sem markdown, nenhum texto fora do JSON.
 
