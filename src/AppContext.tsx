@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AppState, Config } from './types';
+import { AppState, Config, PendingChangeData, Equipe } from './types';
 import { initialData } from './initialData';
 
 interface AppContextType {
@@ -7,7 +7,7 @@ interface AppContextType {
   setState: React.Dispatch<React.SetStateAction<AppState>>;
   config: Config;
   setConfig: React.Dispatch<React.SetStateAction<Config>>;
-  markPending: (table: string, data: any) => void;
+  markPending: (table: string, data: PendingChangeData) => void;
   resetState: () => void;
   toast: (msg: string, type?: 'info' | 'error' | 'success') => void;
 }
@@ -75,7 +75,7 @@ export const AppProvider: React.FC<{children: React.ReactNode}> = ({ children })
           notas: parsed.notas || defaultState.notas,
           fotos: parsed.fotos || defaultState.fotos,
           relatorios: parsed.relatorios || defaultState.relatorios,
-          equipes: parsed.equipes?.map((e: any) => typeof e === 'string' ? { cod: e, nome: e } : e) || defaultState.equipes,
+          equipes: parsed.equipes?.map((e: Equipe | string) => typeof e === 'string' ? { cod: e, nome: e } : e) || defaultState.equipes,
           globalFilter: parsed.globalFilter || defaultState.globalFilter,
           pendingChanges: parsed.pendingChanges || defaultState.pendingChanges,
         };
@@ -112,7 +112,7 @@ export const AppProvider: React.FC<{children: React.ReactNode}> = ({ children })
     localStorage.setItem('badida_cfg_v2', JSON.stringify(config));
   }, [config]);
 
-  const markPending = (table: string, data: any) => {
+  const markPending = (table: string, data: PendingChangeData) => {
     setState(prev => ({
       ...prev,
       pendingChanges: [...prev.pendingChanges, { table, data, ts: Date.now() }]

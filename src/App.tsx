@@ -84,7 +84,7 @@ function Main() {
         const day = (d.created_at || '').split('T')[0];
         if (!newDiario[day]) newDiario[day] = { texto: '' };
         newDiario[day].texto = d.transcricao;
-        (newDiario[day] as any).db_id = d.id;
+        (newDiario[day] as Record<string, any>).db_id = d.id;
         if (d.narrativa) newNarrativas[day] = d.narrativa;
       });
 
@@ -186,14 +186,14 @@ function Main() {
               setState(prev => {
                 const nd = { ...prev.diario };
                 if (!nd[d.day]) nd[d.day] = { texto: '' };
-                (nd[d.day] as any).db_id = ins[0].id;
+                (nd[d.day] as Record<string, any>).db_id = ins[0].id;
                 return { ...prev, diario: nd };
               });
             }
           }
         }
         if (ch.table === 'brain_narrativas') {
-          await sbFetch('brain_narrativas', { method: 'POST', body: JSON.stringify({ obra_id: config.obraId, entrada: (ch.data as any).entrada, resposta_ia: (ch.data as any).resposta_ia, confirmado: true }) }, config);
+          await sbFetch('brain_narrativas', { method: 'POST', body: JSON.stringify({ obra_id: config.obraId, entrada: (ch.data as Record<string, any>).entrada, resposta_ia: (ch.data as Record<string, any>).resposta_ia, confirmado: true }) }, config);
         }
         if (ch.table === 'equipes_presenca') {
           const dPresenca = ch.data as unknown as { equipe: string, dia: string };
@@ -223,7 +223,7 @@ function Main() {
         if (ch.table === 'narrativas') {
           await sbFetch('diario_obra', { 
             method: 'POST', 
-            body: JSON.stringify({ obra_id: config.obraId, created_at: (ch.data as any).dia, narrativa: (ch.data as any).texto }),
+            body: JSON.stringify({ obra_id: config.obraId, created_at: (ch.data as Record<string, any>).dia, narrativa: (ch.data as Record<string, any>).texto }),
             headers: { 'Prefer': 'resolution=merge-duplicates' }
           }, config);
         }
@@ -232,7 +232,7 @@ function Main() {
           // OBS: A tabela relatorios_semanais deve ser criada no Supabase para uso em produção, caso ainda não exista.
           await sbFetch('relatorios_semanais', { 
              method: 'POST', 
-             body: JSON.stringify({ obra_id: config.obraId, data_snapshot: ch.data, semana: (ch.data as any).id }) 
+             body: JSON.stringify({ obra_id: config.obraId, data_snapshot: ch.data, semana: (ch.data as Record<string, any>).id }) 
           }, config);
         }
          ok++;

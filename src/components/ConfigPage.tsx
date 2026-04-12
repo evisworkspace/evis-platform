@@ -64,7 +64,7 @@ export default function ConfigPage() {
       };
 
       // 1. IMPORTAR SERVIÇOS
-      const services = (data.servicos || []).map((s: any) => ({
+      const services = (data.servicos || []).map((s: Record<string, any>) => ({
         obra_id: config.obraId,
         id_servico: s.id_servico || s.cod || s.codigo,
         nome: s.nome || s.descricao,
@@ -87,7 +87,7 @@ export default function ConfigPage() {
       }
 
       // 2. IMPORTAR EQUIPES
-      const teams = (data.equipes || data.fornecedores || []).map((f: any) => ({
+      const teams = (data.equipes || data.fornecedores || []).map((f: Record<string, any>) => ({
         obra_id: config.obraId,
         cod: f.cod || f.equipe_cod,
         nome: f.nome
@@ -102,7 +102,7 @@ export default function ConfigPage() {
       }
 
       // 3. IMPORTAR NOTAS (Anotações/Observações)
-      const notes = (data.notas || []).map((n: any) => ({
+      const notes = (data.notas || []).map((n: Record<string, any>) => ({
         obra_id: config.obraId,
         tipo: n.tipo || 'observacao',
         texto: n.texto,
@@ -133,7 +133,7 @@ export default function ConfigPage() {
       }
 
       // 5. IMPORTAR PENDÊNCIAS
-      const pendings = (data.pendencias || []).map((p: any) => ({
+      const pendings = (data.pendencias || []).map((p: Record<string, any>) => ({
         obra_id: config.obraId,
         descricao: p.descricao,
         prioridade: p.prioridade || 'media',
