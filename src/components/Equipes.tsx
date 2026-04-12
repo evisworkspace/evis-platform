@@ -11,7 +11,9 @@ import {
   Save, 
   CheckCircle,
   Clock,
-  Download
+  Download,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -22,10 +24,11 @@ export default function Equipes() {
   const { state, setState, markPending, toast } = useAppContext();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<Equipe>>({});
+  const [matrixOffset, setMatrixOffset] = useState(0);
   
-  // Week calculations based on active day
+  // Week calculations based on active day + offset
   const currentDd = new Date(state.currentDay);
-  const startD = startOfWeek(new Date(currentDd.getTime() + currentDd.getTimezoneOffset() * 60000), { weekStartsOn: 1 });
+  const startD = startOfWeek(addDays(new Date(currentDd.getTime() + currentDd.getTimezoneOffset() * 60000), matrixOffset * 7), { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 6 }).map((_, i) => addDays(startD, i)); // Seg a Sab
 
   const handleEdit = (eq: Equipe) => {
@@ -106,10 +109,34 @@ export default function Equipes() {
       {/* MATRIX DE PRESENÇA */}
       <div className="bg-s1 border border-b1 rounded-xl overflow-hidden">
         <div className="px-4 py-3 border-b border-b1 bg-s2/30 flex items-center justify-between">
-          <span className="text-[10px] font-bold text-t3 uppercase tracking-widest">Matriz de Presença da Semana</span>
-          <span className="text-[10px] font-mono text-t3 uppercase">
-            {format(weekDays[0], 'dd/MM')} - {format(weekDays[5], 'dd/MM')}
-          </span>
+          <span className="text-[10px] font-bold text-t3 uppercase tracking-widest">Matriz de Presença Semanal</span>
+          <div className="flex items-center gap-4">
+            <div className="flex gap-1">
+              <button 
+                onClick={() => setMatrixOffset(prev => prev - 1)}
+                className="p-1 rounded bg-s2 border border-b1 text-t3 hover:text-t1 hover:border-b2 transition-colors"
+                title="Semana anterior"
+              >
+                <ChevronLeft className="w-3 h-3" />
+              </button>
+              <button 
+                onClick={() => setMatrixOffset(0)}
+                className="px-2 py-1 rounded bg-s2 border border-b1 text-[9px] font-bold uppercase text-t3 hover:text-t1 transition-colors"
+              >
+                Atual
+              </button>
+              <button 
+                onClick={() => setMatrixOffset(prev => prev + 1)}
+                className="p-1 rounded bg-s2 border border-b1 text-t3 hover:text-t1 hover:border-b2 transition-colors"
+                title="Próxima semana"
+              >
+                <ChevronRight className="w-3 h-3" />
+              </button>
+            </div>
+            <span className="text-[10px] font-mono text-t3 uppercase bg-s3 px-2 py-0.5 rounded border border-b2">
+              {format(weekDays[0], 'dd/MM')} - {format(weekDays[5], 'dd/MM')}
+            </span>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">

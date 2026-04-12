@@ -131,29 +131,7 @@ export const initialData: Partial<AppState> = {
     { "id": "f51", "url": "https://i.ibb.co/Sg1kpkf/7810e343acf2.jpg", "legenda": "Foto 01/04", "data_foto": "2026-04-01T12:00:00Z" },
     { "id": "f52", "url": "https://i.ibb.co/TxFj2Rzr/4487a52d4286.jpg", "legenda": "Foto 01/04", "data_foto": "2026-04-01T12:00:00Z" }
   ],
-  notas: [
-    { "id": "n1", "tipo": "observacao", "texto": "Iniciada organização do canteiro de obras para continuidade dos serviços preliminares", "data_nota": "2026-03-17T12:03:00Z" },
-    { "id": "n2", "tipo": "observacao", "texto": "Ambiente praticamente limpo estruturalmente após trabalhos da equipe Valdeci", "data_nota": "2026-03-17T12:05:00Z" },
-    { "id": "n3", "tipo": "observacao", "texto": "Equipe Pro Ar iniciou medição de infraestruturas para fabricação de peças de AC", "data_nota": "2026-03-17T12:05:00Z" },
-    { "id": "n4", "tipo": "observacao", "texto": "Fabricação de infraestrutura AC em andamento na empresa Pro Ar", "data_nota": "2026-03-17T12:06:00Z" },
-    { "id": "n5", "tipo": "decisao", "texto": "Área liberada para início do forro após conclusão da retirada de elementos", "data_nota": "2026-03-17T12:06:00Z" },
-    { "id": "n6", "tipo": "observacao", "texto": "Início efetivo do tarugamento de forro no Salão 1 conforme cronograma", "data_nota": "2026-03-17T12:06:00Z" },
-    { "id": "n7", "tipo": "observacao", "texto": "Início efetivo dos trabalhos de tarugamento de forro no Salão 1 na sexta-feira", "data_nota": "2026-03-17T12:07:00Z" },
-    { "id": "n8", "tipo": "observacao", "texto": "Domínio Refrigeração iniciou infraestrutura da rede frigorífica no Salão 1 com 60% de execução no primeiro dia", "data_nota": "2026-03-17T12:11:00Z" },
-    { "id": "n9", "tipo": "observacao", "texto": "Lumitech iniciou infraestrutura elétrica no Salão 1 com 50% de execução no primeiro dia", "data_nota": "2026-03-17T12:11:00Z" },
-    { "id": "n10", "tipo": "observacao", "texto": "Serviços preliminares e demolições já concluídos. Foco na conclusão da infraestrutura para liberação do fechamento de forro", "data_nota": "2026-03-17T12:12:00Z" },
-    { "id": "n11", "tipo": "observacao", "texto": "Reunião presencial de alinhamento 14h-16h com Valdeci e Carlos (Lumitec)", "data_nota": "2026-03-22T18:04:00Z" },
-    { "id": "n12", "tipo": "decisao", "texto": "Sequência definida: QUA madrugada drywall, QUI massa e AC, SEX finalização AC e limpeza", "data_nota": "2026-03-22T18:04:00Z" },
-    { "id": "n13", "tipo": "lembrete", "texto": "Objetivo: liberação do espaço para funcionamento final de semana", "data_nota": "2026-03-22T18:04:00Z" },
-    { "id": "n14", "tipo": "alerta", "texto": "Forro ainda pendente (~30%) precisa prioridade imediata para liberação de etapas seguintes", "data_nota": "2026-03-22T18:12:00Z" },
-    { "id": "n15", "tipo": "observacao", "texto": "Maçamento concluído destrava etapa para acabamentos (lixa/pintura)", "data_nota": "2026-03-22T18:12:00Z" },
-    { "id": "n16", "tipo": "observacao", "texto": "Elétrica organizada reduz risco operacional e retrabalho, bom padrão de execução", "data_nota": "2026-03-22T18:12:00Z" },
-    { "id": "n17", "tipo": "observacao", "texto": "1 equipamento AC liberado para funcionamento no fim de semana", "data_nota": "2026-03-22T18:17:00Z" },
-    { "id": "n18", "tipo": "alerta", "texto": "Condensação na tubulação do dreno AC necessita proteção", "data_nota": "2026-03-22T18:17:00Z" },
-    { "id": "n19", "tipo": "alerta", "texto": "Aldeir identificou condensação na tubulação do dreno AC através de vídeo - necessária proteção urgente", "data_nota": "2026-03-22T18:20:00Z" },
-    { "id": "n20", "tipo": "observacao", "texto": "Acesso direto ao ambiente já finalizado liberado", "data_nota": "2026-04-01T00:01:00Z" },
-    { "id": "n21", "tipo": "alerta", "texto": "Complemento do duto frigorífico é indispensável para liberar fechamento do forro e paredes em drywall", "data_nota": "2026-04-01T00:10:00Z" }
-  ],
+notas: [],
   narrativas: {
     "2026-04-09": "Semana 04 — Badida ParkShopping Barigui - V1 — Avanço de 30% do cronograma executivo.\nSRV-024 Isolamento Salão 2 em andamento, 80% com instalação de madeirites (EQ-OBR-01). SRV-017 Acabamentos Elétrica concluído (EQ-ELE-01). Inspeção frigorígena realizada (EQ-FRG-01).\nFoco semana 05: finalizar tapume Salão 2, executar complemento duto frigorífico, liberar fechamento forro e drywall."
   }

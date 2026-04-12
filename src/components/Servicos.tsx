@@ -6,11 +6,44 @@ import { Servico } from '../types';
 export default function Servicos() {
   const { state, setState, markPending } = useAppContext();
   const [filter, setFilter] = useState('todos');
+  const [filterCat, setFilterCat] = useState('todas');
+  const [filterEq, setFilterEq] = useState('todas');
+  const [ordenacao, setOrdenacao] = useState<'importada' | 'nome' | 'categoria' | 'equipe'>('importada');
   const [modalOpen, setModalOpen] = useState(false);
   const [editSrv, setEditSrv] = useState<Servico | null>(null);
   const [editIdx, setEditIdx] = useState(-1);
 
-  const list = filter === 'todos' ? state.servicos : state.servicos.filter(s => s.status_atual === filter);
+  // Filtros Dinâmicos
+  const categoriasUnicas = Array.from(new Set(state.servicos.map(s => s.categoria).filter(Boolean))).sort();
+  const equipesUnicas = Array.from(new Set(state.servicos.map(s => s.equipe).filter(Boolean))).sort();
+
+  const refDate = new Date(state.globalFilter.referenceDate);
+  refDate.setHours(23, 59, 59, 999);
+  const startDate = new Date(refDate);
+  startDate.setDate(refDate.getDate() - state.globalFilter.periodDays + 1);
+  startDate.setHours(0, 0, 0, 0);
+
+  const list = state.servicos
+    .filter(s => {
+      if (filter !== 'todos' && s.status_atual !== filter) return false;
+      if (filterCat !== 'todas' && s.categoria !== filterCat) return false;
+      if (filterEq !== 'todas' && s.equipe !== filterEq) return false;
+      if (s.data_inicio && s.data_fim) {
+        const sT = new Date(s.data_inicio);
+        const eT = new Date(s.data_fim);
+        if (eT < startDate || sT > refDate) return false;
+      } else if (s.data_inicio) {
+        const sT = new Date(s.data_inicio);
+        if (sT > refDate) return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (ordenacao === 'nome') return (a.nome || '').localeCompare(b.nome || '');
+      if (ordenacao === 'categoria') return (a.categoria || '').localeCompare(b.categoria || '');
+      if (ordenacao === 'equipe') return (a.equipe || '').localeCompare(b.equipe || '');
+      return 0;
+    });
 
   const stMap: Record<string, [string, string]> = {
     em_andamento: ['bg-brand-blue/10 text-brand-blue', 'andamento'],
@@ -77,24 +110,57 @@ export default function Servicos() {
         </div>
       </div>
 
-      <div className="flex gap-1.5 flex-wrap mb-4">
-        {[
-          { id: 'todos', label: 'Todos' },
-          { id: 'em_andamento', label: 'Andamento' },
-          { id: 'atencao', label: 'Atenção' },
-          { id: 'concluido', label: 'Concluídos' },
-          { id: 'nao_iniciado', label: 'Não iniciado' }
-        ].map(f => (
-          <button
-            key={f.id}
-            onClick={() => setFilter(f.id)}
-            className={`px-3 py-1.5 rounded-md border font-mono text-[10px] uppercase tracking-[0.08em] transition-all ${
-              filter === f.id ? 'border-brand-green text-brand-green bg-brand-green/5' : 'border-b1 bg-s1 text-t3 hover:border-b2 hover:text-t2'
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
+      <div className="flex gap-4 items-center mb-4 flex-wrap bg-s2/30 p-2 rounded-lg border border-b1">
+        <div className="flex gap-1.5 flex-wrap flex-1">
+          {[
+            { id: 'todos', label: 'Todos' },
+            { id: 'em_andamento', label: 'Andamento' },
+            { id: 'atencao', label: 'Atenção' },
+            { id: 'concluido', label: 'Concluídos' },
+            { id: 'nao_iniciado', label: 'Não iniciado' }
+          ].map(f => (
+            <button
+              key={f.id}
+              onClick={() => setFilter(f.id)}
+              className={`px-3 py-1.5 rounded-md border font-mono text-[10px] uppercase tracking-[0.08em] transition-all ${
+                filter === f.id ? 'border-brand-green text-brand-green bg-brand-green/5 shadow-sm' : 'border-b1 bg-s1 text-t3 hover:border-b2 hover:text-t2'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+        
+<div className="flex items-center gap-3 shrink-0">
+            <select 
+              value={filterCat}
+              onChange={(e) => setFilterCat(e.target.value)}
+              className="bg-s1 border border-b1 rounded-md px-3 py-1.5 text-[11px] font-mono uppercase tracking-[0.05em] text-t2 outline-none focus:border-brand-green transition-colors"
+            >
+              <option value="todas">Todas Categ.</option>
+              {categoriasUnicas.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+
+            <select 
+              value={filterEq}
+              onChange={(e) => setFilterEq(e.target.value)}
+              className="bg-s1 border border-b1 rounded-md px-3 py-1.5 text-[11px] font-mono uppercase tracking-[0.05em] text-t2 outline-none focus:border-brand-green transition-colors"
+            >
+              <option value="todas">Todas Equipes</option>
+              {equipesUnicas.map(eq => <option key={eq} value={eq}>{state.equipes.find(e => e.cod === eq)?.nome || eq}</option>)}
+            </select>
+
+            <select 
+              value={ordenacao}
+              onChange={(e) => setOrdenacao(e.target.value as typeof ordenacao)}
+              className="bg-s1 border border-b1 rounded-md px-3 py-1.5 text-[11px] font-mono uppercase tracking-[0.05em] text-t2 outline-none focus:border-brand-green transition-colors"
+            >
+              <option value="importada">Ordem Importada</option>
+              <option value="nome">Ordem Nome</option>
+              <option value="categoria">Ordem Categoria</option>
+              <option value="equipe">Ordem Equipe</option>
+            </select>
+          </div>
       </div>
 
       <div className="bg-s1 border border-b1 rounded-xl overflow-hidden shadow-xl">
@@ -107,6 +173,8 @@ export default function Servicos() {
               <th className="font-mono text-[9px] text-t3 uppercase tracking-[0.1em] text-right px-4 py-3 border-b border-b1 whitespace-nowrap w-[80px]">Qtd</th>
               <th className="font-mono text-[9px] text-t3 uppercase tracking-[0.1em] text-right px-4 py-3 border-b border-b1 whitespace-nowrap w-[100px]">Unitário</th>
               <th className="font-mono text-[9px] text-t3 uppercase tracking-[0.1em] text-right px-4 py-3 border-b border-b1 whitespace-nowrap w-[110px]">Total</th>
+              <th className="font-mono text-[9px] text-t3 uppercase tracking-[0.1em] text-right px-4 py-3 border-b border-b1 whitespace-nowrap w-[100px]">Mão Obra</th>
+              <th className="font-mono text-[9px] text-t3 uppercase tracking-[0.1em] text-right px-4 py-3 border-b border-b1 whitespace-nowrap w-[110px]">Material</th>
               <th className="font-mono text-[9px] text-t3 uppercase tracking-[0.1em] text-left px-4 py-3 border-b border-b1 whitespace-nowrap w-[160px]">Avanço</th>
               <th className="font-mono text-[9px] text-t3 uppercase tracking-[0.1em] text-center px-4 py-3 border-b border-b1 whitespace-nowrap w-[100px]">Status</th>
               <th className="font-mono text-[9px] text-t3 uppercase tracking-[0.1em] text-center px-4 py-3 border-b border-b1 whitespace-nowrap w-[60px]"></th>
@@ -115,7 +183,7 @@ export default function Servicos() {
           <tbody>
             {list.length === 0 ? (
               <tr>
-                <td colSpan={9} className="text-center text-t4 py-12 font-mono text-[11px] uppercase tracking-widest">Nenhum item encontrado</td>
+                <td colSpan={11} className="text-center text-t4 py-12 font-mono text-[11px] uppercase tracking-widest">Nenhum item encontrado</td>
               </tr>
             ) : list.map((s, idx) => {
               const realIdx = state.servicos.findIndex(x => x.id_servico === s.id_servico);
@@ -165,6 +233,22 @@ export default function Servicos() {
                       {((s.quantidade || 0) * (s.valor_unitario || 0)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                     </span>
                   </td>
+                  <td className={`px-4 py-3 border-b text-[12px] text-right align-middle ${pending ? 'border-brand-amber/20' : 'border-b1'}`}>
+                    <input 
+                      type="number"
+                      className="bg-transparent border-none text-t2 font-mono text-[11px] w-full text-right px-1 py-0.5 rounded outline-none focus:bg-s2" 
+                      value={s.custo_mao_obra || 0} 
+                      onChange={e => inlineEdit(realIdx, 'custo_mao_obra', +e.target.value)} 
+                    />
+                  </td>
+                  <td className={`px-4 py-3 border-b text-[12px] text-right align-middle ${pending ? 'border-brand-amber/20' : 'border-b1'}`}>
+                    <input 
+                      type="number"
+                      className="bg-transparent border-none text-t2 font-mono text-[11px] w-full text-right px-1 py-0.5 rounded outline-none focus:bg-s2" 
+                      value={s.custo_material || 0} 
+                      onChange={e => inlineEdit(realIdx, 'custo_material', +e.target.value)} 
+                    />
+                  </td>
                   <td className={`px-4 py-3 border-b text-[13px] align-middle ${pending ? 'border-brand-amber/20' : 'border-b1'}`}>
                     <div className="flex items-center gap-3">
                       <div className="flex-1 h-1.5 bg-s3 rounded-full overflow-hidden">
@@ -186,7 +270,7 @@ export default function Servicos() {
                     <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${bc}`}>{bl}</span>
                   </td>
                   <td className={`px-4 py-3 border-b text-center align-middle ${pending ? 'border-brand-amber/20' : 'border-b1'}`}>
-                    <button onClick={() => openEdit(s, realIdx)} className="text-t4 hover:text-t1 transition-colors p-1">
+                    <button onClick={() => openEdit(s, realIdx)} aria-label={`Editar ${s.nome || s.id_servico}`} className="text-t4 hover:text-t1 transition-colors p-1">
                       <Settings size={14} />
                     </button>
                   </td>
@@ -228,9 +312,19 @@ export default function Servicos() {
                 <input type="number" value={editSrv.quantidade || 0} onChange={e => setEditSrv({...editSrv, quantidade: +e.target.value})} className="w-full bg-s1 border border-b1 rounded-md text-t1 font-mono text-[12px] px-3 py-2 outline-none focus:border-b3" />
               </div>
             </div>
-            <div className="mb-3">
+<div className="mb-3">
               <label className="block font-mono text-[9px] text-t3 uppercase tracking-[0.1em] mb-1.5">Valor Unitário (R$)</label>
-              <input type="number" value={editSrv.valor_unitario || 0} onChange={e => setEditSrv({...editSrv, valor_unitario: +e.target.value})} className="w-full bg-s1 border border-b1 rounded-md text-t1 font-mono text-[12px] px-3 py-2 outline-none focus:border-b3" />
+              <input type="number" value={editSrv.valor_unitario || 0} onChange={e => setEditSrv({...editSrv, valor_unitario: +e.target.value})} className="w-full bg-s1 border border-b1 rounded-md text-t1 font-mono text-[12px] px-3 py-2 outline-none transition-colors focus:border-b3" />
+            </div>
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <label className="block font-mono text-[9px] text-t3 uppercase tracking-[0.1em] mb-1.5">Custo Mão Obra</label>
+                <input type="number" value={editSrv.custo_mao_obra || 0} onChange={e => setEditSrv({...editSrv, custo_mao_obra: +e.target.value})} className="w-full bg-s1 border border-b1 rounded-md text-t1 font-mono text-[12px] px-3 py-2 outline-none focus:border-b3" />
+              </div>
+              <div>
+                <label className="block font-mono text-[9px] text-t3 uppercase tracking-[0.1em] mb-1.5">Custo Material</label>
+                <input type="number" value={editSrv.custo_material || 0} onChange={e => setEditSrv({...editSrv, custo_material: +e.target.value})} className="w-full bg-s1 border border-b1 rounded-md text-t1 font-mono text-[12px] px-3 py-2 outline-none focus:border-b3" />
+              </div>
             </div>
             <div className="mb-3">
               <label className="block font-mono text-[9px] text-t3 uppercase tracking-[0.1em] mb-1.5">Status</label>

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../AppContext';
-import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, ChevronDown, ChevronRight as ChevronRightIcon, Clock, Layers, Users, Maximize2, Minimize2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Servico } from '../types';
@@ -19,6 +19,15 @@ export default function Cronograma() {
   const [search, setSearch] = useState('');
   const [hideCompleted, setHideCompleted] = useState(false);
   const [selectedEquipe, setSelectedEquipe] = useState('');
+  const [expandedCats, setExpandedCats] = useState<string[]>([]); // Inicia vazio para "Visão Macro"
+  const [groupBy, setGroupBy] = useState<'categoria' | 'equipe' | 'cronologico'>('categoria');
+  const [isCompact, setIsCompact] = useState(true); // Modo Macro por padrão
+  
+  const toggleCat = (cat: string) => {
+    setExpandedCats(prev => 
+      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
+    );
+  };
   
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
@@ -26,8 +35,8 @@ export default function Cronograma() {
     return d;
   });
   
-  const daysToShow = 60; // Show 60 days
-  const colWidth = 28; // Width of each day column
+  const [windowSize, setWindowSize] = useState(60); // Janela de exibição
+  const colWidth = 28; // Largura de cada coluna de dia
   
   // Helper: converte uma data (string YYYY-MM-DD ou Date) em string YYYY-MM-DD sem desvio de timezone
   const toDateStr = (d: Date) => {
@@ -39,16 +48,47 @@ export default function Cronograma() {
 
   const dates = useMemo(() => {
     const arr = [];
-    for (let i = 0; i < daysToShow; i++) {
+    for (let i = 0; i < windowSize; i++) {
       const d = new Date(startDate);
       d.setDate(startDate.getDate() + i);
       arr.push(d);
     }
     return arr;
-  }, [startDate, daysToShow]);
+  }, [startDate, windowSize]);
 
   // Pre-compute date strings for performance
   const dateStrings = useMemo(() => dates.map(toDateStr), [dates]);
+
+  const projectRange = useMemo(() => {
+    let min = new Date();
+    let max = new Date();
+    let first = true;
+
+    state.servicos.forEach(s => {
+      if (s.data_inicio) {
+        const d = new Date(s.data_inicio + 'T00:00:00');
+        if (first || d < min) min = d;
+        first = false;
+      }
+      if (s.data_fim) {
+        const d = new Date(s.data_fim + 'T00:00:00');
+        if (first || d > max) max = d;
+        first = false;
+      }
+    });
+
+    return { min, max };
+  }, [state.servicos]);
+
+  const handleWindowChange = (val: string) => {
+    if (val === 'total') {
+      setStartDate(projectRange.min);
+      const diff = Math.ceil((projectRange.max.getTime() - projectRange.min.getTime()) / (1000 * 60 * 60 * 24)) + 5;
+      setWindowSize(diff > 0 ? diff : 30);
+    } else {
+      setWindowSize(Number(val));
+    }
+  };
 
   const filteredServicos = state.servicos.filter(s => {
     if (hideCompleted && s.avanco_atual >= 100) return false;
@@ -73,6 +113,14 @@ export default function Cronograma() {
     setStartDate(d);
   };
 
+  const goToToday = () => {
+    const today = new Date();
+    // Inicia 3 dias antes de hoje para dar contexto, mas focado na semana atual
+    const d = new Date(today);
+    d.setDate(today.getDate() - 3);
+    setStartDate(d);
+  };
+
   const [viewMode, setViewMode] = useState<'gantt' | 'daily'>('gantt');
 
   const dailyTasks = useMemo(() => {
@@ -91,15 +139,93 @@ export default function Cronograma() {
 
   const todayStr = toDateStr(new Date());
 
+  const getStatusColor = (status?: string) => {
+    switch(status) {
+      case 'concluido': return { bg: 'bg-brand-green/20', border: 'border-brand-green/50', fill: 'bg-brand-green/40', hover: 'hover:bg-brand-green/40' };
+      case 'em_andamento': return { bg: 'bg-brand-blue/20', border: 'border-brand-blue/50', fill: 'bg-brand-blue/40', hover: 'hover:bg-brand-blue/40' };
+      case 'atrasado': return { bg: 'bg-brand-red/20', border: 'border-brand-red/50', fill: 'bg-brand-red/40', hover: 'hover:bg-brand-red/40' };
+      default: return { bg: 'bg-brand-amber/20', border: 'border-brand-amber/50', fill: 'bg-brand-amber/40', hover: 'hover:bg-brand-amber/40' };
+    }
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-140px)]">
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-4 gap-4">
         <div className="flex items-center gap-2">
-          <button onClick={() => shiftDate(-15)} className="p-1.5 border border-b2 rounded hover:bg-s2 text-t2"><ChevronLeft size={16} /></button>
-          <button onClick={() => setStartDate(new Date(new Date().setDate(new Date().getDate() - 7)))} className="px-3 py-1.5 border border-b2 rounded text-[11px] font-bold hover:bg-s2 text-t1">HOJE</button>
-          <button onClick={() => shiftDate(15)} className="p-1.5 border border-b2 rounded hover:bg-s2 text-t2"><ChevronRight size={16} /></button>
+          {/* Navegação Rápida */}
+          <div className="flex items-center bg-s1 border border-b2 rounded-lg p-0.5">
+            <button onClick={() => shiftDate(-30)} title="Mês anterior" className="p-1 px-2 hover:bg-s2 text-t3 hover:text-t1 transition-colors text-[10px] font-bold">≪</button>
+            <button onClick={() => shiftDate(-7)} title="Semana anterior" className="p-1 px-2 hover:bg-s2 text-t3 hover:text-t1 transition-colors text-[10px] font-bold">＜</button>
+            <button onClick={goToToday} className="px-3 py-1 hover:bg-s2 text-brand-green text-[10px] font-extrabold uppercase tracking-wider">Hoje</button>
+            <button onClick={() => shiftDate(7)} title="Próxima semana" className="p-1 px-2 hover:bg-s2 text-t3 hover:text-t1 transition-colors text-[10px] font-bold">＞</button>
+            <button onClick={() => shiftDate(30)} title="Próximo mês" className="p-1 px-2 hover:bg-s2 text-t3 hover:text-t1 transition-colors text-[10px] font-bold">≫</button>
+          </div>
+
+          <div className="h-4 w-[1px] bg-b2 mx-1" />
+
+          {/* Seleção de Período */}
+          <div className="flex items-center gap-2 bg-s1 border border-b2 rounded-lg px-2 py-1">
+            <input 
+              type="date" 
+              value={toDateStr(startDate)}
+              onChange={(e) => setStartDate(new Date(e.target.value + 'T00:00:00'))}
+              className="bg-transparent border-none text-[10px] font-mono text-t2 outline-none cursor-pointer hover:text-t1"
+            />
+          </div>
+
+          <div className="h-4 w-[1px] bg-b2 mx-1" />
+
+          {/* Seletor de Densidade */}
+          <select 
+            onChange={(e) => handleWindowChange(e.target.value)}
+            className="bg-s1 border border-b2 rounded-lg px-2 py-1 text-[10px] font-bold text-t3 outline-none cursor-pointer hover:border-b3"
+          >
+            <option value="7">Semana</option>
+            <option value="30">Mês</option>
+            <option value="60" selected>60 dias</option>
+            <option value="90">90 dias</option>
+            <option value="total">Total</option>
+          </select>
           
+          <div className="h-4 w-[1px] bg-b2 mx-1" />
+
+          {/* Organizar Por */}
+          <div className="flex bg-s1 border border-b2 rounded-lg p-0.5">
+            <button 
+              onClick={() => { setGroupBy('cronologico'); setExpandedCats(['Fluxo de Obra']); }}
+              title="Ordem Cronológica"
+              className={`p-1 px-2 rounded transition-all ${groupBy === 'cronologico' ? 'bg-b2 text-brand-green' : 'text-t3 hover:text-t2'}`}
+            >
+              <Clock size={14} />
+            </button>
+            <button 
+              onClick={() => setGroupBy('categoria')}
+              title="Agrupar por Categoria"
+              className={`p-1 px-2 rounded transition-all ${groupBy === 'categoria' ? 'bg-b2 text-brand-green' : 'text-t3 hover:text-t2'}`}
+            >
+              <Layers size={14} />
+            </button>
+            <button 
+              onClick={() => setGroupBy('equipe')}
+              title="Agrupar por Equipe"
+              className={`p-1 px-2 rounded transition-all ${groupBy === 'equipe' ? 'bg-b2 text-brand-green' : 'text-t3 hover:text-t2'}`}
+            >
+              <Users size={14} />
+            </button>
+          </div>
+          
+          <div className="h-4 w-[1px] bg-b2 mx-1" />
+
+          {/* Toggle Compacto */}
+          <button 
+            onClick={() => setIsCompact(!isCompact)}
+            title={isCompact ? "Expandir detalhes" : "Visualização Compacta"}
+            className={`p-1.5 rounded-lg border transition-all ${isCompact ? 'bg-brand-green/10 border-brand-green/30 text-brand-green' : 'bg-s1 border-b2 text-t3 hover:text-t2'}`}
+          >
+            {isCompact ? <Maximize2 size={14} /> : <Minimize2 size={14} />}
+          </button>
+
           <div className="h-6 w-[1px] bg-b2 mx-2" />
           
           <div className="flex bg-s1 border border-b2 rounded p-0.5">
@@ -136,7 +262,7 @@ export default function Cronograma() {
           >
             <option value="">Todas as equipes</option>
             {state.equipes.map(eq => (
-              <option key={eq.cod} value={eq.nome}>{eq.nome}</option>
+              <option key={eq.cod} value={eq.cod}>{eq.nome}</option>
             ))}
           </select>
           <label className="flex items-center gap-2 text-[12px] text-t2 cursor-pointer select-none">
@@ -200,136 +326,160 @@ export default function Cronograma() {
 
           {/* Body (Scrollable) */}
           <div className="absolute top-12 left-0 right-0 bottom-0 overflow-auto">
-             {(() => {
-               const groups: Record<string, typeof filteredServicos> = {};
-               filteredServicos.forEach(s => {
-                 const cat = s.categoria || 'Sem Categoria';
-                 if (!groups[cat]) groups[cat] = [];
-                 groups[cat].push(s);
-               });
-               
-               return Object.entries(groups).map(([cat, services]) => (
-                 <React.Fragment key={cat}>
-                    {/* Category Header */}
-                    <div className="flex bg-s2/50 border-b border-b2/50 group w-max min-w-full sticky top-0 z-10">
-                       <div className="w-80 flex-shrink-0 border-r border-b2/50 p-2 pl-4 flex items-center bg-s2/80 sticky left-0 z-20">
-                          <span className="text-[11px] font-extrabold text-brand-green uppercase tracking-widest">{cat}</span>
-                          <span className="ml-2 px-1.5 py-0.5 rounded-full bg-s1 text-[9px] text-t3 border border-b2">{services.length}</span>
-                       </div>
-                       <div className="flex-1 flex">
-                          {dates.map((d, i) => (
-                             <div key={i} className="flex-shrink-0 border-r border-b2/10 bg-s2/20" style={{ width: `${colWidth}px`, minWidth: `${colWidth}px` }} />
-                          ))}
-                       </div>
-                    </div>
-                    
-                    {services.map(s => {
-                      // Calculate bar position
-                      let startIdx = -1;
-                      let endIdx = -1;
+              {(() => {
+                const groups: Record<string, typeof filteredServicos> = {};
+                filteredServicos.forEach(s => {
+                  let key = '';
+                  if (groupBy === 'categoria') key = s.categoria || 'Sem Categoria';
+                  else if (groupBy === 'equipe') {
+                    const eqObj = state.equipes.find(e => e.cod === s.equipe);
+                    key = eqObj ? eqObj.nome : (s.equipe || 'Sem Equipe');
+                  }
+                  else key = 'Fluxo de Obra';
+
+                  if (!groups[key]) groups[key] = [];
+                  groups[key].push(s);
+                });
+                
+                return Object.entries(groups).map(([groupName, services]) => {
+                  const isExpanded = expandedCats.includes(groupName);
+                    return (
+                    <React.Fragment key={groupName}>
+                       {/* Group Header */}
+                       <div 
+                         className="flex bg-s2/50 border-b border-b2/50 group w-max min-w-full sticky top-0 z-10 cursor-pointer hover:bg-s2/80 transition-colors"
+                         onClick={() => toggleCat(groupName)}
+                       >
+                          <div className="w-80 flex-shrink-0 border-r border-b2/50 p-2 pl-4 flex items-center bg-s2/80 sticky left-0 z-20">
+                             {isExpanded ? <ChevronDown size={14} className="mr-2 text-t3" /> : <ChevronRight size={14} className="mr-2 text-t3" />}
+                             <span className="text-[11px] font-extrabold text-brand-green uppercase tracking-widest">{groupName}</span>
+                             <span className="ml-2 px-1.5 py-0.5 rounded-full bg-s1 text-[9px] text-t3 border border-b2">{services.length}</span>
+                          </div>
+                          <div className="flex-1 flex">
+                            {dates.map((d, i) => (
+                               <div key={i} className="flex-shrink-0 border-r border-b2/10 bg-s2/20" style={{ width: `${colWidth}px`, minWidth: `${colWidth}px` }} />
+                            ))}
+                         </div>
+                      </div>
                       
-                      if (s.data_inicio && s.data_fim) {
-                        const startStr = s.data_inicio.split('T')[0];
-                        const endStr = s.data_fim.split('T')[0];
+                      {isExpanded && services.map(s => {
+                        // Calculate bar position
+                        let startIdx = -1;
+                        let endIdx = -1;
                         
-                        startIdx = dateStrings.findIndex(d => d === startStr);
-                        endIdx = dateStrings.findIndex(d => d === endStr);
-                        
-                        // Handle cases where dates are outside the current view
-                        if (startIdx === -1 && new Date(startStr) < dates[0]) startIdx = 0;
-                        if (endIdx === -1 && new Date(endStr) > dates[dates.length - 1]) endIdx = dates.length - 1;
-                      }
+                        if (s.data_inicio && s.data_fim) {
+                          const startStr = s.data_inicio.split('T')[0];
+                          const endStr = s.data_fim.split('T')[0];
+                          
+                          startIdx = dateStrings.findIndex(d => d === startStr);
+                          endIdx = dateStrings.findIndex(d => d === endStr);
+                          
+                          // Handle cases where dates are outside the current view
+                          if (startIdx === -1 && new Date(startStr) < dates[0]) startIdx = 0;
+                          if (endIdx === -1 && new Date(endStr) > dates[dates.length - 1]) endIdx = dates.length - 1;
+                        }
 
-                      const isPending = state.pendingChanges.some(ch => {
-                        const d = ch.data as any;
-                        return ch.table === 'servicos' && (d.id === s.id || ('id_servico' in d && d.id_servico === s.id_servico));
-                      });
+                        const isPending = state.pendingChanges.some(ch => {
+                          const d = ch.data as any;
+                          return ch.table === 'servicos' && (d.id === s.id || ('id_servico' in d && d.id_servico === s.id_servico));
+                        });
 
-                      return (
-                        <div key={s.id} className="flex border-b border-b2/30 group hover:bg-s1/30 w-max min-w-full">
-                          {/* Left Cell (Sticky Left) */}
-                          <div className={`w-80 flex-shrink-0 border-r border-b2/30 p-3 bg-bg sticky left-0 z-10 group-hover:bg-s1/30 ${isPending ? 'bg-brand-amber/5' : ''}`}>
-                            <div className="flex justify-between items-start mb-1">
-                              <span className="text-[10px] font-bold bg-s3 px-1.5 py-0.5 rounded text-t2">{s.id_servico}</span>
-                              <div className="w-16 shrink-0">
-                               <input 
-                                 type="number" 
-                                 value={s.avanco_atual} 
-                                 onChange={e => handleUpdate(s.id || s.id_servico, 'avanco_atual', Number(e.target.value))}
-                                 className="w-full text-right text-[11px] bg-s1 border border-b2 rounded px-1 py-0.5 text-t1 outline-none focus:border-brand-green"
-                                 min="0" max="100"
-                               />
-                               <span className="text-[10px] text-t3 font-mono">%</span>
-                             </div>
+                        return (
+                          <div key={s.id} className={`flex border-b border-b2/30 group hover:bg-s1/30 w-max min-w-full ${isCompact ? 'h-[38px]' : ''}`}>
+                            {/* Left Cell (Sticky Left) */}
+                            <div className={`w-80 flex-shrink-0 border-r border-b2/30 ${isCompact ? 'p-2' : 'p-3'} bg-bg sticky left-0 z-10 group-hover:bg-s1/30 ${isPending ? 'bg-brand-amber/5' : ''}`}>
+                              <div className={`flex justify-between items-start ${isCompact ? 'mb-0' : 'mb-1'}`}>
+                                <span className="text-[10px] font-bold bg-s3 px-1.5 py-0.5 rounded text-t2">{s.id_servico}</span>
+                                {!isCompact && (
+                                  <div className="w-16 shrink-0">
+                                   <input 
+                                     type="number" 
+                                     value={s.avanco_atual} 
+                                     onChange={e => handleUpdate(s.id || s.id_servico, 'avanco_atual', Number(e.target.value))}
+                                     className="w-full text-right text-[11px] bg-s1 border border-b2 rounded px-1 py-0.5 text-t1 outline-none focus:border-brand-green"
+                                     min="0" max="100"
+                                   />
+                                   <span className="text-[10px] text-t3 font-mono">%</span>
+                                 </div>
+                                )}
+                              </div>
+                              <div className={`${isCompact ? 'text-[11px]' : 'text-[12px]'} font-medium text-t1 leading-tight ${isCompact ? '' : 'mb-2'} truncate`}>{s.nome}</div>
+                              
+                              {!isCompact && (
+                                <>
+                                  <select 
+                                     value={s.equipe || ''} 
+                                     onChange={e => handleUpdate(s.id || s.id_servico, 'equipe', e.target.value)}
+                                     className="w-full text-[10px] text-t3 bg-transparent border-none p-0 mb-2 focus:ring-0 cursor-pointer hover:text-t2 transition-colors"
+                                   >
+                                    <option value="" className="bg-s2">Sem equipe</option>
+                                    {state.equipes.map(eq => (
+                                      <option key={eq.cod} value={eq.cod} className="bg-s2">{eq.nome}</option>
+                                    ))}
+                                  </select>
+                                  <div className="flex items-center gap-2 text-[10px]">
+                                    <div className="flex-1">
+                                      <div className="text-t4 mb-0.5 font-bold uppercase tracking-tighter">Início</div>
+                                      <input 
+                                        type="date" 
+                                        value={s.data_inicio ? s.data_inicio.split('T')[0] : ''} 
+                                        onChange={e => handleUpdate(s.id || s.id_servico, 'data_inicio', e.target.value)}
+                                        className="w-full bg-s1 border border-b2 rounded px-1.5 py-1 text-t2 outline-none focus:border-brand-green"
+                                      />
+                                    </div>
+                                    <div className="flex-1">
+                                      <div className="text-t4 mb-0.5 font-bold uppercase tracking-tighter">Fim</div>
+                                      <input 
+                                        type="date" 
+                                        value={s.data_fim ? s.data_fim.split('T')[0] : ''} 
+                                        onChange={e => handleUpdate(s.id || s.id_servico, 'data_fim', e.target.value)}
+                                        className="w-full bg-s1 border border-b2 rounded px-1.5 py-1 text-t2 outline-none focus:border-brand-green"
+                                      />
+                                    </div>
+                                  </div>
+                                </>
+                              )}
                             </div>
-                            <div className="text-[12px] font-medium text-t1 leading-tight mb-2">{s.nome}</div>
-                            <select 
-                               value={s.equipe || ''} 
-                               onChange={e => handleUpdate(s.id || s.id_servico, 'equipe', e.target.value)}
-                               className="w-full text-[10px] text-t3 bg-transparent border-none p-0 mb-2 focus:ring-0 cursor-pointer hover:text-t2 transition-colors"
-                             >
-                              <option value="" className="bg-s2">Sem equipe</option>
-                              {state.equipes.map(eq => (
-                                <option key={eq.cod} value={eq.nome} className="bg-s2">{eq.nome}</option>
-                              ))}
-                            </select>
-                            <div className="flex items-center gap-2 text-[10px]">
-                              <div className="flex-1">
-                                <div className="text-t4 mb-0.5 font-bold uppercase tracking-tighter">Início</div>
-                                <input 
-                                  type="date" 
-                                  value={s.data_inicio ? s.data_inicio.split('T')[0] : ''} 
-                                  onChange={e => handleUpdate(s.id || s.id_servico, 'data_inicio', e.target.value)}
-                                  className="w-full bg-s1 border border-b2 rounded px-1.5 py-1 text-t2 outline-none focus:border-brand-green"
-                                />
-                              </div>
-                              <div className="flex-1">
-                                <div className="text-t4 mb-0.5 font-bold uppercase tracking-tighter">Fim</div>
-                                <input 
-                                  type="date" 
-                                  value={s.data_fim ? s.data_fim.split('T')[0] : ''} 
-                                  onChange={e => handleUpdate(s.id || s.id_servico, 'data_fim', e.target.value)}
-                                  className="w-full bg-s1 border border-b2 rounded px-1.5 py-1 text-t2 outline-none focus:border-brand-green"
-                                />
-                              </div>
+
+                            {/* Right Cell (Timeline Row) */}
+                            <div className="flex relative">
+                              {/* Grid lines */}
+                              {dates.map((d, i) => {
+                                const isToday = d.toISOString().split('T')[0] === todayStr;
+                                const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                                return (
+                                  <div key={i} className={`flex-shrink-0 border-r border-b2/20 ${isToday ? 'bg-brand-green/5' : isWeekend ? 'bg-s1/50' : ''}`} style={{ width: `${colWidth}px`, minWidth: `${colWidth}px` }} />
+                                );
+                              })}
+                              
+                              {/* Bar */}
+                              {startIdx >= 0 && endIdx >= startIdx && (() => {
+                                const colors = getStatusColor(s.status_atual);
+                                return (
+                                  <div 
+                                    className={`absolute top-1/2 -translate-y-1/2 h-6 ${colors.bg} border ${colors.border} rounded-sm shadow-sm flex items-center px-2 overflow-hidden cursor-pointer ${colors.hover} transition-colors`}
+                                    style={{ 
+                                      left: `${startIdx * colWidth + 4}px`, 
+                                      width: `${(endIdx - startIdx + 1) * colWidth - 8}px` 
+                                    }}
+                                  >
+                                    <div 
+                                      className={`absolute left-0 top-0 bottom-0 ${colors.fill}`}
+                                      style={{ width: `${s.avanco_atual}%` }}
+                                    />
+                                    <span className="text-[9px] text-white font-bold relative z-10 truncate drop-shadow-md">
+                                      {s.avanco_atual}%
+                                    </span>
+                                  </div>
+                                );
+                              })()}
                             </div>
                           </div>
-
-                          {/* Right Cell (Timeline Row) */}
-                          <div className="flex relative">
-                            {/* Grid lines */}
-                            {dates.map((d, i) => {
-                              const isToday = d.toISOString().split('T')[0] === todayStr;
-                              const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-                              return (
-                                <div key={i} className={`flex-shrink-0 border-r border-b2/20 ${isToday ? 'bg-brand-green/5' : isWeekend ? 'bg-s1/50' : ''}`} style={{ width: `${colWidth}px`, minWidth: `${colWidth}px` }} />
-                              );
-                            })}
-                            
-                            {/* Bar */}
-                            {startIdx >= 0 && endIdx >= startIdx && (
-                              <div 
-                                className="absolute top-1/2 -translate-y-1/2 h-6 bg-brand-green/40 border border-brand-green/60 rounded-sm shadow-sm flex items-center px-2 overflow-hidden cursor-pointer hover:bg-brand-green/60 transition-colors"
-                                style={{ 
-                                  left: `${startIdx * colWidth + 4}px`, 
-                                  width: `${(endIdx - startIdx + 1) * colWidth - 8}px` 
-                                }}
-                              >
-                                <div 
-                                  className="absolute left-0 top-0 bottom-0 bg-brand-green/40"
-                                  style={{ width: `${s.avanco_atual}%` }}
-                                />
-                                <span className="text-[9px] text-white font-bold relative z-10 truncate drop-shadow-md">
-                                  {s.avanco_atual}%
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                 </React.Fragment>
-               ));
+                        );
+                      })}
+                   </React.Fragment>
+                 );
+               });
              })()}
           </div>
         </div>
@@ -369,7 +519,9 @@ export default function Cronograma() {
                             <span className="text-[9px] font-mono text-brand-green">{t.avanco_atual}%</span>
                           </div>
                           <div className="flex justify-between items-center text-[9px] text-t3">
-                            <span className="bg-s3 px-1 rounded text-t2">{t.equipe || 'Sem equipe'}</span>
+                            <span className="bg-s3 px-1 rounded text-t2">
+                              {state.equipes.find(eq => eq.cod === t.equipe)?.nome || t.equipe || 'Sem equipe'}
+                            </span>
                             <span className="text-t4">{t.id_servico}</span>
                           </div>
                           <div className="h-1 w-full bg-s3 rounded-full overflow-hidden mt-1">

@@ -7,6 +7,23 @@
 -- ============================================================================
 
 -- ============================================================================
+-- SECTION 0: SCHEMA ALIGNMENT (RENAME LEGACY COLUMNS)
+-- ============================================================================
+
+DO $$ 
+BEGIN 
+  -- Ajuste na tabela equipes_presenca
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='equipes_presenca' AND column_name='nome_equipe') THEN
+    ALTER TABLE equipes_presenca RENAME COLUMN nome_equipe TO equipe_cod;
+  END IF;
+  
+  -- Garantir que a coluna equipe em servicos existe e é texto
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='servicos' AND column_name='equipe') THEN
+    ALTER TABLE servicos ADD COLUMN equipe VARCHAR(100);
+  END IF;
+END $$;
+
+-- ============================================================================
 -- SECTION 1: ENABLE RLS ON ALL TABLES
 -- ============================================================================
 
@@ -22,6 +39,11 @@ ALTER TABLE fotos ENABLE ROW LEVEL SECURITY;
 -- ============================================================================
 -- SECTION 2: ADD MISSING CHECK CONSTRAINTS
 -- ============================================================================
+
+-- IMPORTANTE: Normalizar dados legados antes de aplicar a trava (evita erro 23514)
+UPDATE servicos 
+SET status_atual = 'nao_iniciado' 
+WHERE status_atual NOT IN ('nao_iniciado', 'em_andamento', 'concluido');
 
 -- Constraint: Avanço sempre entre 0 e 100%
 ALTER TABLE servicos ADD CONSTRAINT check_avanco 

@@ -30,7 +30,13 @@ const defaultState: AppState = {
     { cod: 'EQ-LIM-01', nome: '[Limpeza]' },
     { cod: 'EQ-LOG-01', nome: 'Roberto' }
   ],
-  currentDay: new Date().toISOString().split('T')[0],
+  relatorios: {},
+  currentDay: '2026-03-09',
+  globalFilter: {
+    referenceDate: '2026-03-09',
+    periodDays: 7,
+    viewMode: 'layers'
+  },
   pendingChanges: []
 };
 
@@ -55,7 +61,7 @@ export const AppProvider: React.FC<{children: React.ReactNode}> = ({ children })
 
   const [state, setState] = useState<AppState>(() => {
     try {
-      const s = localStorage.getItem('badida_state');
+      const s = localStorage.getItem('badida_state_v3');
       if (s) {
         const parsed = JSON.parse(s);
         return {
@@ -68,7 +74,9 @@ export const AppProvider: React.FC<{children: React.ReactNode}> = ({ children })
           narrativas: parsed.narrativas || defaultState.narrativas,
           notas: parsed.notas || defaultState.notas,
           fotos: parsed.fotos || defaultState.fotos,
+          relatorios: parsed.relatorios || defaultState.relatorios,
           equipes: parsed.equipes?.map((e: any) => typeof e === 'string' ? { cod: e, nome: e } : e) || defaultState.equipes,
+          globalFilter: parsed.globalFilter || defaultState.globalFilter,
           pendingChanges: parsed.pendingChanges || defaultState.pendingChanges,
         };
       }
@@ -80,7 +88,7 @@ export const AppProvider: React.FC<{children: React.ReactNode}> = ({ children })
 
   const [config, setConfig] = useState<Config>(() => {
     try {
-      const c = localStorage.getItem('badida_cfg');
+      const c = localStorage.getItem('badida_cfg_v2');
       if (c) {
         const parsed = JSON.parse(c);
         return {
@@ -97,11 +105,11 @@ export const AppProvider: React.FC<{children: React.ReactNode}> = ({ children })
   });
 
   useEffect(() => {
-    localStorage.setItem('badida_state', JSON.stringify(state));
+    localStorage.setItem('badida_state_v3', JSON.stringify(state));
   }, [state]);
 
   useEffect(() => {
-    localStorage.setItem('badida_cfg', JSON.stringify(config));
+    localStorage.setItem('badida_cfg_v2', JSON.stringify(config));
   }, [config]);
 
   const markPending = (table: string, data: any) => {
@@ -112,8 +120,26 @@ export const AppProvider: React.FC<{children: React.ReactNode}> = ({ children })
   };
 
   const resetState = () => {
-    setState(defaultState);
-    localStorage.removeItem('badida_state');
+    const emptyState: AppState = {
+      servicos: [],
+      pendencias: [],
+      presenca: {},
+      diario: {},
+      narrativas: {},
+      notas: [],
+      fotos: [],
+      equipes: defaultState.equipes,
+      relatorios: {},
+      currentDay: new Date().toISOString().split('T')[0],
+      globalFilter: {
+        referenceDate: new Date().toISOString().split('T')[0],
+        periodDays: 7,
+        viewMode: 'layers'
+      },
+      pendingChanges: []
+    };
+    setState(emptyState);
+    localStorage.removeItem('badida_state_v3');
   };
 
   return (

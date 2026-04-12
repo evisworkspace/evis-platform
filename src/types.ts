@@ -12,6 +12,8 @@ export type Servico = {
   quantidade?: number;
   valor_unitario?: number;
   valor_total?: number;
+  custo_mao_obra?: number;
+  custo_material?: number;
   obra_id?: string;
 };
 
@@ -82,12 +84,31 @@ export type DiarioEntry = {
   ts?: number;
 };
 
+export type RelatorioSemanal = {
+  id: string; // Ex: "2026-W11"
+  semana_str: string; // "Semana 11"
+  periodo: { inicio: string; fim: string };
+  resumo_executivo: string;
+  narrativa_tecnica: string;
+  kpis: {
+    avanco_fisico: number;
+    avanco_ponderado: number;
+  };
+  cronograma: Servico[]; 
+  presenca: Record<string, string[]>;
+  fotos: Foto[];
+  notas_criticas: Nota[];
+  pendencias_criticas: Pendencia[];
+  data_fechamento: string;
+};
+
 export type PendingChangeData = 
   | Servico 
   | Pendencia 
   | Equipe 
   | Nota 
   | Foto 
+  | RelatorioSemanal
   | { id: string, [key: string]: unknown };
 
 export type PendingChange = {
@@ -105,7 +126,13 @@ export type AppState = {
   notas: Nota[];
   fotos: Foto[];
   equipes: Equipe[];
+  relatorios: Record<string, RelatorioSemanal>; // dict de semana (ex: '2026-W11') -> RelatorioSemanal congelado
   currentDay: string;
+  globalFilter: {
+    referenceDate: string;
+    periodDays: number;
+    viewMode: string;
+  };
   pendingChanges: PendingChange[];
 };
 

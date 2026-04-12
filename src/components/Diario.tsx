@@ -128,31 +128,31 @@ RELATO DO DIA:
 "${txt}"
 
 INSTRUÇÕES IMPORTANTES:
-1. Se o relato mencionar uma equipe pelo nome (ex: "EQ-OBR-01", "Valdeci", "Pro Ar"), inclua o código correto em equipes_presentes.
-2. A narrativa deve começar com a data "${currentDay} —" e mencionar os avanços, equipes presentes e próximos passos.
-3. CRÍTICO: SEMPRE retorne data_inicio e data_fim (formato YYYY-MM-DD) para cada serviço atualizado. NUNCA retorne NULL. Use estas regras de inferência temporal:
-   - Se status="nao_iniciado": data_inicio = hoje, data_fim = hoje + 30 dias
-   - Se status="em_andamento": data_inicio = hoje - 1 dia (se não explícita no relato), data_fim = hoje + 30 dias
-   - Se status="concluido": data_inicio = hoje - 1 dia (se não explícita), data_fim = hoje (data do relato)
-   IMPORTANTE: Sempre forneça datas EXPLÍCITAS em formato YYYY-MM-DD. Nunca use null, undefined ou string vazia.
-4. Os status válidos são: nao_iniciado, em_andamento, concluido.
-5. Retorne APENAS um JSON válido, sem markdown, nenhum texto fora do JSON.
+1. CONTEXTO TEMPORAL: Para todos os cálculos de datas e registro de presença, hoje é ${currentDay}.
+2. PRESENÇA: Se o relato mencionar uma equipe realizando atividade ou estiver no local (ex: "Valdeci iniciou...", "Pro Ar medindo..."), inclua o código correto dessa equipe em equipes_presentes para a data ${currentDay}.
+3. NARRATIVA: Comece obrigatoriamente com "${currentDay} —" e descreva de forma técnica os avanços, equipes presentes e próximos passos.
+4. DATAS DOS SERVIÇOS: Retorne data_inicio e data_fim (formato YYYY-MM-DD) OU null. Use estas regras:
+   - Se status="concluido": data_fim = hoje (obrigatório), data_inicio pode ser null.
+   - Se status="em_andamento" ou "nao_iniciado": pode retornar null (será ajustado conforme obra avança).
+   *Pode usar null para datas não definidas ainda.*
+5. NOTAS E OBSERVAÇÕES: Extraia do relato e classifique OBRIGATORIAMENTE o campo "tipo" de cada item de "notas_adicionar" usando EXATAMENTE um destes 4 valores:
+    - "observacao" (Para registros factuais ou avisos do dia)
+    - "decisao" (Para decisões taken that day)
+    - "alerta" (Para avisos importantes ou warnings)
+    - "lembrete" (Para lembretes ou follow-ups)
+6. Retorne APENAS um JSON válido.
 
 {
-  "resumo": "Resumo técnico do dia em 2-3 frases para o histórico",
-  "narrativa": "Narrativa detalhada e técnica para o relatório. DEVE começar com a data ${currentDay}.",
-  "equipes_presentes": ["COD-EQUIPE-01"],
+  "resumo": "...",
+  "narrativa": "${currentDay} — ...",
+  "equipes_presentes": ["EQ-OBR-01"],
   "servicos_atualizar": [
-    {"id_servico": "SRV-XXX", "avanco_novo": 85, "status_novo": "em_andamento", "data_inicio": null, "data_fim": null}
+    {"id_servico": "SRV-XXX", "avanco_novo": 85, "status_novo": "em_andamento", "data_inicio": "${currentDay}", "data_fim": "${currentDay}"}
   ],
-  "pendencias_novas": [
-    {"descricao": "...", "prioridade": "alta|media|baixa"}
-  ],
-  "pendencias_resolver": [
-    {"id": "id_da_pendencia_existente"}
-  ],
+  "pendencias_novas": [],
+  "pendencias_resolver": [],
   "notas_adicionar": [
-    {"tipo": "observacao|decisao|alerta|lembrete", "texto": "..."}
+     {"texto": "Chegaram 10 sacos de cimento", "tipo": "material"}
   ]
 }`;
 
@@ -175,18 +175,22 @@ INSTRUÇÕES IMPORTANTES:
     }
   };
 
-   // Função helper para garantir datas completas em serviços
+   // Função helper para garante datas - usa 1900-01-01 como placeholder se não definido
    const ensureDates = (update: any, servico: any): any => {
      const today = new Date().toISOString().split('T')[0];
-     const in30Days = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
+     const placeholder = '1900-01-01'; // Indica "não definido"
      
      // Se status é "concluido", força data_fim para hoje
      const isConcluido = update.status_novo === 'concluido';
      
+     // Mantém valor existente, ou placeholder se não houver
+     const hasStart = update.data_inicio || servico.data_inicio;
+     const hasEnd = update.data_fim || servico.data_fim;
+     
      return {
        ...update,
-       data_inicio: update.data_inicio || servico.data_inicio || today,
-       data_fim: isConcluido ? today : (update.data_fim || servico.data_fim || in30Days)
+       data_inicio: isConcluido ? (hasStart || today) : (hasStart || placeholder),
+       data_fim: isConcluido ? today : (hasEnd || placeholder)
      };
    };
 
@@ -232,17 +236,23 @@ INSTRUÇÕES IMPORTANTES:
       }
     });
 
-    const newNotas = [...state.notas];
-    if (ia.resumo) {
-      const resumoNota: Nota = { id: crypto.randomUUID(), tipo: 'observacao' as const, texto: `Resumo do dia: ${ia.resumo}`, data_nota: new Date().toISOString() };
-      newNotas.unshift(resumoNota);
-      markPending('notas', resumoNota);
-    }
-    (ia.notas_adicionar || []).forEach(n => {
-      const nota: Nota = { id: crypto.randomUUID(), tipo: n.tipo as any, texto: n.texto, data_nota: new Date().toISOString() };
-      newNotas.unshift(nota);
-      markPending('notas', nota);
-    });
+const validTipos = ['observacao', 'decisao', 'alerta', 'lembrete'];
+     const normalizeTipo = (t: string): Nota['tipo'] => {
+       const lower = (t || '').toLowerCase().trim();
+       return validTipos.includes(lower) ? lower as Nota['tipo'] : 'observacao';
+     };
+
+     const newNotas = [...state.notas];
+     if (ia.resumo) {
+       const resumoNota: Nota = { id: crypto.randomUUID(), tipo: 'observacao' as const, texto: `Resumo do dia: ${ia.resumo}`, data_nota: new Date().toISOString() };
+       newNotas.unshift(resumoNota);
+       markPending('notas', resumoNota);
+     }
+     (ia.notas_adicionar || []).forEach(n => {
+       const nota: Nota = { id: crypto.randomUUID(), tipo: normalizeTipo(n.tipo), texto: n.texto, data_nota: new Date().toISOString() };
+       newNotas.unshift(nota);
+       markPending('notas', nota);
+     });
 
     const currentPresenca = [...(state.presenca[currentDay] || [])];
     (ia.equipes_presentes || []).forEach((eqCod: string) => {
@@ -343,10 +353,10 @@ INSTRUÇÕES IMPORTANTES:
       <div className="flex items-center justify-between mb-2.5">
         <div className="font-mono text-[10px] text-t3 uppercase tracking-[0.12em]">Semana</div>
         <div className="flex gap-1">
-          <button onClick={() => changeWeek(-1)} className="p-1 rounded bg-s2 border border-b1 text-t3 hover:text-t1 hover:border-b2 transition-colors">
+          <button onClick={() => changeWeek(-1)} aria-label="Semana anterior" className="p-1 rounded bg-s2 border border-b1 text-t3 hover:text-t1 hover:border-b2 transition-colors">
             <ChevronLeft className="w-3.5 h-3.5" />
           </button>
-          <button onClick={() => changeWeek(1)} className="p-1 rounded bg-s2 border border-b1 text-t3 hover:text-t1 hover:border-b2 transition-colors">
+          <button onClick={() => changeWeek(1)} aria-label="Próxima semana" className="p-1 rounded bg-s2 border border-b1 text-t3 hover:text-t1 hover:border-b2 transition-colors">
             <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -401,6 +411,7 @@ INSTRUÇÕES IMPORTANTES:
         <div className="flex flex-col items-center gap-2.5 mb-5">
           <div 
             onClick={toggleRec}
+            aria-label={isRecording ? 'Parar gravação' : 'Iniciar gravação'}
             className={`w-[68px] h-[68px] rounded-full flex items-center justify-center cursor-pointer transition-all ${
               isRecording 
                 ? 'bg-brand-red/10 border-brand-red animate-pulse shadow-[0_0_0_0_rgba(248,113,113,0.25)]' 

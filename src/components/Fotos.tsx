@@ -1,23 +1,16 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import { useAppContext } from '../AppContext';
-import { UploadCloud, Loader2 } from 'lucide-react';
+import { UploadCloud, Loader2, Trash2 } from 'lucide-react';
 import { logger } from '../services/logger';
 import { Foto } from '../types';
+import { getRelativeWeekString, getDaysOfRelativeWeek } from '../lib/dateUtils';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 export default function Fotos() {
   const { state, setState, config, markPending, toast } = useAppContext();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
-
-  // Helper to get week string (e.g., "2026-W15")
-  const getWeekString = (dateStr: string) => {
-    const d = new Date(dateStr);
-    d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
-    const week1 = new Date(d.getFullYear(), 0, 4);
-    const weekNum = 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-    return `${d.getFullYear()}-W${weekNum.toString().padStart(2, '0')}`;
-  };
 
   const onFotos = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
@@ -46,7 +39,7 @@ export default function Fotos() {
             url: data.data.url,
             thumb: data.data.thumb.url,
             data_foto: state.currentDay,
-            semana: getWeekString(state.currentDay),
+            semana: getRelativeWeekString(state.currentDay, state),
             legenda: f.name.replace(/\.[^.]+$/, '')
           };
           
@@ -59,63 +52,103 @@ export default function Fotos() {
          logger.error('Upload failed:', err);
        }
     }
-    
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // Group photos by week
-  const groupedFotos = state.fotos.reduce((acc, foto) => {
-    const w = foto.semana || getWeekString(foto.data_foto);
-    if (!acc[w]) acc[w] = [];
-    acc[w].push(foto);
-    return acc;
-  }, {} as Record<string, Foto[]>);
+  const deletePhoto = (id: string) => {
+      setState(p => ({...p, fotos: p.fotos.filter(f => f.id !== id)}));
+  };
 
-  const weeks = Object.keys(groupedFotos).sort().reverse();
+  // Group photos by relative week
+  const photosByWeek = useMemo(() => {
+      const grouped: Record<string, Foto[]> = {};
+      state.fotos.forEach(f => {
+          let w = f.semana;
+          // Legacy check if photo was saved using ISO Format (2026-W11) recalculate.
+           if (w && w.includes('-W')) {
+              w = getRelativeWeekString(f.data_foto, state);
+          } else if (!w) {
+              w = getRelativeWeekString(f.data_foto, state);
+          }
+          if (!grouped[w]) grouped[w] = [];
+          grouped[w].push(f);
+      });
+      return grouped;
+  }, [state.fotos, state.servicos, state.diario]);
+
+  // Sort weeks S1, S2, S3...
+  const sortedWeeks = Object.keys(photosByWeek).sort((a,b) => {
+      const numA = parseInt(a.replace('S',''), 10);
+      const numB = parseInt(b.replace('S',''), 10);
+      return numB - numA; // Largest first (most recent)
+  });
 
   return (
-    <div>
-      <div className="flex items-start justify-between mb-6 gap-3">
+    <div className="max-w-4xl mx-auto h-full flex flex-col pt-4">
+      <div className="flex items-start justify-between mb-8 pb-4 border-b border-b1">
         <div>
-          <h2 className="text-[20px] font-bold text-t1">Registro Fotográfico</h2>
+          <h2 className="text-[20px] font-bold text-t1 uppercase tracking-tight">Registro Fotográfico</h2>
+          <p className="font-mono text-[11px] text-t3 uppercase mt-1">
+            Galeria Imutável • Organizada por Semanas Virtuais da Obra
+          </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-4">
+          <input type="file" ref={fileInputRef} onChange={onFotos} multiple accept="image/*" className="hidden" />
           <button 
-            onClick={() => fileInputRef.current?.click()} 
+            onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="px-2.5 py-1.5 rounded-md text-[11px] font-bold tracking-[0.05em] text-t2 border border-b2 hover:border-b3 hover:text-t1 transition-colors disabled:opacity-50 flex items-center gap-2"
+            className="flex items-center gap-2 px-4 py-2 bg-brand-green text-[#0a0d0a] text-[11px] font-black uppercase tracking-widest rounded-lg hover:bg-brand-green2 transition-colors disabled:opacity-50"
           >
-            {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '+ Adicionar fotos'}
+            {uploading ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
+            {uploading ? 'ENVIANDO...' : 'CARREGAR FOTOS'}
           </button>
         </div>
       </div>
-      
-      <input type="file" ref={fileInputRef} accept="image/*" multiple className="hidden" onChange={onFotos} />
-      
-      {weeks.length === 0 && !uploading && (
-        <div onClick={() => fileInputRef.current?.click()} className="border border-dashed border-b2 rounded-lg py-12 px-5 flex flex-col items-center gap-2.5 cursor-pointer text-t3 transition-colors hover:border-brand-green hover:text-brand-green font-mono text-[11px] tracking-[0.06em] text-center">
-          <UploadCloud className="w-8 h-8" strokeWidth={1.2} />
-          Clique ou arraste fotos aqui
-        </div>
-      )}
 
-      {weeks.map(week => (
-        <div key={week} className="mb-8">
-          <h3 className="font-mono text-[12px] text-t2 uppercase tracking-[0.1em] mb-3 pb-2 border-b border-b1">Semana {week.split('-W')[1]} ({week.split('-W')[0]})</h3>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-2.5">
-            {groupedFotos[week].map(f => (
-              <div key={f.id} className="bg-s1 border border-b1 rounded-lg overflow-hidden cursor-pointer transition-all hover:border-b2 hover:-translate-y-px">
-                <img src={f.thumb || f.url} alt={f.legenda} className="w-full h-[130px] object-cover bg-s3 block" />
-                <div className="p-2.5">
-                  <div className="text-[12px] text-t2 whitespace-nowrap overflow-hidden text-ellipsis">{f.legenda}</div>
-                  <div className="font-mono text-[10px] text-t3 mt-1">{f.data_foto}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
+      <div className="flex-1 overflow-y-auto no-scrollbar space-y-12 pb-20">
+         {sortedWeeks.map(w => {
+            const days = getDaysOfRelativeWeek(w, state);
+            if (days.length === 0) return null;
+            const dtFrom = new Date(days[0]).toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'});
+            const dtTo = new Date(days[days.length - 1]).toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'});
+
+            return (
+               <div key={w} className="flex flex-col gap-4">
+                   <div className="bg-s1 border-l-4 border-brand-green p-4 px-6 relative rounded-r-md">
+                      <div className="text-[16px] font-black uppercase tracking-tighter text-t1">Semana {w.replace('S','')}</div>
+                      <div className="text-[10px] font-mono text-t3 uppercase tracking-widest mt-1">Período Contábil: {dtFrom} a {dtTo}</div>
+                   </div>
+
+                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
+                       {photosByWeek[w].map(f => (
+                           <div key={f.id} className="group relative bg-s1 border border-b1 rounded-lg overflow-hidden shadow-lg hover:border-brand-green transition-colors aspect-square flex flex-col">
+                               <img src={f.thumb || f.url} alt={f.legenda} className="w-full h-full object-cover filter contrast-[1.05]" />
+                               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4 flex flex-col justify-end pointer-events-none">
+                                   <p className="text-[12px] font-bold text-white uppercase tracking-tighter truncate">{f.legenda}</p>
+                                   <p className="text-[9px] font-mono text-gray-300 tracking-widest uppercase mt-1">
+                                       {format(new Date(f.data_foto), "dd/MM 'às' HH:mm", {locale: ptBR})}
+                                   </p>
+                               </div>
+                               <button 
+                                 onClick={() => deletePhoto(f.id)}
+                                 className="absolute top-2 right-2 p-2 bg-black/50 text-white rounded opacity-0 group-hover:opacity-100 transition-all hover:bg-brand-red"
+                               >
+                                  <Trash2 size={14} />
+                               </button>
+                           </div>
+                       ))}
+                   </div>
+               </div>
+            );
+         })}
+
+         {sortedWeeks.length === 0 && (
+             <div className="text-center py-20 bg-s1 border border-b1 border-dashed rounded-lg">
+                 <p className="text-[12px] font-mono text-t4 uppercase tracking-widest leading-relaxed">A galeria da obra ainda não possui registros fotográficos vinculados aos diários.</p>
+             </div>
+         )}
+      </div>
     </div>
   );
 }

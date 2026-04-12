@@ -46,79 +46,120 @@ export default function ConfigPage() {
 
   const [jsonText, setJsonText] = React.useState('');
 
-  const handleImportJSON = () => {
+  const handleImportJSON = async () => {
+    if (!config.url || !config.key) {
+      toast('Configure Supabase primeiro.', 'error');
+      return;
+    }
+
     try {
-      const data = JSON.parse(jsonText) as any;
+      const data = JSON.parse(jsonText);
+      toast('Iniciando importação direta para o Supabase...', 'info');
       
-      const newServicos = (data.servicos || []).map((s: any) => ({
-        id: crypto.randomUUID(),
+      const headers = {
+        'apikey': config.key,
+        'Authorization': `Bearer ${config.key}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      };
+
+      // 1. IMPORTAR SERVIÇOS
+      const services = (data.servicos || []).map((s: any) => ({
+        obra_id: config.obraId,
         id_servico: s.id_servico || s.cod || s.codigo,
         nome: s.nome || s.descricao,
         categoria: s.categoria || s.setor || '',
         avanco_atual: s.avanco_atual || s.pct_atual || 0,
-        status_atual: (s.status_atual || 'a_executar').toLowerCase().replace(' ', '_'),
+        status_atual: (s.status_atual || 'nao_iniciado').toLowerCase().replace(' ', '_'),
         data_inicio: s.data_inicio || null,
         data_fim: s.data_fim || null,
         equipe: s.equipe || s.equipe_cod || null,
       }));
 
-      const newPendencias = (data.pendencias || []).map((p: any) => ({
-        id: crypto.randomUUID(),
-        descricao: p.descricao,
-        prioridade: p.prioridade || 'media',
-        status: p.status || 'ABERTA',
+      if (services.length > 0) {
+        toast(`Enviando ${services.length} serviços...`, 'info');
+        const res = await fetch(`${config.url}/rest/v1/servicos`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(services)
+        });
+        if (!res.ok) throw new Error('Falha ao enviar serviços: ' + res.statusText);
+      }
+
+      // 2. IMPORTAR EQUIPES
+      const teams = (data.equipes || data.fornecedores || []).map((f: any) => ({
+        obra_id: config.obraId,
+        cod: f.cod || f.equipe_cod,
+        nome: f.nome
       }));
 
-      const newNotas = (data.notas || []).map((n: any) => ({
-        id: crypto.randomUUID(),
+      if (teams.length > 0) {
+        await fetch(`${config.url}/rest/v1/equipes_cadastro`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(teams)
+        });
+      }
+
+      // 3. IMPORTAR NOTAS (Anotações/Observações)
+      const notes = (data.notas || []).map((n: any) => ({
+        obra_id: config.obraId,
         tipo: n.tipo || 'observacao',
         texto: n.texto,
         data_nota: n.data_nota || n.data || new Date().toISOString()
       }));
 
-      const newFotos = (data.fotos || []).map((f: any) => ({
-        id: crypto.randomUUID(),
-        url: f.url || f.src,
-        legenda: f.legenda || '',
-        data_foto: f.data_foto || f.data || new Date().toISOString()
-      }));
-
-      const newEquipes = (data.equipes || data.fornecedores || []).map((f: any) => ({
-        cod: f.cod || f.equipe_cod,
-        nome: f.nome
-      }));
-
-      const newNarrativas: Record<string, string> = { ...state.narrativas };
-      if (data.narrativa_visita) {
-        const day = new Date().toISOString().split('T')[0];
-        newNarrativas[day] = data.narrativa_visita;
+      if (notes.length > 0) {
+        toast(`Enviando ${notes.length} notas/anotações...`, 'info');
+        await fetch(`${config.url}/rest/v1/notas`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(notes)
+        });
       }
 
-      setState(prev => ({
-        ...prev,
-        servicos: newServicos,
-        pendencias: newPendencias,
-        notas: newNotas,
-        fotos: newFotos,
-        equipes: newEquipes.length > 0 ? newEquipes : prev.equipes,
-        narrativas: newNarrativas
+      // 4. IMPORTAR DIÁRIO (Narrativas)
+      if (data.narrativa_visita) {
+        await fetch(`${config.url}/rest/v1/diario_obra`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            obra_id: config.obraId,
+            narrativa: data.narrativa_visita,
+            transcricao: 'Importação inicial JSON',
+            created_at: new Date().toISOString()
+          })
+        });
+      }
+
+      // 5. IMPORTAR PENDÊNCIAS
+      const pendings = (data.pendencias || []).map((p: any) => ({
+        obra_id: config.obraId,
+        descricao: p.descricao,
+        prioridade: p.prioridade || 'media',
+        status: p.status || 'ABERTA'
       }));
 
-      newServicos.forEach((s: any) => markPending('servicos', s));
-      newPendencias.forEach((p: any) => markPending('pendencias', p));
-      newNotas.forEach((n: any) => markPending('notas', n));
+      if (pendings.length > 0) {
+        await fetch(`${config.url}/rest/v1/pendencias`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(pendings)
+        });
+      }
 
-      toast(`Projeto inicializado: ${newServicos.length} serviços, ${newPendencias.length} pendências, ${newNotas.length} notas, ${newFotos.length} fotos.`, 'success');
+      toast('IMPORTAÇÃO CONCLUÍDA: Dados salvos diretamente no Supabase.', 'success');
       setJsonText('');
+      
+      // Auto-refresh do estado local para refletir o que foi enviado
+      window.location.reload(); 
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      toast('Erro ao importar JSON: ' + msg, 'error');
+      toast('Erro na Importação Direta: ' + msg, 'error');
     }
   };
 
   const handleReset = () => {
-    // Note: window.confirm is blocked in iframe, so we just reset directly or use a custom modal.
-    // For now, we'll just reset directly to avoid blocking.
     resetState();
     toast('Dados locais apagados com sucesso. A tela está limpa.', 'success');
   };
@@ -250,6 +291,7 @@ export default function ConfigPage() {
           Processar e Inicializar
         </button>
       </div>
+
 
       <div className="flex items-center gap-2.5 mt-3 justify-between">
         <div className="flex items-center gap-2.5">

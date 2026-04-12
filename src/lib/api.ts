@@ -17,8 +17,19 @@ export async function sbFetch(path: string, opts: SbFetchOptions = {}, cfg: Conf
     }
   });
   if (!res.ok) {
-    const t = await res.text();
-    throw new Error(t);
+    let errorMessage = `Erro na requisição (${res.status})`;
+    try {
+      const errorData = await res.json();
+      // Mapeamento PostgREST / Supabase
+      if (errorData.code === 'PGRST301') {
+        errorMessage = 'Erro de Permissão (RLS): Você não tem autorização para realizar esta operação nesta tabela.';
+      } else {
+        errorMessage = errorData.message || errorData.hint || JSON.stringify(errorData);
+      }
+    } catch {
+      errorMessage = await res.text() || res.statusText;
+    }
+    throw new Error(errorMessage);
   }
   if (opts.method === 'PATCH' && opts.prefer === 'return=minimal') return null;
   return res.json().catch(() => null);
