@@ -4,9 +4,10 @@ export type Servico = {
   nome: string;
   categoria: string;
   avanco_atual: number;
-  status_atual: string;
-  data_inicio?: string;
-  data_fim?: string;
+  status: string; 
+  data_prevista?: string; 
+  data_conclusao?: string; 
+  responsavel?: string;
   equipe?: string;
   unidade?: string;
   quantidade?: number;
@@ -29,7 +30,7 @@ export type Equipe = {
   id?: string;
   cod: string;
   nome: string;
-  especialidade?: string;
+  funcao?: string;
   telefone?: string;
   email?: string;
   pix?: string;
@@ -42,6 +43,7 @@ export type Nota = {
   tipo: 'observacao' | 'decisao' | 'alerta' | 'lembrete';
   texto: string;
   data_nota: string;
+  autor?: string;
 };
 
 export type Foto = {
@@ -61,8 +63,8 @@ export type IAResult = {
     id_servico: string;
     avanco_novo: number;
     status_novo: 'nao_iniciado' | 'em_andamento' | 'concluido';
-    data_inicio?: string | null;
-    data_fim?: string | null;
+    data_prevista?: string | null;
+    data_conclusao?: string | null;
   }[];
   pendencias_novas: {
     descricao: string;
@@ -143,4 +145,8 @@ export type Config = {
   gemini: string;
   model: string;
   imgbbKey: string;
+  ollama: string;
+  minimax: string;
+  mcpServer: string;
 };
+

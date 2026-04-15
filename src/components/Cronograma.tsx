@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Search, ChevronDown, ChevronRight as Chevron
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Servico } from '../types';
+import { toDateStr, gerarIntervalo } from '../lib/dateUtils';
 
 const Badge = ({ children, className }: { children: React.ReactNode, className?: string }) => (
   <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${className}`}>
@@ -19,7 +20,10 @@ export default function Cronograma() {
   const [search, setSearch] = useState('');
   const [hideCompleted, setHideCompleted] = useState(false);
   const [selectedEquipe, setSelectedEquipe] = useState('');
-  const [expandedCats, setExpandedCats] = useState<string[]>([]); // Inicia vazio para "Visão Macro"
+  // Expande todas as categorias presentes ao montar — o usuário pode colapsar manualmente
+  const [expandedCats, setExpandedCats] = useState<string[]>(() =>
+    [...new Set(state.servicos.map(s => s.categoria || 'Sem Categoria'))]
+  );
   const [groupBy, setGroupBy] = useState<'categoria' | 'equipe' | 'cronologico'>('categoria');
   const [isCompact, setIsCompact] = useState(true); // Modo Macro por padrão
   
@@ -38,22 +42,12 @@ export default function Cronograma() {
   const [windowSize, setWindowSize] = useState(60); // Janela de exibição
   const colWidth = 28; // Largura de cada coluna de dia
   
-  // Helper: converte uma data (string YYYY-MM-DD ou Date) em string YYYY-MM-DD sem desvio de timezone
-  const toDateStr = (d: Date) => {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${dd}`;
-  };
+
 
   const dates = useMemo(() => {
-    const arr = [];
-    for (let i = 0; i < windowSize; i++) {
-      const d = new Date(startDate);
-      d.setDate(startDate.getDate() + i);
-      arr.push(d);
-    }
-    return arr;
+    const end = new Date(startDate);
+    end.setDate(startDate.getDate() + windowSize - 1);
+    return gerarIntervalo(startDate, end);
   }, [startDate, windowSize]);
 
   // Pre-compute date strings for performance
@@ -65,13 +59,13 @@ export default function Cronograma() {
     let first = true;
 
     state.servicos.forEach(s => {
-      if (s.data_inicio) {
-        const d = new Date(s.data_inicio + 'T00:00:00');
+      if (s.data_prevista) {
+        const d = new Date(s.data_prevista + 'T00:00:00');
         if (first || d < min) min = d;
         first = false;
       }
-      if (s.data_fim) {
-        const d = new Date(s.data_fim + 'T00:00:00');
+      if (s.data_conclusao) {
+        const d = new Date(s.data_conclusao + 'T00:00:00');
         if (first || d > max) max = d;
         first = false;
       }
@@ -128,9 +122,9 @@ export default function Cronograma() {
     dates.forEach((_, i) => {
       const dStr = dateStrings[i];
       map[dStr] = state.servicos.filter(s => {
-        if (!s.data_inicio || !s.data_fim) return false;
-        const start = s.data_inicio.split('T')[0];
-        const end = s.data_fim.split('T')[0];
+        if (!s.data_prevista || !s.data_conclusao) return false;
+        const start = s.data_prevista.split('T')[0];
+        const end = s.data_conclusao.split('T')[0];
         return dStr >= start && dStr <= end;
       });
     });
@@ -138,6 +132,15 @@ export default function Cronograma() {
   }, [dates, dateStrings, state.servicos]);
 
   const todayStr = toDateStr(new Date());
+
+  // Quando Supabase trouxer categorias novas (que não estavam no cache local), expande-as também
+  React.useEffect(() => {
+    const all = [...new Set(state.servicos.map(s => s.categoria || 'Sem Categoria'))];
+    setExpandedCats(prev => {
+      const missing = all.filter(c => !prev.includes(c));
+      return missing.length ? [...prev, ...missing] : prev;
+    });
+  }, [state.servicos.length]);
 
   const getStatusColor = (status?: string) => {
     switch(status) {
@@ -177,13 +180,14 @@ export default function Cronograma() {
           <div className="h-4 w-[1px] bg-b2 mx-1" />
 
           {/* Seletor de Densidade */}
-          <select 
+          <select
+            value={String(windowSize)}
             onChange={(e) => handleWindowChange(e.target.value)}
             className="bg-s1 border border-b2 rounded-lg px-2 py-1 text-[10px] font-bold text-t3 outline-none cursor-pointer hover:border-b3"
           >
             <option value="7">Semana</option>
             <option value="30">Mês</option>
-            <option value="60" selected>60 dias</option>
+            <option value="60">60 dias</option>
             <option value="90">90 dias</option>
             <option value="total">Total</option>
           </select>
@@ -367,9 +371,9 @@ export default function Cronograma() {
                         let startIdx = -1;
                         let endIdx = -1;
                         
-                        if (s.data_inicio && s.data_fim) {
-                          const startStr = s.data_inicio.split('T')[0];
-                          const endStr = s.data_fim.split('T')[0];
+                        if (s.data_prevista && s.data_conclusao) {
+                          const startStr = s.data_prevista.split('T')[0];
+                          const endStr = s.data_conclusao.split('T')[0];
                           
                           startIdx = dateStrings.findIndex(d => d === startStr);
                           endIdx = dateStrings.findIndex(d => d === endStr);
@@ -380,7 +384,7 @@ export default function Cronograma() {
                         }
 
                         const isPending = state.pendingChanges.some(ch => {
-                          const d = ch.data as any;
+                          const d = ch.data as Record<string, any>;
                           return ch.table === 'servicos' && (d.id === s.id || ('id_servico' in d && d.id_servico === s.id_servico));
                         });
 
@@ -422,8 +426,8 @@ export default function Cronograma() {
                                       <div className="text-t4 mb-0.5 font-bold uppercase tracking-tighter">Início</div>
                                       <input 
                                         type="date" 
-                                        value={s.data_inicio ? s.data_inicio.split('T')[0] : ''} 
-                                        onChange={e => handleUpdate(s.id || s.id_servico, 'data_inicio', e.target.value)}
+                                        value={s.data_prevista ? s.data_prevista.split('T')[0] : ''} 
+                                        onChange={e => handleUpdate(s.id || s.id_servico, 'data_prevista', e.target.value)}
                                         className="w-full bg-s1 border border-b2 rounded px-1.5 py-1 text-t2 outline-none focus:border-brand-green"
                                       />
                                     </div>
@@ -431,8 +435,8 @@ export default function Cronograma() {
                                       <div className="text-t4 mb-0.5 font-bold uppercase tracking-tighter">Fim</div>
                                       <input 
                                         type="date" 
-                                        value={s.data_fim ? s.data_fim.split('T')[0] : ''} 
-                                        onChange={e => handleUpdate(s.id || s.id_servico, 'data_fim', e.target.value)}
+                                        value={s.data_conclusao ? s.data_conclusao.split('T')[0] : ''} 
+                                        onChange={e => handleUpdate(s.id || s.id_servico, 'data_conclusao', e.target.value)}
                                         className="w-full bg-s1 border border-b2 rounded px-1.5 py-1 text-t2 outline-none focus:border-brand-green"
                                       />
                                     </div>
@@ -453,23 +457,36 @@ export default function Cronograma() {
                               })}
                               
                               {/* Bar */}
-                              {startIdx >= 0 && endIdx >= startIdx && (() => {
-                                const colors = getStatusColor(s.status_atual);
+                              {startIdx >= 0 && endIdx >= startIdx ? (() => {
+                                const colors = getStatusColor(s.status);
                                 return (
-                                  <div 
+                                  <div
                                     className={`absolute top-1/2 -translate-y-1/2 h-6 ${colors.bg} border ${colors.border} rounded-sm shadow-sm flex items-center px-2 overflow-hidden cursor-pointer ${colors.hover} transition-colors`}
-                                    style={{ 
-                                      left: `${startIdx * colWidth + 4}px`, 
-                                      width: `${(endIdx - startIdx + 1) * colWidth - 8}px` 
+                                    style={{
+                                      left: `${startIdx * colWidth + 4}px`,
+                                      width: `${(endIdx - startIdx + 1) * colWidth - 8}px`
                                     }}
                                   >
-                                    <div 
+                                    <div
                                       className={`absolute left-0 top-0 bottom-0 ${colors.fill}`}
                                       style={{ width: `${s.avanco_atual}%` }}
                                     />
                                     <span className="text-[9px] text-white font-bold relative z-10 truncate drop-shadow-md">
                                       {s.avanco_atual}%
                                     </span>
+                                  </div>
+                                );
+                              })() : (() => {
+                                // Serviço sem datas definidas — mostra indicador na coluna de hoje
+                                const todayIdx = dateStrings.indexOf(todayStr);
+                                if (todayIdx < 0) return null;
+                                return (
+                                  <div
+                                    className="absolute top-1/2 -translate-y-1/2 h-5 border border-dashed border-t4/40 rounded-sm flex items-center px-1.5"
+                                    style={{ left: `${todayIdx * colWidth + 4}px`, width: `${colWidth * 4 - 8}px` }}
+                                    title="Datas não definidas — use a visão expandida para preencher"
+                                  >
+                                    <span className="text-[8px] text-t4 font-mono truncate">sem datas</span>
                                   </div>
                                 );
                               })()}

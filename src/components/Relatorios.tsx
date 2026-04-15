@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../AppContext';
-import { aiCall } from '../lib/api';
+import { aiCall, extractJSON } from '../lib/api';
 import { FileDown, Calendar, AlertTriangle, MessageSquare, Lock, Settings } from 'lucide-react';
 import { RelatorioSemanal, Servico } from '../types';
 import { getRelativeWeekString, getDaysOfRelativeWeek } from '../lib/dateUtils';
@@ -81,9 +81,10 @@ INSTRUÇÕES:
 2. "narrativa_tecnica": Crie um relato detalhado (2 parágrafos) do que evoluiu na semana, sem excesso de termos complexos.
 Responda APENAS com um JSON válido contendo as chaves acima. NÃO use markdown na saída.`;
 
-        let raw = await aiCall(prompt, 0.2, 2000, config);
-        raw = raw.replace(/`+json\n?|`+/g, '').trim();
-        const ia = JSON.parse(raw);
+        let raw = await aiCall(prompt, 0.2, 4000, config, 'claude');
+        
+        const pureJsonText = extractJSON(raw);
+        const ia = JSON.parse(pureJsonText);
 
         const totalSrv = Math.max(state.servicos.length, 1);
         const concluidos = state.servicos.filter(s => s.avanco_atual >= 100).length;
@@ -92,11 +93,11 @@ Responda APENAS com um JSON válido contendo as chaves acima. NÃO use markdown 
         const cronogramaFiltrado = state.servicos.filter(s => {
            if (s.avanco_atual < 100) return true;
            // Concluído, checa se tocou no período
-           if (s.data_fim) {
-               const dtFim = new Date(s.data_fim);
+           if (s.data_conclusao) {
+               const dtFim = new Date(s.data_conclusao);
                // Interseção temporal ou data da semana
                if (semana === 'custom') return dtFim >= startD && dtFim <= refD;
-               return getRelativeWeekString(s.data_fim, state) === semana;
+               return getRelativeWeekString(s.data_conclusao, state) === semana;
            }
            return false;
         });

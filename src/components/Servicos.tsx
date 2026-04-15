@@ -8,7 +8,7 @@ export default function Servicos() {
   const [filter, setFilter] = useState('todos');
   const [filterCat, setFilterCat] = useState('todas');
   const [filterEq, setFilterEq] = useState('todas');
-  const [ordenacao, setOrdenacao] = useState<'importada' | 'nome' | 'categoria' | 'equipe'>('importada');
+  const [ordenacao, setOrdenacao] = useState<'importada' | 'nome' | 'categoria' | 'equipe' | 'id'>('importada');
   const [modalOpen, setModalOpen] = useState(false);
   const [editSrv, setEditSrv] = useState<Servico | null>(null);
   const [editIdx, setEditIdx] = useState(-1);
@@ -25,23 +25,21 @@ export default function Servicos() {
 
   const list = state.servicos
     .filter(s => {
-      if (filter !== 'todos' && s.status_atual !== filter) return false;
+      if (filter !== 'todos' && s.status !== filter) return false;
       if (filterCat !== 'todas' && s.categoria !== filterCat) return false;
       if (filterEq !== 'todas' && s.equipe !== filterEq) return false;
-      if (s.data_inicio && s.data_fim) {
-        const sT = new Date(s.data_inicio);
-        const eT = new Date(s.data_fim);
-        if (eT < startDate || sT > refDate) return false;
-      } else if (s.data_inicio) {
-        const sT = new Date(s.data_inicio);
-        if (sT > refDate) return false;
-      }
+
       return true;
     })
     .sort((a, b) => {
       if (ordenacao === 'nome') return (a.nome || '').localeCompare(b.nome || '');
       if (ordenacao === 'categoria') return (a.categoria || '').localeCompare(b.categoria || '');
       if (ordenacao === 'equipe') return (a.equipe || '').localeCompare(b.equipe || '');
+      if (ordenacao === 'id') {
+        const idA = a.id_servico || '';
+        const idB = b.id_servico || '';
+        return idA.localeCompare(idB, undefined, { numeric: true, sensitivity: 'base' });
+      }
       return 0;
     });
 
@@ -55,7 +53,7 @@ export default function Servicos() {
 
   const isPending = (id_servico: string) => {
     return state.pendingChanges.some(p => {
-      const d = p.data as any;
+      const d = p.data as Record<string, any>;
       return p.table === 'servicos' && d.id_servico === id_servico;
     });
   };
@@ -79,7 +77,7 @@ export default function Servicos() {
       nome: '',
       categoria: '',
       avanco_atual: 0,
-      status_atual: 'nao_iniciado'
+      status: 'nao_iniciado'
     });
     setEditIdx(-1);
     setModalOpen(true);
@@ -150,15 +148,12 @@ export default function Servicos() {
               {equipesUnicas.map(eq => <option key={eq} value={eq}>{state.equipes.find(e => e.cod === eq)?.nome || eq}</option>)}
             </select>
 
-            <select 
-              value={ordenacao}
-              onChange={(e) => setOrdenacao(e.target.value as typeof ordenacao)}
-              className="bg-s1 border border-b1 rounded-md px-3 py-1.5 text-[11px] font-mono uppercase tracking-[0.05em] text-t2 outline-none focus:border-brand-green transition-colors"
-            >
+            <select value={ordenacao} onChange={e => setOrdenacao(e.target.value as any)} className="bg-s1 border border-b1 rounded px-2 py-1 text-[11px] font-mono text-t2 outline-none focus:border-b2">
               <option value="importada">Ordem Importada</option>
-              <option value="nome">Ordem Nome</option>
-              <option value="categoria">Ordem Categoria</option>
-              <option value="equipe">Ordem Equipe</option>
+              <option value="id">Ordem por ID</option>
+              <option value="nome">Ordem Alfabetica</option>
+              <option value="categoria">Por Categoria</option>
+              <option value="equipe">Por Equipe</option>
             </select>
           </div>
       </div>
@@ -189,7 +184,7 @@ export default function Servicos() {
               const realIdx = state.servicos.findIndex(x => x.id_servico === s.id_servico);
               const pct = Math.min(100, Math.max(0, s.avanco_atual || 0));
               const col = pct >= 100 ? 'bg-brand-green' : pct > 0 ? 'bg-brand-blue' : 'bg-s3';
-              const [bc, bl] = stMap[s.status_atual] || ['bg-s3 text-t3', s.status_atual || '—'];
+              const [bc, bl] = stMap[s.status] || ['bg-s3 text-t3', s.status || '—'];
               const pending = isPending(s.id_servico);
               
               return (
@@ -328,7 +323,7 @@ export default function Servicos() {
             </div>
             <div className="mb-3">
               <label className="block font-mono text-[9px] text-t3 uppercase tracking-[0.1em] mb-1.5">Status</label>
-              <select value={editSrv.status_atual} onChange={e => setEditSrv({...editSrv, status_atual: e.target.value})} className="w-full bg-s1 border border-b1 rounded-md text-t1 font-mono text-[12px] px-3 py-2 outline-none transition-colors focus:border-b3">
+              <select value={editSrv.status} onChange={e => setEditSrv({...editSrv, status: e.target.value})} className="w-full bg-s1 border border-b1 rounded-md text-t1 font-mono text-[12px] px-3 py-2 outline-none transition-colors focus:border-b3">
                 <option value="em_andamento" className="bg-s2">Em andamento</option>
                 <option value="concluido" className="bg-s2">Concluído</option>
                 <option value="atencao" className="bg-s2">Atenção</option>

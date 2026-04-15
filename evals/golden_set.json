@@ -1,0 +1,182 @@
+[
+  {
+    "id": "EVAL-001",
+    "transcricao": "Hoje o João e o Carlos tavam lá, fizeram o reboco da fachada, tá em 60%, ainda falta o canto direito",
+    "esperado": {
+      "servicos": [{ "id": "REB-01", "avanco": 60, "status": "em_andamento" }],
+      "equipes": ["PED-01", "PINT-01"],
+      "notas": []
+    }
+  },
+  {
+    "id": "EVAL-002",
+    "transcricao": "Faltou argamassa pra terminar a sala, a entrega atrasou",
+    "esperado": {
+      "servicos": [],
+      "equipes": [],
+      "notas": [{ "tipo": "Material", "descricao": "Falta de argamassa (atraso na entrega)", "gravidade": "alta" }]
+    }
+  },
+  {
+    "id": "EVAL-003",
+    "transcricao": "Pintura concluída 100% no segundo andar",
+    "esperado": {
+      "servicos": [{ "id": "PIN-02", "avanco": 100, "status": "concluido" }],
+      "equipes": [],
+      "notas": []
+    }
+  },
+  {
+    "id": "EVAL-004",
+    "transcricao": "Equipe de elétrica não veio hoje por causa da chuva forte pela manhã",
+    "esperado": {
+      "servicos": [],
+      "equipes": [],
+      "notas": [{ "tipo": "Clima", "descricao": "Chuvas fortes impediram equipe de elétrica", "gravidade": "media" }]
+    }
+  },
+  {
+    "id": "EVAL-005",
+    "transcricao": "Começamos o assentamento de piso, já fizemos uns 10%",
+    "esperado": {
+      "servicos": [{ "id": "PISO-01", "avanco": 10, "status": "em_andamento" }],
+      "equipes": [],
+      "notas": []
+    }
+  },
+  {
+    "id": "EVAL-006",
+    "transcricao": "Visita do engenheiro hoje. Ele aprovou a armação da viga mas pediu pra reforçar o estribo no canto.",
+    "esperado": {
+      "servicos": [],
+      "equipes": [],
+      "notas": [{ "tipo": "Visita Técnica", "descricao": "Aprovação de armação com ressalva no estribo", "gravidade": "media" }]
+    }
+  },
+  {
+    "id": "EVAL-007",
+    "transcricao": "João, Pedro e Maria trabalharam na limpeza o dia todo. Tá tudo pronto pra concretagem amanhã.",
+    "esperado": {
+      "servicos": [{ "id": "LIMPEZA", "avanco": 100, "status": "concluido" }],
+      "equipes": ["PED-01", "PED-02", "AJU-01"],
+      "notas": []
+    }
+  },
+  {
+    "id": "EVAL-008",
+    "transcricao": "O pessoal do gesso finalizou metade do teto do hall.",
+    "esperado": {
+      "servicos": [{ "id": "GESSO-01", "avanco": 50, "status": "em_andamento" }],
+      "equipes": [],
+      "notas": []
+    }
+  },
+  {
+    "id": "EVAL-009",
+    "transcricao": "Erro na instalação do ralo do banheiro 2, vai precisar quebrar o porcelanato.",
+    "esperado": {
+      "servicos": [],
+      "equipes": [],
+      "notas": [{ "tipo": "Pendência", "descricao": "Refazer ralo do banheiro 2 (quebrar piso)", "gravidade": "alta" }]
+    }
+  },
+  {
+    "id": "EVAL-010",
+    "transcricao": "Chegou a carga de areia e brita às 14h.",
+    "esperado": {
+      "servicos": [],
+      "equipes": [],
+      "notas": [{ "tipo": "Material", "descricao": "Entrega de areia e brita", "gravidade": "baixa" }]
+    }
+  },
+  {
+    "id": "EVAL-011",
+    "transcricao": "Reboco interno tá quase acabando, 95% pronto.",
+    "esperado": {
+      "servicos": [{ "id": "REB-INT", "avanco": 95, "status": "em_andamento" }],
+      "equipes": [],
+      "notas": []
+    }
+  },
+  {
+    "id": "EVAL-012",
+    "transcricao": "O elevador de carga quebrou de novo, obra parada no transporte de massa.",
+    "esperado": {
+      "servicos": [],
+      "equipes": [],
+      "notas": [{ "tipo": "Pendência", "descricao": "Elevador de carga quebrado", "gravidade": "alta" }]
+    }
+  },
+  {
+    "id": "EVAL-013",
+    "transcricao": "Equipe de impermeabilização finalizou a primeira demão da laje.",
+    "esperado": {
+      "servicos": [{ "id": "IMP-01", "avanco": 33, "status": "em_andamento" }],
+      "equipes": ["IMP-EQ"],
+      "notas": []
+    }
+  },
+  {
+    "id": "EVAL-014",
+    "transcricao": "Conversamos com o cliente sobre a mudança de cor da fachada, ele escolheu o cinza escuro.",
+    "esperado": {
+      "servicos": [],
+      "equipes": [],
+      "notas": [{ "tipo": "Decisão", "descricao": "Cliente definiu cor cinza escuro para fachada", "gravidade": "baixa" }]
+    }
+  },
+  {
+    "id": "EVAL-015",
+    "transcricao": "Tubulação de esgoto fundação, batemos 85% hoje.",
+    "esperado": {
+      "servicos": [{ "id": "ESG-01", "avanco": 85, "status": "em_andamento" }],
+      "equipes": [],
+      "notas": []
+    }
+  },
+  {
+    "id": "EVAL-016",
+    "transcricao": "Cuidado com o andaime do bloco B, tá meio balançando.",
+    "esperado": {
+      "servicos": [],
+      "equipes": [],
+      "notas": [{ "tipo": "Segurança", "descricao": "Andaime do bloco B instável", "gravidade": "alta" }]
+    }
+  },
+  {
+    "id": "EVAL-017",
+    "transcricao": "Iniciamos a retirada dos entulhos, serviço em 20%.",
+    "esperado": {
+      "servicos": [{ "id": "ENTULHO", "avanco": 20, "status": "em_andamento" }],
+      "equipes": [],
+      "notas": []
+    }
+  },
+  {
+    "id": "EVAL-018",
+    "transcricao": "Faltou luz na região a tarde toda, perdemos o dia.",
+    "esperado": {
+      "servicos": [],
+      "equipes": [],
+      "notas": [{ "tipo": "Observação", "descricao": "Falta de energia elétrica", "gravidade": "media" }]
+    }
+  },
+  {
+    "id": "EVAL-019",
+    "transcricao": "Colocação das janelas do 3º andar, tudo concluído.",
+    "esperado": {
+      "servicos": [{ "id": "JAN-03", "avanco": 100, "status": "concluido" }],
+      "equipes": [],
+      "notas": []
+    }
+  },
+  {
+    "id": "EVAL-020",
+    "transcricao": "Hoje a obra bombou, Pedro, José, Maria e Carlos todos aqui firmes no reboco.",
+    "esperado": {
+      "servicos": [],
+      "equipes": ["PED-02", "PED-03", "AJU-01", "PINT-01"],
+      "notas": []
+    }
+  }
+]

@@ -1,9 +1,8 @@
 import React from 'react';
 import { useAppContext } from '../AppContext';
-import { initialData } from '../initialData';
 
 export default function ConfigPage() {
-  const { config, setConfig, state, setState, resetState, markPending, toast } = useAppContext();
+  const { config, setConfig, resetState, toast } = useAppContext();
   const [testStatus, setTestStatus] = React.useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -14,34 +13,21 @@ export default function ConfigPage() {
     setTestStatus('Testando...');
     try {
       const res = await fetch(`${config.url}/rest/v1/servicos?limit=1`, {
-        headers: {
-          'apikey': config.key,
-          'Authorization': `Bearer ${config.key}`,
-        }
+        headers: { 'apikey': config.key, 'Authorization': `Bearer ${config.key}` }
       });
       if (!res.ok) throw new Error(await res.text());
       setTestStatus('✓ Supabase conectado');
-      toast('Conexão com Supabase bem-sucedida!', 'success');
+      toast('Conexão bem-sucedida!', 'success');
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       setTestStatus('✗ ' + msg);
-      toast('Erro na conexão: ' + msg, 'error');
+      toast('Erro: ' + msg, 'error');
     }
   };
 
-  const updateEquipe = (index: number, field: 'cod' | 'nome', value: string) => {
-    const newEquipes = [...state.equipes];
-    newEquipes[index] = { ...newEquipes[index], [field]: value };
-    setState({ ...state, equipes: newEquipes });
-  };
-
-  const removeEquipe = (index: number) => {
-    const newEquipes = state.equipes.filter((_, i) => i !== index);
-    setState({ ...state, equipes: newEquipes });
-  };
-
-  const addEquipe = () => {
-    setState({ ...state, equipes: [...state.equipes, { cod: `EQ-${state.equipes.length + 1}`, nome: 'Nova equipe' }] });
+  const handleReset = () => {
+    resetState();
+    toast('Dados locais apagados.', 'success');
   };
 
   const [jsonText, setJsonText] = React.useState('');
@@ -69,10 +55,10 @@ export default function ConfigPage() {
         id_servico: s.id_servico || s.cod || s.codigo,
         nome: s.nome || s.descricao,
         categoria: s.categoria || s.setor || '',
-        avanco_atual: s.avanco_atual || s.pct_atual || 0,
-        status_atual: (s.status_atual || 'nao_iniciado').toLowerCase().replace(' ', '_'),
-        data_inicio: s.data_inicio || null,
-        data_fim: s.data_fim || null,
+        avanco_atual: s.avanco_atual || 0,
+        status: (s.status || 'nao_iniciado').toLowerCase().replace(' ', '_'),
+        data_prevista: s.data_prevista || null,
+        data_conclusao: s.data_conclusao || null,
         equipe: s.equipe || s.equipe_cod || null,
       }));
 
@@ -159,30 +145,10 @@ export default function ConfigPage() {
     }
   };
 
-  const handleReset = () => {
-    resetState();
-    toast('Dados locais apagados com sucesso. A tela está limpa.', 'success');
-  };
 
-  const handleSeedData = () => {
-    setState(prev => ({
-      ...prev,
-      ...initialData,
-      pendingChanges: [] 
-    }));
-    toast('Dados iniciais carregados com sucesso!', 'success');
-  };
 
   return (
     <div>
-      <div className="flex items-start justify-between mb-6 gap-3">
-        <div className="flex-1">
-          <h2 className="text-[20px] font-bold text-t1">Configurações</h2>
-        </div>
-        <button onClick={handleSeedData} className="px-3 py-1.5 rounded-lg text-[11px] font-bold tracking-[0.05em] bg-brand-blue/20 text-brand-blue border border-brand-blue/30 hover:bg-brand-blue/30 transition-all">
-          Importar Dados de Exemplo
-        </button>
-      </div>
 
       <div className="bg-s1 border border-b1 rounded-[10px] p-5 mb-3">
         <div className="font-mono text-[10px] text-t3 uppercase tracking-[0.1em] mb-3.5 pb-2.5 border-b border-b1">Supabase</div>
@@ -237,6 +203,42 @@ export default function ConfigPage() {
       </div>
 
       <div className="bg-s1 border border-b1 rounded-[10px] p-5 mb-3">
+        <div className="font-mono text-[10px] text-t3 uppercase tracking-[0.1em] mb-3.5 pb-2.5 border-b border-b1">Ollama (Soldado Local)</div>
+        
+        <div className="flex items-center justify-between py-2.5 border-b border-b1">
+          <div>
+            <div className="text-[13px] text-t1 font-semibold">Endpoint</div>
+            <div className="font-mono text-[10px] text-t3 mt-0.5">Padrão: http://localhost:11434/api/generate</div>
+          </div>
+          <input name="ollama" value={config.ollama || ''} onChange={handleChange} className="bg-s2 border border-b1 rounded-md text-t1 font-mono text-[11px] px-3 py-2 outline-none w-[300px] focus:border-b3 transition-colors" placeholder="http://localhost:11434/..." />
+        </div>
+      </div>
+
+      <div className="bg-s1 border border-b1 rounded-[10px] p-5 mb-3">
+        <div className="font-mono text-[10px] text-t3 uppercase tracking-[0.1em] mb-3.5 pb-2.5 border-b border-b1">Minimax / OpenRouter</div>
+        
+        <div className="flex items-center justify-between py-2.5">
+          <div>
+            <div className="text-[13px] text-t1 font-semibold">API Key</div>
+            <div className="font-mono text-[10px] text-t3 mt-0.5">Usado para o Agente Analista (Minimax)</div>
+          </div>
+          <input name="minimax" type="password" value={config.minimax || ''} onChange={handleChange} className="bg-s2 border border-b1 rounded-md text-t1 font-mono text-[11px] px-3 py-2 outline-none w-[300px] focus:border-b3 transition-colors" placeholder="sk-or-v1-..." />
+        </div>
+      </div>
+
+      <div className="bg-s1 border border-b1 rounded-[10px] p-5 mb-3">
+        <div className="font-mono text-[10px] text-t3 uppercase tracking-[0.1em] mb-3.5 pb-2.5 border-b border-b1">Contexto e Ferramentas (MCP)</div>
+        
+        <div className="flex items-center justify-between py-2.5">
+          <div>
+            <div className="text-[13px] text-t1 font-semibold">Servidor MCP</div>
+            <div className="font-mono text-[10px] text-t3 mt-0.5">Conecta a IA a ferramentas externas</div>
+          </div>
+          <input name="mcpServer" value={config.mcpServer || ''} onChange={handleChange} className="bg-s2 border border-b1 rounded-md text-t1 font-mono text-[11px] px-3 py-2 outline-none w-[300px] focus:border-b3 transition-colors" placeholder="https://..." />
+        </div>
+      </div>
+
+      <div className="bg-s1 border border-b1 rounded-[10px] p-5 mb-3">
         <div className="font-mono text-[10px] text-t3 uppercase tracking-[0.1em] mb-3.5 pb-2.5 border-b border-b1">ImgBB API (Fotos)</div>
         
         <div className="flex items-center justify-between py-2.5">
@@ -248,33 +250,6 @@ export default function ConfigPage() {
         </div>
       </div>
 
-      <div className="bg-s1 border border-b1 rounded-[10px] p-5 mb-3">
-        <div className="font-mono text-[10px] text-t3 uppercase tracking-[0.1em] mb-3.5 pb-2.5 border-b border-b1">Equipes</div>
-        
-        {state.equipes.map((eq, i) => (
-          <div key={i} className="flex items-center gap-2 py-2.5 border-b border-b1 last:border-b-0">
-            <input 
-              value={eq.cod} 
-              onChange={(e) => updateEquipe(i, 'cod', e.target.value)} 
-              className="bg-s2 border border-b1 rounded-[5px] text-t1 font-mono text-[11px] px-2.5 py-1.5 w-[100px] outline-none focus:border-b3" 
-              placeholder="CÓDIGO"
-            />
-            <input 
-              value={eq.nome} 
-              onChange={(e) => updateEquipe(i, 'nome', e.target.value)} 
-              className="bg-s2 border border-b1 rounded-[5px] text-t1 font-mono text-[12px] px-2.5 py-1.5 flex-1 outline-none focus:border-b3" 
-              placeholder="Nome da equipe"
-            />
-            <button onClick={() => removeEquipe(i)} className="px-2.5 py-1.5 rounded-md text-[11px] font-bold tracking-[0.05em] text-t2 border border-b2 hover:border-b3 hover:text-t1 transition-colors">
-              remover
-            </button>
-          </div>
-        ))}
-        
-        <button onClick={addEquipe} className="mt-2.5 px-2.5 py-1.5 rounded-md text-[11px] font-bold tracking-[0.05em] text-t2 border border-b2 hover:border-b3 hover:text-t1 transition-colors">
-          + Equipe
-        </button>
-      </div>
 
       <div className="bg-s1 border border-b1 rounded-[10px] p-5 mb-3">
         <div className="font-mono text-[10px] text-t3 uppercase tracking-[0.1em] mb-3.5 pb-2.5 border-b border-b1">Inicializar Projeto (JSON)</div>

@@ -31,9 +31,9 @@ const defaultState: AppState = {
     { cod: 'EQ-LOG-01', nome: 'Roberto' }
   ],
   relatorios: {},
-  currentDay: '2026-03-09',
+  currentDay: new Date().toISOString().split('T')[0],
   globalFilter: {
-    referenceDate: '2026-03-09',
+    referenceDate: new Date().toISOString().split('T')[0],
     periodDays: 7,
     viewMode: 'layers'
   },
@@ -43,11 +43,16 @@ const defaultState: AppState = {
 const defaultConfig: Config = {
   url: (import.meta as any).env.VITE_SUPABASE_URL || '',
   key: (import.meta as any).env.VITE_SUPABASE_ANON_KEY || '',
-  obraId: '3c7ade92-5078-4db3-996c-1390a9a2bb27',
+  obraId: (import.meta as any).env.VITE_OBRA_ID || '', // Vazio = sem obra ativa
   gemini: (import.meta as any).env.VITE_GEMINI_API_KEY || '',
   model: 'gemini-1.5-flash',
-  imgbbKey: (import.meta as any).env.VITE_IMGBB_API_KEY || ''
+  imgbbKey: (import.meta as any).env.VITE_IMGBB_API_KEY || '',
+  ollama: 'http://localhost:11434/api/generate',
+  minimax: (import.meta as any).env.VITE_OPENROUTER_API_KEY || '',
+  mcpServer: 'https://mcp.context7.com/mcp'
 };
+
+
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -64,7 +69,8 @@ export const AppProvider: React.FC<{children: React.ReactNode}> = ({ children })
       const s = localStorage.getItem('badida_state_v3');
       if (s) {
         const parsed = JSON.parse(s);
-        return {
+        const today = new Date().toISOString().split('T')[0];
+      return {
           ...defaultState,
           ...parsed,
           servicos: parsed.servicos || defaultState.servicos,
@@ -76,7 +82,12 @@ export const AppProvider: React.FC<{children: React.ReactNode}> = ({ children })
           fotos: parsed.fotos || defaultState.fotos,
           relatorios: parsed.relatorios || defaultState.relatorios,
           equipes: parsed.equipes?.map((e: Equipe | string) => typeof e === 'string' ? { cod: e, nome: e } : e) || defaultState.equipes,
-          globalFilter: parsed.globalFilter || defaultState.globalFilter,
+          // Sempre usa a data de hoje — nunca restaura data stale do localStorage
+          currentDay: today,
+          globalFilter: {
+            ...(parsed.globalFilter || defaultState.globalFilter),
+            referenceDate: today,
+          },
           pendingChanges: parsed.pendingChanges || defaultState.pendingChanges,
         };
       }

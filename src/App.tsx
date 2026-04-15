@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, useParams, useNavigate, Navigate } from 'react-router-dom';
 import { AppProvider, useAppContext } from './AppContext';
 import { Servico, Pendencia, Equipe, Nota, Foto, DiarioEntry, PendingChange } from './types';
 import { 
   Book, CheckSquare, FileText, Image as ImageIcon, FileBarChart, Settings, CloudDownload, CloudUpload, Calendar, TrendingUp, MessageSquare,
-  Building2, MapPin, Users, Camera, BarChart, Activity, AlertTriangle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Layers, Maximize
+  Building2, MapPin, Users, Camera, BarChart, Activity, AlertTriangle, ChevronRight
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import Diario from './components/Diario';
@@ -14,21 +15,84 @@ import Fotos from './components/Fotos';
 import Relatorios from './components/Relatorios';
 import ConfigPage from './components/ConfigPage';
 import Cronograma from './components/Cronograma';
+
+import Login from './pages/Login';
+import PortalCliente from './pages/PortalCliente';
+import { useAuth } from './hooks/useAuth';
+import { Loader2 } from 'lucide-react';
 import { useSupabaseQuery } from './hooks/useSupabaseQuery';
 import { sbFetch } from './lib/api';
 import { logger } from './services/logger';
+import { useRealtimeSync } from './hooks/useRealtimeSync';
 
 function Main() {
   const [activeTab, setActiveTab] = useState('diario');
-  const { state, setState, config, toast } = useAppContext();
+  const { state, setState, config, setConfig, toast } = useAppContext();
   const [syncing, setSyncing] = useState(false);
   const queryClient = useQueryClient();
+  const { obraId: urlObraId } = useParams();
+  const navigate = useNavigate();
   const [loadingInitial, setLoadingInitial] = useState(false);
+  const [obraPickerOpen, setObraPickerOpen] = useState(false);
+  const [obras, setObras] = useState<{id: string, nome: string, status?: string}[]>([]);
+  const [loadingObras, setLoadingObras] = useState(false);
+  const obraPickerRef = React.useRef<HTMLDivElement>(null);
+
+  // Sincroniza Obra ID da URL com o Config
+  useEffect(() => {
+    if (urlObraId && urlObraId !== config.obraId) {
+      console.log(`[Router] Sincronizando obra da URL: ${urlObraId}`);
+      setConfig({ ...config, obraId: urlObraId });
+      queryClient.invalidateQueries();
+    }
+  }, [urlObraId, config.obraId, setConfig, queryClient]);
+
+  // Ativa Sincronização em Tempo Real (Supabase Realtime)
+  useRealtimeSync(config.obraId);
+
+  // Fecha dropdown ao clicar fora
+  React.useEffect(() => {
+    if (!obraPickerOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (obraPickerRef.current && !obraPickerRef.current.contains(e.target as Node)) {
+        setObraPickerOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [obraPickerOpen]);
+
+  const fetchObras = async () => {
+    if (!config.url || !config.key) {
+      toast('Configure Supabase nas Configurações primeiro.', 'error');
+      setActiveTab('config');
+      return;
+    }
+    setLoadingObras(true);
+    try {
+      const res = await fetch(`${config.url}/rest/v1/obras?select=id,nome,status&order=nome`, {
+        headers: { 'apikey': config.key, 'Authorization': `Bearer ${config.key}` }
+      });
+      const data = await res.json();
+      setObras(Array.isArray(data) ? data : []);
+    } catch {
+      toast('Erro ao buscar obras.', 'error');
+    } finally {
+      setLoadingObras(false);
+    }
+  };
+
+  const selecionarObra = (obra: {id: string, nome: string}) => {
+    navigate(`/obra/${obra.id}`);
+    setObraPickerOpen(false);
+    toast(`Obra "${obra.nome}" selecionada.`, 'success');
+  };
+
 
   // React Query hooks for caching data
   const servicos = useSupabaseQuery<Servico[]>(
     ['servicos', config.obraId],
-    `servicos?obra_id=eq.${config.obraId}&select=id,id_servico,nome,categoria,avanco_atual,status_atual,data_inicio,data_fim,equipe&order=data_inicio`,
+    `servicos?obra_id=eq.${config.obraId}&select=id,id_servico,nome,categoria,avanco_atual,status,data_prevista,data_conclusao,equipe&order=data_prevista`,
     config,
     { staleTime: 5 * 60 * 1000 }
   );
@@ -162,9 +226,9 @@ function Main() {
               method: 'PATCH', 
               body: JSON.stringify({ 
                 avanco_atual: s.avanco_atual, 
-                status_atual: s.status_atual, 
-                data_inicio: s.data_inicio, 
-                data_fim: s.data_fim, 
+                status: s.status, 
+                data_prevista: s.data_prevista, 
+                data_conclusao: s.data_conclusao, 
                 equipe: s.equipe 
               }), 
               prefer: 'return=minimal' 
@@ -197,13 +261,15 @@ function Main() {
         }
         if (ch.table === 'equipes_presenca') {
           const dPresenca = ch.data as unknown as { equipe: string, dia: string };
-          await sbFetch('equipes_presenca', { 
+          // Conforme Regra 3 do RULES.md: on_conflict usa nomes de colunas, não nomes de constraints.
+          await sbFetch('equipes_presenca?on_conflict=obra_id,equipe_cod,data_presenca', { 
             method: 'POST', 
             body: JSON.stringify({ 
               obra_id: config.obraId, 
               equipe_cod: dPresenca.equipe, 
               data_presenca: dPresenca.dia 
-            }) 
+            }),
+            headers: { 'Prefer': 'resolution=merge-duplicates' }
           }, config);
         }
         if (ch.table === 'equipes_cadastro') {
@@ -298,15 +364,56 @@ if (tablesToInvalidate.has('equipes_presenca')) {
       </a>
 
       <header className="flex items-center bg-s1 border-b border-b1 h-[56px] shrink-0 px-4">
-        {/* ... header existente mantido ... */}
-        <div className="flex items-center gap-3 border-r border-b1 pr-6 h-full">
-          <div className="bg-brand-green/10 p-1.5 rounded-md">
-            <TrendingUp className="w-5 h-5 text-brand-green" />
-          </div>
-          <div className="flex flex-col justify-center">
-            <div className="font-mono text-[9px] text-brand-green tracking-[0.15em] uppercase font-bold">Obra ativa</div>
-            <h1 className="text-[14px] font-bold text-t1 leading-tight">Restaurante Badida</h1>
-          </div>
+        {/* Seletor de Obra */}
+        <div className="relative" ref={obraPickerRef}>
+          <button
+            onClick={() => { setObraPickerOpen(p => !p); if (!obraPickerOpen) fetchObras(); }}
+            className="flex items-center gap-3 border-r border-b1 pr-6 h-[56px] hover:bg-s2 transition-colors px-2 rounded-sm group"
+          >
+            <div className="bg-brand-green/10 p-1.5 rounded-md group-hover:bg-brand-green/20 transition-colors">
+              <TrendingUp className="w-5 h-5 text-brand-green" />
+            </div>
+            <div className="flex flex-col justify-center text-left">
+              <div className="font-mono text-[9px] text-brand-green tracking-[0.15em] uppercase font-bold">Obra ativa</div>
+              <h1 className="text-[14px] font-bold text-t1 leading-tight flex items-center gap-1.5">
+                {config.obraId ? (obras.find(o => o.id === config.obraId)?.nome || 'Obra Carregada') : 'Obra Pendente'}
+                <ChevronRight className="w-3 h-3 text-t4 group-hover:text-t2 transition-colors rotate-90" />
+              </h1>
+            </div>
+          </button>
+
+          {/* Dropdown de obras */}
+          {obraPickerOpen && (
+            <div className="absolute top-[calc(100%+4px)] left-0 z-50 bg-s1 border border-b1 rounded-xl shadow-2xl w-[300px] overflow-hidden">
+              <div className="px-4 py-3 border-b border-b1 flex items-center justify-between">
+                <span className="text-[10px] font-bold text-t3 uppercase tracking-widest">Selecionar Obra</span>
+                {loadingObras && <Loader2 className="w-3 h-3 animate-spin text-t3" />}
+              </div>
+              <div className="max-h-[300px] overflow-y-auto">
+                {obras.length === 0 && !loadingObras && (
+                  <div className="px-4 py-6 text-center text-[12px] text-t4 font-mono">
+                    Nenhuma obra encontrada no Supabase.
+                  </div>
+                )}
+                {obras.map(obra => (
+                  <button
+                    key={obra.id}
+                    onClick={() => selecionarObra(obra)}
+                    className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-s2 transition-colors border-b border-b1/50 last:border-0 ${config.obraId === obra.id ? 'bg-brand-green/5' : ''}`}
+                  >
+                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${config.obraId === obra.id ? 'bg-brand-green' : 'bg-t4'}`} />
+                    <div>
+                      <div className="text-[13px] font-bold text-t1">{obra.nome}</div>
+                      <div className="text-[9px] font-mono text-t4">{obra.id}</div>
+                    </div>
+                    {config.obraId === obra.id && (
+                      <div className="ml-auto text-[9px] font-bold text-brand-green uppercase">Ativa</div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         
         <nav className="flex h-full flex-1 overflow-x-auto no-scrollbar px-2" aria-label="Navegação Principal">
@@ -355,126 +462,7 @@ if (tablesToInvalidate.has('equipes_presenca')) {
         </div>
       </header>
 
-      {/* Global Filter Bar - mostra para Diario, Equipes, Orcamento, Cronograma, Notas */}
-      {activeTab !== 'config' && activeTab !== 'fotos' && (
-        <div className="flex items-center gap-4 px-6 py-3 bg-s1 border-b border-b1 shrink-0 overflow-x-auto no-scrollbar">
-          
-          {/* Navegação de Data */}
-          <div className="flex items-center bg-s2 border border-b1 rounded-full px-1 py-1">
-            <button 
-              onClick={() => {
-                const d = new Date(state.globalFilter.referenceDate);
-                d.setDate(d.getDate() - state.globalFilter.periodDays);
-                setState(p => ({ ...p, globalFilter: { ...p.globalFilter, referenceDate: d.toISOString().split('T')[0] } }));
-              }}
-              className="p-1.5 text-t3 hover:text-t1 hover:bg-s3 rounded-full transition-colors"
-            >
-              <ChevronsLeft size={14} />
-            </button>
-            <button 
-              onClick={() => {
-                const d = new Date(state.globalFilter.referenceDate);
-                d.setDate(d.getDate() - 1);
-                setState(p => ({ ...p, globalFilter: { ...p.globalFilter, referenceDate: d.toISOString().split('T')[0] } }));
-              }}
-              className="p-1.5 text-t3 hover:text-t1 hover:bg-s3 rounded-full transition-colors"
-            >
-              <ChevronLeft size={14} />
-            </button>
-            
-            <button 
-              onClick={() => {
-                const today = new Date().toISOString().split('T')[0];
-                setState(p => ({ ...p, globalFilter: { ...p.globalFilter, referenceDate: today } }));
-              }}
-              className="px-4 py-1 text-[11px] font-black uppercase tracking-widest text-brand-green hover:bg-s3 rounded-full transition-colors"
-            >
-              HOJE
-            </button>
 
-            <button 
-              onClick={() => {
-                const d = new Date(state.globalFilter.referenceDate);
-                d.setDate(d.getDate() + 1);
-                setState(p => ({ ...p, globalFilter: { ...p.globalFilter, referenceDate: d.toISOString().split('T')[0] } }));
-              }}
-              className="p-1.5 text-t3 hover:text-t1 hover:bg-s3 rounded-full transition-colors"
-            >
-              <ChevronRight size={14} />
-            </button>
-            <button 
-               onClick={() => {
-                const d = new Date(state.globalFilter.referenceDate);
-                d.setDate(d.getDate() + state.globalFilter.periodDays);
-                setState(p => ({ ...p, globalFilter: { ...p.globalFilter, referenceDate: d.toISOString().split('T')[0] } }));
-              }}
-              className="p-1.5 text-t3 hover:text-t1 hover:bg-s3 rounded-full transition-colors"
-             >
-              <ChevronsRight size={14} />
-            </button>
-          </div>
-
-          <div className="w-px h-4 bg-b1 mx-1 shrink-0"></div>
-
-          {/* Date Picker */}
-          <div className="flex items-center">
-            <input 
-              type="date" 
-              value={state.globalFilter.referenceDate}
-              onChange={(e) => setState(p => ({ ...p, globalFilter: { ...p.globalFilter, referenceDate: e.target.value } }))}
-              className="bg-s2 border border-b1 rounded-full px-4 py-1.5 text-[12px] font-mono text-t2 outline-none focus:border-brand-green transition-colors [color-scheme:dark]"
-            />
-          </div>
-
-          <div className="w-px h-4 bg-b1 mx-1 shrink-0"></div>
-
-          {/* Period Dropdown */}
-          <select 
-            value={state.globalFilter.periodDays}
-            onChange={(e) => setState(p => ({ ...p, globalFilter: { ...p.globalFilter, periodDays: parseInt(e.target.value) } }))}
-            className="bg-s2 border border-b1 rounded-full px-4 py-1.5 text-[12px] font-mono text-t2 outline-none focus:border-brand-green transition-colors appearance-none"
-          >
-            <option value={1}>1 dia</option>
-            <option value={7}>7 dias</option>
-            <option value={15}>15 dias</option>
-            <option value={30}>30 dias</option>
-            <option value={60}>60 dias</option>
-            <option value={90}>90 dias</option>
-          </select>
-
-          <div className="w-px h-4 bg-b1 mx-1 shrink-0"></div>
-
-          {/* View Modes Toggle */}
-          <div className="flex items-center bg-s2 border border-b1 rounded-full p-1">
-            <button 
-              onClick={() => setState(p => ({ ...p, globalFilter: { ...p.globalFilter, viewMode: 'time' } }))}
-              className={`p-1.5 rounded-full transition-colors ${state.globalFilter.viewMode === 'time' ? 'bg-s4 text-t1' : 'text-t3 hover:text-t2'}`}
-            >
-              <Calendar size={14} />
-            </button>
-            <button 
-              onClick={() => setState(p => ({ ...p, globalFilter: { ...p.globalFilter, viewMode: 'layers' } }))}
-              className={`p-1.5 rounded-full transition-colors ${state.globalFilter.viewMode === 'layers' ? 'bg-s4 text-brand-green' : 'text-t3 hover:text-t2'}`}
-            >
-              <Layers size={14} />
-            </button>
-            <button 
-              onClick={() => setState(p => ({ ...p, globalFilter: { ...p.globalFilter, viewMode: 'people' } }))}
-              className={`p-1.5 rounded-full transition-colors ${state.globalFilter.viewMode === 'people' ? 'bg-s4 text-t1' : 'text-t3 hover:text-t2'}`}
-            >
-              <Users size={14} />
-            </button>
-          </div>
-
-          <div className="w-px h-4 bg-b1 mx-1 shrink-0"></div>
-
-          {/* Expand */}
-          <button className="p-2 border border-b1 bg-s2 text-brand-green hover:bg-s3 rounded-full transition-colors">
-            <Maximize size={14} />
-          </button>
-          
-        </div>
-      )}
 
       {/* Pages */}
       <main 
@@ -482,14 +470,38 @@ if (tablesToInvalidate.has('equipes_presenca')) {
         tabIndex={-1} 
         className="overflow-y-auto p-8 flex-1 bg-[radial-gradient(circle_at_top_right,rgba(63,185,80,0.03),transparent_40%)] outline-none"
       >
-        {activeTab === 'diario' && <Diario />}
-        {activeTab === 'equipes' && <Equipes />}
-        {activeTab === 'orcamento' && <Servicos />}
-        {activeTab === 'cronograma' && <Cronograma />}
-        {activeTab === 'notas' && <Notas />}
-        {activeTab === 'fotos' && <Fotos />}
-        {activeTab === 'relatorios' && <Relatorios />}
-        {activeTab === 'config' && <ConfigPage />}
+        {/* Guard: sem obraId, todas as abas (exceto Config) ficam bloqueadas */}
+        {!config.obraId && activeTab !== 'config' ? (
+          <div className="h-full flex flex-col items-center justify-center gap-6 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-s1 border border-b1 flex items-center justify-center">
+              <Settings className="w-8 h-8 text-t4" />
+            </div>
+            <div>
+              <div className="text-[11px] font-mono text-brand-amber uppercase tracking-widest mb-2">Obra Pendente</div>
+              <h2 className="text-[18px] font-bold text-t1 mb-2">Nenhuma Obra Ativa</h2>
+              <p className="text-[13px] text-t3 max-w-sm leading-relaxed">
+                Configure o ID da Obra nas Configurações para carregar os dados do Supabase e ativar o sistema.
+              </p>
+            </div>
+            <button
+              onClick={() => setActiveTab('config')}
+              className="px-6 py-2.5 bg-brand-green text-bg text-[11px] font-extrabold uppercase tracking-widest rounded-lg hover:bg-brand-green2 transition-colors"
+            >
+              Ir para Configurações
+            </button>
+          </div>
+        ) : (
+          <>
+            {activeTab === 'diario' && <Diario />}
+            {activeTab === 'equipes' && <Equipes />}
+            {activeTab === 'orcamento' && <Servicos />}
+            {activeTab === 'cronograma' && <Cronograma />}
+            {activeTab === 'notas' && <Notas />}
+            {activeTab === 'fotos' && <Fotos />}
+            {activeTab === 'relatorios' && <Relatorios />}
+            {activeTab === 'config' && <ConfigPage />}
+          </>
+        )}
       </main>
     </div>
   );

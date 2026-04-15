@@ -60,7 +60,7 @@ export default function Equipes() {
       const newP = p.includes(eqCod) ? p.filter(c => c !== eqCod) : [...p, eqCod];
       
       if (!p.includes(eqCod)) {
-        markPending('equipes_presenca', { equipe: eqCod, dia: dayStr });
+        markPending('equipes_presenca', { id: `${dayStr}-${eqCod}`, equipe: eqCod, dia: dayStr });
       }
       return { ...prev, presenca: { ...prev.presenca, [dayStr]: newP } };
     });
@@ -216,9 +216,9 @@ export default function Equipes() {
                          className="bg-bg border border-b1 rounded px-2 py-1 text-xs text-t1 outline-none font-bold"
                       />
                       <input 
-                         placeholder="Especialidade" 
-                         value={formData.especialidade} 
-                         onChange={e => setFormData({...formData, especialidade: e.target.value})}
+                         placeholder="funcao" 
+                         value={formData.funcao} 
+                         onChange={e => setFormData({...formData, funcao: e.target.value})}
                          className="bg-bg border border-b1 rounded px-2 py-1 text-xs text-t2 outline-none"
                       />
                        <input 
@@ -244,7 +244,7 @@ export default function Equipes() {
                          <div>
                             <div className="font-mono text-[9px] text-brand-green tracking-[0.1em] bg-brand-green/10 px-1.5 py-0.5 rounded inline-block mb-1.5">{eq.cod}</div>
                             <div className="text-[13px] font-bold text-t1 leading-tight">{eq.nome}</div>
-                            {eq.especialidade && <div className="text-[11px] text-t3 mt-1 line-clamp-1">{eq.especialidade}</div>}
+                            {eq.funcao && <div className="text-[11px] text-t3 mt-1 line-clamp-1">{eq.funcao}</div>}
                          </div>
                       </div>
                       <div className="p-4 flex flex-col gap-2 flex-1">
@@ -287,7 +287,7 @@ export default function Equipes() {
                       </div>
                       <input placeholder="Código (ex: EQ-XXX-01)" value={formData.cod} onChange={e => setFormData({...formData, cod: e.target.value})} className="bg-bg border border-b1 rounded px-2 py-1.5 text-xs text-t1 outline-none font-mono" />
                       <input placeholder="Nome da Equipe" value={formData.nome} onChange={e => setFormData({...formData, nome: e.target.value})} className="bg-bg border border-b1 rounded px-2 py-1.5 text-xs text-t1 outline-none font-bold" />
-                      <input placeholder="Especialidade" value={formData.especialidade} onChange={e => setFormData({...formData, especialidade: e.target.value})} className="bg-bg border border-b1 rounded px-2 py-1.5 text-xs text-t2 outline-none" />
+                      <input placeholder="funcao" value={formData.funcao} onChange={e => setFormData({...formData, funcao: e.target.value})} className="bg-bg border border-b1 rounded px-2 py-1.5 text-xs text-t2 outline-none" />
                       <div className="flex gap-2 mt-4">
                          <button onClick={() => setEditingId(null)} className="flex-1 bg-s2 border border-b1 text-t2 rounded py-1.5 text-[10px] font-bold uppercase transition-colors hover:text-t1">Cancela</button>
                          <button onClick={handleSave} className="flex-1 bg-brand-green text-bg rounded py-1.5 text-[10px] font-bold uppercase transition-colors flex justify-center items-center gap-1"><Save size={12}/> Adicionar</button>

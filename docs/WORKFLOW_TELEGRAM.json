@@ -1,0 +1,95 @@
+{
+  "name": "Evis AI - Telegram (Voz para Relatório)",
+  "nodes": [
+    {
+      "id": "telegram-trigger",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "updates": ["message"],
+        "additionalFields": {}
+      },
+      "credentials": {
+        "telegramApi": { "id": "telegram-creds-id" }
+      }
+    },
+    {
+      "id": "download-e-converter",
+      "name": "Download e Converter Base64",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 300],
+      "parameters": {
+        "jsCode": "const BOT_TOKEN = '8723896780:AAFISWZwETo8fbK9srUzuZyh2e7OipRlr7g';\n\nconst msg = $('Telegram Trigger').first().json.message;\nconst fileId = msg.voice?.file_id || msg.audio?.file_id;\nconst mimeType = msg.voice?.mime_type || msg.audio?.mime_type || 'audio/ogg';\nconst telegramUser = msg.from?.first_name || 'Usuário';\n\nif (!fileId) throw new Error('Nenhum file_id encontrado na mensagem');\n\n// 1. Obter file_path\nconst infoRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`);\nconst infoJson = await infoRes.json();\nif (!infoJson.ok) throw new Error('getFile falhou: ' + JSON.stringify(infoJson));\nconst filePath = infoJson.result.file_path;\n\n// 2. Baixar o binário\nconst fileRes = await fetch(`https://api.telegram.org/file/bot${BOT_TOKEN}/${filePath}`);\nif (!fileRes.ok) throw new Error('Download falhou: ' + fileRes.status);\nconst arrayBuffer = await fileRes.arrayBuffer();\nconst base64Audio = Buffer.from(arrayBuffer).toString('base64');\n\nreturn [{ json: { base64Audio, mimeType, telegram_user: telegramUser } }];"
+      }
+    },
+    {
+      "id": "gemini-http",
+      "name": "Gemini Transcrição (HTTP)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [750, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyB8PP3Xzyvz-V_3khv-9Xxu-X-xYkMSvxk",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [\n      {\n        \"inline_data\": {\n          \"mime_type\": \"{{ $json.mimeType }}\",\n          \"data\": \"{{ $json.base64Audio }}\"\n        }\n      },\n      {\n        \"text\": \"Transcreva este áudio em português do Brasil. Retorne apenas o texto transcrito, sem comentários, sem prefixos, sem explicações.\"\n      }\n    ]\n  }]\n}",
+        "options": {}
+      }
+    },
+    {
+      "id": "extrair-texto",
+      "name": "Extrair Texto Transcrito",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 300],
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst transcricao = response?.candidates?.[0]?.content?.parts?.[0]?.text || '';\nconst telegram_user = $('Download e Converter Base64').first().json.telegram_user;\n\nif (!transcricao) {\n  throw new Error('Gemini sem resposta: ' + JSON.stringify(response));\n}\n\nreturn [{ json: { transcricao, telegram_user } }];"
+      }
+    },
+    {
+      "id": "enviar-evis",
+      "name": "Enviar para Evis (Rascunho)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1250, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:3001/api/diario/rascunho",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"transcricao\": \"{{ $json.transcricao }}\",\n  \"telegram_user\": \"{{ $json.telegram_user }}\"\n}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [[{ "node": "Download e Converter Base64", "index": 0 }]]
+    },
+    "Download e Converter Base64": {
+      "main": [[{ "node": "Gemini Transcrição (HTTP)", "index": 0 }]]
+    },
+    "Gemini Transcrição (HTTP)": {
+      "main": [[{ "node": "Extrair Texto Transcrito", "index": 0 }]]
+    },
+    "Extrair Texto Transcrito": {
+      "main": [[{ "node": "Enviar para Evis (Rascunho)", "index": 0 }]]
+    }
+  }
+}

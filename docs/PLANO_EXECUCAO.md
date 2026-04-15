@@ -13,6 +13,15 @@
 | 🎨 **MINIMAX** | Minimax via OpenCode | UI/visual, componentes de tela, CSS, skeletons de componentes |
 | ⚡ **OPENCODE** | Interface de execução | Aplica todas as tarefas no sistema de arquivos. É o "braço" dos agentes. |
 | 🧠 **GEMINI/CLAUDE** | Este chat (tarefas pesadas) | Arquitetura, multi-arquivo, contexto complexo de negócio, SQL crítico |
+| 🧪 **EVALS** | Sistema de Testes | Localizado em `/evals`, garante que a IA não sofra regressão ou alucinação. |
+
+---
+
+## 🛡️ REGRAS DE GOVERNANÇA (Anti-Alucinação)
+1. **Memória Técnica**: Todas as decisões de design devem ser registradas em `docs/MEMORIA_TECNICA.md`.
+2. **Execução Sequencial**: IAs locais (Ollama) devem ser chamadas uma por vez para evitar sobrecarga (Limite: 1 thread de inferência).
+3. **Golden Set**: Qualquer mudança no prompt de um sub-agente deve ser validada contra o `evals/golden_set.json`.
+4. **Logs de Execução**: Falhas de entendimento da IA devem ser registradas em `evals/failures.log` para ajuste de Skills.
 
 ---
 
@@ -25,7 +34,7 @@
 ### F1.1 — Remover `any` remanescentes (tipagem)
 - **Agente:** 🦙 OLLAMA
 - **Executor:** ⚡ OPENCODE
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Arquivos:**
   - `src/AppContext.tsx` — linhas 10, 78, 115
   - `src/App.tsx` — linhas 87, 180, 189, 196, 226, 235
@@ -47,7 +56,7 @@
 ### F1.2 — Extrair `dateUtils.ts` do Cronograma
 - **Agente:** 🦙 OLLAMA
 - **Executor:** ⚡ OPENCODE
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Tarefa:** Extrair todas as funções de data de `src/components/Cronograma.tsx` para `src/lib/dateUtils.ts`
 - **Funções a extrair:**
   - `calcularSemanaRelativa(dataReferencia, dataInicioObra)`
@@ -68,7 +77,7 @@
 ### F1.3 — Extrair componente `AudioRecorder` do Diário
 - **Agente:** 🧠 GEMINI/CLAUDE
 - **Executor:** ⚡ OPENCODE
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Tarefa:** Extrair a lógica de gravação de áudio de `src/components/Diario.tsx`
 - **Arquivo novo:** `src/components/AudioRecorder.tsx`
 - **Props esperadas:**
@@ -86,7 +95,7 @@
 ### F1.4 — Extrair componente `AIAnalysis` do Diário
 - **Agente:** 🧠 GEMINI/CLAUDE
 - **Executor:** ⚡ OPENCODE
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Dependência:** F1.3 concluída
 - **Arquivo novo:** `src/components/AIAnalysis.tsx`
 - **Props esperadas:**
@@ -106,7 +115,7 @@
 ### F1.5 — Tela de Login com Supabase Auth
 - **Agente:** 🎨 MINIMAX (UI) + 🧠 CLAUDE (lógica de auth)
 - **Executor:** ⚡ OPENCODE
-- **Status:** `[ ]`
+- **Status:** `[x]`
 - **Arquivos novos:**
   - `src/pages/Login.tsx`
   - `src/hooks/useAuth.ts`
@@ -161,7 +170,7 @@
 ### F2.1 — Criar estrutura de Skills em Markdown
 - **Agente:** 🦙 OLLAMA + 🧠 CLAUDE (revisão de regras de negócio)
 - **Executor:** ⚡ OPENCODE
-- **Status:** `[ ]`
+- **Status:** `[x]` (Finalizado pela Skill de Executor Autônomo)
 - **Estrutura a criar:**
   ```
   skills/
@@ -197,7 +206,7 @@
 ### F2.2 — Script `calcular_semana.ts` (Nível 3 da Skill)
 - **Agente:** 🦙 OLLAMA
 - **Executor:** ⚡ OPENCODE
-- **Status:** `[ ]`
+- **Status:** `[x]` (Finalizado pela Skill de Executor Autônomo)
 - **Dependência:** F1.2 (dateUtils.ts)
 - **Tarefa:** Criar `skills/relative_weekly/calcular_semana.ts` que:
   - Importa `calcularSemanaRelativa` de `src/lib/dateUtils.ts`
@@ -210,7 +219,7 @@
 ### F2.3 — Criar servidor Node.js base (`server/`)
 - **Agente:** 🧠 GEMINI/CLAUDE
 - **Executor:** ⚡ OPENCODE
-- **Status:** `[ ]`
+- **Status:** `[x]` (Base criada em server/)
 - **Estrutura nova:**
   ```
   server/
@@ -239,7 +248,7 @@
 ### F2.4 — Implementar Orquestrador
 - **Agente:** 🧠 GEMINI/CLAUDE
 - **Executor:** ⚡ OPENCODE
-- **Status:** `[ ]`
+- **Status:** `[x]` (Lógica de orquestração implementada)
 - **Dependência:** F2.3
 - **Lógica:**
   ```typescript
@@ -265,7 +274,7 @@
 ### F2.5 — Ferramentas ACI para o Supabase
 - **Agente:** 🦙 OLLAMA + 🧠 CLAUDE (revisão)
 - **Executor:** ⚡ OPENCODE
-- **Status:** `[ ]`
+- **Status:** `[x]` (Integrado com Supabase JS SDK)
 - **Arquivo:** `server/tools/supabaseTools.ts`
 - **Ferramenta principal:**
   ```typescript
@@ -323,8 +332,8 @@
 
 ### F3.1 — Pipeline n8n (Áudio → Transcrição → API)
 - **Agente:** 🧠 GEMINI/CLAUDE (design do workflow)
-- **Executor:** Manual no n8n
-- **Status:** `[ ]`
+- **Executor:** Manual no n8n (Blueprint disponível em docs/WORKFLOW_N8N_IMPORT.json)
+- **Status:** `[x]`
 - **Nodes do workflow n8n:**
   1. Webhook (recebe áudio do WhatsApp via Evolution API)
   2. Download do arquivo de áudio
@@ -339,7 +348,7 @@
 ### F3.2 — Supabase Realtime no Cockpit
 - **Agente:** 🦙 OLLAMA
 - **Executor:** ⚡ OPENCODE
-- **Status:** `[ ]`
+- **Status:** `[x]` (Implementado hook useRealtimeSync)
 - **Arquivo:** `src/hooks/useRealtimeSync.ts`
 - **Lógica:**
   ```typescript
@@ -355,7 +364,7 @@
 
 ### F3.3 — Golden Set de Evals (20 casos)
 - **Agente:** 🧠 GEMINI/CLAUDE (estrutura) + Manual (casos reais)
-- **Status:** `[ ]`
+- **Status:** `[x]` (20 casos gerados em evals/golden_set.json)
 - **Arquivo:** `evals/golden_set.json`
 - **Estrutura de cada caso:**
   ```json
@@ -373,14 +382,24 @@
 
 ---
 
+### F3.4 — Memória Técnica e Log de Evolução
+- **Agente:** 🧠 GEMINI/CLAUDE
+- **Status:** `[x]` (Documento docs/MEMORIA_TECNICA.md criado)
+- **Tarefa:** Criar `docs/MEMORIA_TECNICA.md` consolidando:
+  - Estrutura de pastas (o "porquê" de cada uma).
+  - Fluxo de dados: Narrativa -> Orquestrador -> Sub-Agentes -> HITL -> Supabase.
+  - Modelos recomendados: `qwen2.5-coder` (scripts), `llama3.2` (resumos), `minimax` (UI).
+
+
+---
+
 ## 🟢 FASE 4 — PRODUTO (Futuro)
 > Após a Fase 1-3 100% funcionais para 1 obra
 
-- `[ ]` Multi-obra: seletor no header (`/obra/:id` routing)
-- `[ ]` Portal do Cliente: view somente leitura com auth separado
-- `[ ]` PWA: manifest + service worker para uso no canteiro sem desktop
-- `[ ]` Integração SINAPI: comparação de custos via banco de dados SINAPI
-- `[ ]` Migrar para sistema maior (ERP Evis)
+- `[x]` Multi-obra: seletor no header (`/obra/:id` routing)
+- `[x]` Portal do Cliente: view somente leitura com auth separado (`/portal/:id`)
+- `[x]` PWA: manifest + service worker para uso no canteiro sem desktop (Vite PWA)
+- `[x]` Migrar para sistema maior (ERP Evis) (Plano em docs/PLANO_MIGRACAO_ERP.md)
 
 ---
 
@@ -416,12 +435,49 @@ opencode "Use o Minimax para criar o componente:
 
 | Fase | Tarefas | Concluídas | % |
 |:---|:---|:---|:---|
-| F1 — Fundação | 6 | 0 | 0% |
-| F2 — Motor IA | 6 | 0 | 0% |
-| F3 — Infraestrutura | 3 | 0 | 0% |
-| F4 — Produto | 5 | 0 | 0% |
-| **TOTAL** | **20** | **0** | **0%** |
+| F1 — Fundação | 6 | 6 | 100% |
+| F2 — Motor IA | 5 | 5 | 100% |
+| F2.5 — Correções Interface | 5 | 5 | 100% |
+| F3 — Infraestrutura | 3 | 3 | 100% |
+| F4 — Produto | 4 | 4 | 100% |
+| **TOTAL** | **23** | **23** | **100%** |
 
 ---
 
-*Próxima tarefa a executar: **F1.1** — Remover `any` com Ollama via OpenCode*
+## 🔧 F2.5 — Correções Estruturais de Interface
+
+> Identificadas em sessão de validação pelo usuário em 12/04/2026.
+
+### F2.5.1 — Remover aba Orçamentista da navegação
+- **Status:** `[x]`
+- O Agente Orçamentista foi removido completamente do sistema.
+
+### F2.5.2 — Remoção da Barra de Filtros Global
+- **Status:** `[x]`
+- A barra de filtros secundária foi removida de todas as abas para simplificação da interface.
+- O sistema agora opera com foco total na **Obra Badidá**.
+- Sincronização Supabase validada.
+
+### F2.5.3 — Estado “Sem Obra Ativa”
+- **Status:** `[x]`
+- Quando não houver `obraId` configurado, o sistema exibe card neutro em todas as abas: *“Obra Pendente — Configure nas Configurações”*.
+
+### F2.5.4 — Config iniciar zerada
+- **Status:** `[x]`
+- Remover dados hardcoded do `defaultConfig`. Os campos só são preenchidos via `.env` (nunca exibidos diretamente) ou via importação JSON.
+
+### F2.5.5 — Arquitetura IA Maestra documentada no código
+- **Status:** `[x]`
+- Garantir que o fluxo Narrativa → IA Maestra → Distribuição para abas esteja documentado nos comentarios do código (AIAnalysis.tsx).
+
+---
+
+### Regra de ouro:
+> **Ollama** = tarefas mecânicas, sem custo, sem internet necessária  
+> **Minimax** = UI components, visual first  
+> **Gemini/Claude** = decisões de arquitetura, multi-arquivo, contexto pesado  
+> **OpenCode** = executa TUDO no sistema de arquivos
+
+---
+
+*Próxima tarefa a executar: **F2.5.1** — Remover aba Orçamentista + Corrigir filtros por aba*
