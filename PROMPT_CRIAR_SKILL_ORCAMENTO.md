@@ -11,6 +11,8 @@ Você vai criar uma **SKILL completa e autocontida** que será usada por gestore
 
 Esta skill será usada em conversas externas (outro chat do Claude) onde o gestor desenvolve o orçamento e, ao final, recebe um JSON pronto para importar no EVIS.
 
+Este fluxo pertence a um projeto separado do EVIS Obra. O orçamentista trabalha antes da operação da obra, em um núcleo externo, e entrega apenas o JSON final para importação.
+
 ---
 
 ## ARQUIVOS OBRIGATÓRIOS PARA CONSULTA
@@ -338,7 +340,7 @@ Etapas:
 ### FORMATO DE ENTREGA:
 
 ```
-skills/orcamento-evis/SKILL.md
+orcamentista/skills/orcamento-evis/SKILL.md
 ```
 
 ---
@@ -372,6 +374,8 @@ Antes de entregar a skill, verifique:
 2. Colar a skill
 3. Desenvolver orçamento conversando
 4. Receber JSON perfeito para importar no EVIS
+
+Em um projeto externo ao EVIS Obra, dentro da pasta dedicada ao orçamentista.
 
 **SEM precisar:**
 - Conhecer schema do banco

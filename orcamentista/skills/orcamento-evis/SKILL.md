@@ -1,6 +1,6 @@
 ---
 name: orcamento-evis
-description: Transforme orcamentos, propostas, planilhas, textos extraidos de PDF ou listas de servicos em JSON padronizado para importacao no EVIS. Use quando for necessario estruturar obra, equipes e servicos com IDs consistentes, categorias padrao, aliases e cronograma inicial, prontos para o fluxo CONFIG > Inicializar Projeto (JSON).
+description: Transforme orcamentos, propostas, planilhas, textos extraidos de PDF ou listas de servicos em JSON padronizado para importacao no EVIS. Use quando for necessario estruturar obra, equipes e servicos com IDs consistentes, categorias padrao, aliases e cronograma inicial, prontos para um fluxo externo de orcamentacao que acontece antes do EVIS Obra.
 ---
 
 # SKILL: Orcamento para EVIS
@@ -8,6 +8,11 @@ description: Transforme orcamentos, propostas, planilhas, textos extraidos de PD
 ## Objetivo
 
 Transformar um orcamento bruto em um JSON unico, valido e pronto para importacao no EVIS.
+
+Esta skill pertence a um fluxo externo ao EVIS Obra:
+- o gestor ou orcamentista usa esta skill antes da obra entrar em operacao
+- a skill nao depende do sistema EVIS estar aberto
+- a saida final serve como ponte entre o projeto de orcamentacao e o projeto EVIS Obra
 
 Gerar apenas estes blocos:
 - `obra`

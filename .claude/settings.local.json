@@ -63,7 +63,10 @@
       "Bash(taskkill //PID 12408 //F)",
       "Bash(code \"C:\\\\Users\\\\User\\\\Evis AI\\\\docs\\\\TEMPLATE_ORCAMENTO_COMPLETO_V3.json\")",
       "Bash(ls -la docs/*.md docs/*.sql)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(ls -la docs/TEMPLATE*.json docs/PROMPT_PADRONIZACAO_ORCAMENTO.md)"
     ]
   }
 }

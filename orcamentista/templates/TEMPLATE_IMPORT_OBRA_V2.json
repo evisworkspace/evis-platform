@@ -1,0 +1,242 @@
+{
+  "_meta": {
+    "versao": "2.0",
+    "data": "2026-04-15",
+    "fluxo": "Orçamento → JSON → Importar → Selecionar Obra → Gestor adiciona equipes"
+  },
+
+  "_instrucoes": {
+    "1": "Este JSON cria APENAS a obra e serviços",
+    "2": "Equipes, presença e diário são gerenciados DEPOIS pelo gestor",
+    "3": "Após importar: clicar no seletor de obras (canto superior) e selecionar",
+    "4": "Sistema carrega automaticamente os dados"
+  },
+
+  "obra": {
+    "id": "obra-badida-parkshoppingbarigui",
+    "nome": "Badida - ParkShopping Barigui",
+    "cliente": "Badida Restaurante",
+    "status": "ATIVA",
+    "data_inicio": "2026-02-15",
+    "data_fim": null,
+    "descricao": "Reforma completa dos salões 1 e 2 do restaurante Badida no ParkShopping Barigui"
+  },
+
+  "servicos": [
+    {
+      "id_servico": "SRV-001",
+      "nome": "Isolamento de Obra",
+      "categoria": "Preliminares",
+      "avanco_atual": 100,
+      "status": "concluido",
+      "data_prevista": "2026-02-20",
+      "data_conclusao": "2026-02-18"
+    },
+    {
+      "id_servico": "SRV-002",
+      "nome": "Desmobilização de Mobiliário — Salão 1",
+      "categoria": "Preliminares",
+      "avanco_atual": 100,
+      "status": "concluido",
+      "data_prevista": "2026-02-22",
+      "data_conclusao": "2026-02-21"
+    },
+    {
+      "id_servico": "SRV-003",
+      "nome": "Proteção de Piso e Esquadrias — Salão 1",
+      "categoria": "Preliminares",
+      "avanco_atual": 100,
+      "status": "concluido"
+    },
+    {
+      "id_servico": "SRV-004",
+      "nome": "Mobilização de Canteiro (andaimes) — Salão 1",
+      "categoria": "Preliminares",
+      "avanco_atual": 100,
+      "status": "concluido"
+    },
+    {
+      "id_servico": "SRV-005",
+      "nome": "Retirada de Elementos de Parede — Salão 1",
+      "categoria": "Demolições",
+      "avanco_atual": 100,
+      "status": "concluido"
+    },
+    {
+      "id_servico": "SRV-006",
+      "nome": "Retirada de Elementos de Teto — Salão 1",
+      "categoria": "Demolições",
+      "avanco_atual": 100,
+      "status": "concluido"
+    },
+    {
+      "id_servico": "SRV-007",
+      "nome": "PPCI — Estalonamento e Estrutura de Incêndio — Salão 1",
+      "categoria": "PPCI / Incêndio",
+      "avanco_atual": 100,
+      "status": "concluido"
+    },
+    {
+      "id_servico": "SRV-008",
+      "nome": "Desmontagem de Duto — AC — Salão 1",
+      "categoria": "Ar-condicionado",
+      "avanco_atual": 100,
+      "status": "concluido"
+    },
+    {
+      "id_servico": "SRV-009",
+      "nome": "Infraestrutura de Drenos — AC — Salão 1",
+      "categoria": "Ar-condicionado",
+      "avanco_atual": 90,
+      "status": "em_andamento"
+    },
+    {
+      "id_servico": "SRV-010",
+      "nome": "Infraestrutura Elétrica — Salão 1",
+      "categoria": "Elétrica",
+      "avanco_atual": 100,
+      "status": "concluido"
+    },
+    {
+      "id_servico": "SRV-011",
+      "nome": "Infraestrutura da Rede Frigorífica — Salão 1",
+      "categoria": "Ar-condicionado",
+      "avanco_atual": 100,
+      "status": "concluido"
+    },
+    {
+      "id_servico": "SRV-012",
+      "nome": "Tarugamento de Forro — Salão 1",
+      "categoria": "Drywall / Forro",
+      "avanco_atual": 100,
+      "status": "concluido"
+    },
+    {
+      "id_servico": "SRV-013",
+      "nome": "Fechamento de Forro (placas) — Salão 1",
+      "categoria": "Drywall / Forro",
+      "avanco_atual": 100,
+      "status": "concluido"
+    },
+    {
+      "id_servico": "SRV-014",
+      "nome": "PPCI — Instalação de Pontos + Regulagem — Salão 1",
+      "categoria": "PPCI / Incêndio",
+      "avanco_atual": 0,
+      "status": "a_executar"
+    },
+    {
+      "id_servico": "SRV-015",
+      "nome": "Emassamento / Lixamento / Preparação — Salão 1",
+      "categoria": "Pintura",
+      "avanco_atual": 100,
+      "status": "concluido"
+    },
+    {
+      "id_servico": "SRV-016",
+      "nome": "1ª Demão de Pintura — Salão 1",
+      "categoria": "Pintura",
+      "avanco_atual": 100,
+      "status": "concluido"
+    },
+    {
+      "id_servico": "SRV-017",
+      "nome": "Acabamentos Elétrica — Salão 1",
+      "categoria": "Elétrica",
+      "avanco_atual": 100,
+      "status": "concluido"
+    },
+    {
+      "id_servico": "SRV-018",
+      "nome": "Acabamentos AC — Salão 1",
+      "categoria": "Ar-condicionado",
+      "avanco_atual": 100,
+      "status": "concluido"
+    },
+    {
+      "id_servico": "SRV-019",
+      "nome": "Instalação de Equipamento AC (cassete) — Salão 1",
+      "categoria": "Ar-condicionado",
+      "avanco_atual": 100,
+      "status": "concluido"
+    },
+    {
+      "id_servico": "SRV-020",
+      "nome": "Mobiliário Planejado — Salão 1",
+      "categoria": "Marcenaria",
+      "avanco_atual": 0,
+      "status": "a_executar"
+    },
+    {
+      "id_servico": "SRV-021",
+      "nome": "Pintura Final — Salão 1",
+      "categoria": "Pintura",
+      "avanco_atual": 100,
+      "status": "concluido"
+    },
+    {
+      "id_servico": "SRV-022",
+      "nome": "Limpeza Pós-obra — Salão 1",
+      "categoria": "Limpeza",
+      "avanco_atual": 100,
+      "status": "concluido"
+    },
+    {
+      "id_servico": "SRV-023",
+      "nome": "Mobilização de Mobiliário — Salão 1",
+      "categoria": "Preliminares",
+      "avanco_atual": 100,
+      "status": "concluido"
+    },
+    {
+      "id_servico": "SRV-024",
+      "nome": "Isolamento — Salão 2",
+      "categoria": "Preliminares",
+      "avanco_atual": 100,
+      "status": "concluido"
+    },
+    {
+      "id_servico": "SRV-025",
+      "nome": "Desmobilização de Mobiliário — Salão 2",
+      "categoria": "Preliminares",
+      "avanco_atual": 0,
+      "status": "a_executar"
+    }
+  ],
+
+  "pendencias": [
+    {
+      "descricao": "Definir fornecedor de móveis planejados para Salão 1",
+      "prioridade": "alta",
+      "status": "ABERTA"
+    },
+    {
+      "descricao": "Agendar vistoria final PPCI com bombeiros",
+      "prioridade": "alta",
+      "status": "ABERTA"
+    }
+  ],
+
+  "_como_usar": {
+    "passo_1": "Copie este JSON completo",
+    "passo_2": "Vá em CONFIG → seção 'Inicializar Projeto (JSON)'",
+    "passo_3": "Cole o JSON no campo de texto",
+    "passo_4": "Clique em 'Processar e Inicializar'",
+    "passo_5": "Clique no seletor de obras (canto superior esquerdo)",
+    "passo_6": "Selecione 'Badida - ParkShopping Barigui'",
+    "passo_7": "Sistema carrega automaticamente todos os dados",
+    "passo_8": "Vá em EQUIPES → Adicionar equipes manualmente"
+  },
+
+  "_campos_obrigatorios": {
+    "obra": ["id", "nome"],
+    "servicos": ["id_servico", "nome"]
+  },
+
+  "_status_validos": {
+    "obra_status": ["ATIVA", "PAUSADA", "CONCLUIDA", "CANCELADA"],
+    "servico_status": ["nao_iniciado", "em_andamento", "concluido", "pausado"],
+    "pendencia_status": ["ABERTA", "EM_ANDAMENTO", "RESOLVIDA", "CANCELADA"],
+    "pendencia_prioridade": ["baixa", "media", "alta", "critica"]
+  }
+}
