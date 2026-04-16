@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia - Criar Obra de Teste</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        header {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        header h1 { font-size: 2.2em; margin-bottom: 10px; }
+        header p { font-size: 1.1em; opacity: 0.9; }
+        .content { padding: 40px; }
+        .step {
+            background: #f7fafc;
+            border-left: 4px solid #667eea;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        .step h2 {
+            color: #667eea;
+            font-size: 1.5em;
+            margin-bottom: 15px;
+        }
+        .step p {
+            color: #4a5568;
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+        .highlight {
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            border-left: 3px solid #48bb78;
+        }
+        .highlight strong {
+            color: #22543d;
+            font-size: 1.1em;
+        }
+        .code {
+            background: #2d3748;
+            color: #48bb78;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        .warning {
+            background: #fff5f5;
+            border-left: 4px solid #fc8181;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+        }
+        .info {
+            background: #ebf8ff;
+            border-left: 4px solid #4299e1;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .info h3 {
+            color: #2c5282;
+            margin-bottom: 10px;
+        }
+        ul {
+            margin-left: 25px;
+            line-height: 2;
+        }
+        .success {
+            background: #f0fff4;
+            border: 2px solid #48bb78;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .success h3 {
+            color: #22543d;
+            font-size: 1.4em;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏗️ Criar Obra de Teste</h1>
+            <p>Residência Modelo Completa</p>
+        </header>
+
+        <div class="content">
+            <div class="info">
+                <h3>📋 O que vamos criar:</h3>
+                <ul>
+                    <li><strong>Obra:</strong> Residência Modelo - Rua das Flores 123</li>
+                    <li><strong>5 Equipes:</strong> Construtora, Elétrica, Hidráulica, Pintura, Limpeza</li>
+                    <li><strong>10 Serviços:</strong> 5 concluídos, 2 em andamento, 3 a executar</li>
+                    <li><strong>Presença:</strong> Semana completa (10-14/03)</li>
+                    <li><strong>3 Diários:</strong> Narrativas realistas</li>
+                    <li><strong>4 Pendências:</strong> 2 abertas, 2 resolvidas</li>
+                    <li><strong>3 Notas:</strong> Observações e alertas</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <h2>Passo 1️⃣ - Abrir Supabase</h2>
+                <p>Acesse seu projeto Supabase:</p>
+                <div class="code">https://jwutiebpfauwzzltwgbb.supabase.co</div>
+                <p style="margin-top: 10px;">1. Clique em <strong>"SQL Editor"</strong> no menu lateral esquerdo</p>
+                <p>2. Clique em <strong>"New Query"</strong></p>
+            </div>
+
+            <div class="step">
+                <h2>Passo 2️⃣ - Copiar o Script SQL</h2>
+                <p>Abra o arquivo criado:</p>
+                <div class="code">C:\Users\User\Evis AI\criar-obra-teste.sql</div>
+                <p style="margin-top: 10px;">1. Abra o arquivo em um editor de texto (VSCode, Notepad++, etc)</p>
+                <p>2. Selecione TODO o conteúdo (Ctrl+A)</p>
+                <p>3. Copie (Ctrl+C)</p>
+            </div>
+
+            <div class="step">
+                <h2>Passo 3️⃣ - Executar no Supabase</h2>
+                <p>No SQL Editor do Supabase:</p>
+                <p>1. Cole o script (Ctrl+V)</p>
+                <p>2. Clique em <strong>"Run"</strong> (ou pressione Ctrl+Enter)</p>
+                <p>3. Aguarde a mensagem de sucesso ✅</p>
+
+                <div class="highlight">
+                    <strong>Resultado esperado:</strong><br>
+                    "✅ OBRA DE TESTE CRIADA COM SUCESSO!"<br>
+                    obra_id: residencia-modelo
+                </div>
+            </div>
+
+            <div class="step">
+                <h2>Passo 4️⃣ - Acessar a Obra no Sistema</h2>
+                <p>Volte para o localhost:3000</p>
+                <p>1. Clique na aba <strong>CONFIG</strong> (ícone de engrenagem)</p>
+                <p>2. Role até encontrar o campo <strong>"Obra ID"</strong></p>
+                <p>3. Digite: <code style="background:#edf2f7; padding:3px 8px; border-radius:4px;">residencia-modelo</code></p>
+                <p>4. Clique no botão azul <strong>"CARREGAR"</strong> no topo da página</p>
+            </div>
+
+            <div class="step">
+                <h2>Passo 5️⃣ - Explorar os Dados</h2>
+                <p>Navegue pelas abas para ver a obra funcionando:</p>
+
+                <div style="margin: 20px 0;">
+                    <p><strong>📖 DIÁRIO:</strong> 3 narrativas da semana 10-14/03</p>
+                    <p><strong>👥 EQUIPES:</strong> Matriz de presença semanal preenchida</p>
+                    <p><strong>📋 ORÇAMENTO:</strong> 10 serviços com status realistas</p>
+                    <p><strong>📅 CRONOGRAMA:</strong> Timeline de execução</p>
+                    <p><strong>📝 NOTAS:</strong> Observações e alertas</p>
+                </div>
+            </div>
+
+            <div class="success">
+                <h3>✅ Pronto para Testar!</h3>
+                <p style="color:#4a5568; margin-top:10px;">
+                    Agora você tem uma obra completa e funcional para comparar<br>
+                    com a obra "Badida" e entender como o sistema deve funcionar.
+                </p>
+            </div>
+
+            <div class="warning">
+                <h4 style="color:#c53030; margin-bottom:8px;">⚠️ Importante:</h4>
+                <p style="color:#742a2a; margin:0;">
+                    Esta é uma obra DE TESTE. Use-a para experimentar o sistema.<br>
+                    Para voltar para a obra Badida, troque o "Obra ID" de volta.
+                </p>
+            </div>
+
+            <div class="info" style="margin-top: 30px;">
+                <h3>🔄 Para voltar para a obra Badida:</h3>
+                <p style="color:#4a5568; margin-top:10px;">
+                    1. Vá em CONFIG<br>
+                    2. Troque "Obra ID" para o ID original da obra Badida<br>
+                    3. Clique em CARREGAR
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

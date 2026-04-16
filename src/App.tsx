@@ -167,7 +167,7 @@ function Main() {
         narrativas: Object.keys(newNarrativas).length > 0 ? newNarrativas : prev.narrativas,
         notas: notas.data || prev.notas,
         equipes: equipes.data || prev.equipes,
-        presenca: Object.keys(newPresenca).length > 0 ? newPresenca : prev.presenca,
+        presenca: newPresenca, // SEMPRE usa Supabase (mesmo vazio) - Supabase é fonte de verdade
         fotos: fotosData.data || prev.fotos,
       }));
     }

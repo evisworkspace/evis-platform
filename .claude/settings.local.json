@@ -44,7 +44,26 @@
       "Bash(python3 -m json.tool)",
       "Bash(curl -s http://localhost:3000)",
       "Bash(awk '{print $1, $2, $11, $12, $13}')",
-      "Bash(chmod +x \"C:\\\\Users\\\\User\\\\Evis AI\\\\start.sh\")"
+      "Bash(chmod +x \"C:\\\\Users\\\\User\\\\Evis AI\\\\start.sh\")",
+      "Bash(gh --version)",
+      "Bash(git config *)",
+      "Bash(gh auth *)",
+      "Bash(npm list *)",
+      "Bash(npm install *)",
+      "Bash(npm audit *)",
+      "Bash(npm uninstall *)",
+      "Bash(ls -lh docs/SESSAO_*.md)",
+      "Bash(findstr :3000)",
+      "Bash(findstr :3001)",
+      "Bash(taskkill /PID 6884 /F)",
+      "Bash(taskkill /PID 18348 /F)",
+      "Bash(taskkill /PID 12408 /F)",
+      "Bash(taskkill //PID 6884 //F)",
+      "Bash(taskkill //PID 18348 //F)",
+      "Bash(taskkill //PID 12408 //F)",
+      "Bash(code \"C:\\\\Users\\\\User\\\\Evis AI\\\\docs\\\\TEMPLATE_ORCAMENTO_COMPLETO_V3.json\")",
+      "Bash(ls -la docs/*.md docs/*.sql)",
+      "Bash(git add *)"
     ]
   }
 }

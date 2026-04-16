@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Limpar Presença - EVIS AI</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+        p {
+            color: #4a5568;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        button {
+            background: #e53e3e;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 20px;
+        }
+        button:hover { background: #c53030; transform: scale(1.05); }
+        button:active { transform: scale(0.95); }
+        .success {
+            background: #48bb78;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        .success.show { display: block; }
+        code {
+            background: #f7fafc;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #e53e3e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Limpar Dados de Presença</h1>
+        
+        <p><strong>Problema detectado:</strong></p>
+        <p>O <code>localStorage</code> está guardando presenças antigas das equipes <strong>Marcenaria</strong> e <strong>Limpeza</strong> nos dias <strong>09/03</strong> e <strong>10/03</strong>.</p>
+        
+        <p>Mesmo após desmarcar e sincronizar, ao recarregar a página os dados antigos voltam do cache local.</p>
+        
+        <p><strong>Esta ferramenta vai:</strong></p>
+        <ul style="margin-left: 20px; margin-bottom: 20px; line-height: 2;">
+            <li>Limpar APENAS os dados de presença (<code>presenca: {}</code>)</li>
+            <li>Manter todos os outros dados (equipes, serviços, configurações)</li>
+            <li>Forçar reload do sistema</li>
+        </ul>
+        
+        <button onclick="limparPresenca()">🗑️ Limpar Presença Agora</button>
+        
+        <div id="success" class="success">
+            ✅ <strong>Presença limpa com sucesso!</strong><br>
+            Recarregue o localhost:3000 para ver as mudanças.
+        </div>
+    </div>
+
+    <script>
+        function limparPresenca() {
+            try {
+                // Pega o state atual do localStorage
+                const stateRaw = localStorage.getItem('badida_state_v3');
+                
+                if (!stateRaw) {
+                    alert('Nenhum dado encontrado no localStorage!');
+                    return;
+                }
+                
+                // Parse o JSON
+                const state = JSON.parse(stateRaw);
+                
+                // Limpa APENAS a presença
+                state.presenca = {};
+                
+                // Salva de volta
+                localStorage.setItem('badida_state_v3', JSON.stringify(state));
+                
+                // Mostra mensagem de sucesso
+                document.getElementById('success').classList.add('show');
+                
+                // Aguarda 2 segundos e recarrega
+                setTimeout(() => {
+                    alert('Presença limpa! A página será recarregada.');
+                    window.location.reload();
+                }, 2000);
+                
+            } catch (error) {
+                alert('Erro ao limpar: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
