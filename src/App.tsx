@@ -17,6 +17,7 @@ import ConfigPage from './components/ConfigPage';
 import Cronograma from './components/Cronograma';
 
 import Login from './pages/Login';
+import OrcamentistaDashboard from './pages/Orcamentista/dashboard';
 import PortalCliente from './pages/PortalCliente';
 import { useAuth } from './hooks/useAuth';
 import { Loader2 } from 'lucide-react';
@@ -510,7 +511,10 @@ if (tablesToInvalidate.has('equipes_presenca')) {
 export default function App() {
   return (
     <AppProvider>
-      <Main />
+      <Routes>
+        <Route path="/orcamentista/dashboard" element={<OrcamentistaDashboard />} />
+        <Route path="*" element={<Main />} />
+      </Routes>
     </AppProvider>
   );
 }

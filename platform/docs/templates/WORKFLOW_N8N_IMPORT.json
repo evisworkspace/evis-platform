@@ -1,0 +1,143 @@
+{
+  "name": "Evis AI - WhatsApp com Fallback Gemini",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook-audio",
+        "options": {}
+      },
+      "name": "Webhook (Evolution API)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [100, 300],
+      "webhookId": "webhook-audio"
+    },
+    {
+      "parameters": {
+        "url": "={{$node[\"Webhook (Evolution API)\"].json[\"data\"][\"message\"][\"mediaUrl\"]}}",
+        "responseFormat": "file",
+        "options": {}
+      },
+      "name": "Download Áudio",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [300, 300]
+    },
+    {
+      "parameters": {
+        "model": "whisper-1",
+        "language": "pt",
+        "options": {}
+      },
+      "name": "OpenAI Whisper",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [500, 200],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "model": "gemini-1.5-pro",
+        "prompt": "Transcreva exatamente o que é dito neste áudio de obra, sem comentários adicionais.",
+        "options": {}
+      },
+      "name": "Gemini (Fallback)",
+      "type": "n8n-nodes-base.googleAi",
+      "typeVersion": 1,
+      "position": [500, 400]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "transcricao",
+              "value": "={{$node[\"OpenAI Whisper\"].json[\"text\"] || $node[\"Gemini (Fallback)\"].json[\"text\"]}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Consolidar Texto",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:3001/api/processar-diario",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "transcricao",
+              "value": "={{$json[\"transcricao\"]}}"
+            },
+            {
+              "name": "obra_id",
+              "value": "={{$node[\"Webhook (Evolution API)\"].json[\"data\"][\"instance\"]}}"
+            },
+            {
+              "name": "data_referencia",
+              "value": "={{$now}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Enviar para EVIS AI",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [950, 300]
+    }
+  ],
+  "connections": {
+    "Webhook (Evolution API)": {
+      "main": [
+        [
+          {
+            "node": "Download Áudio",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Áudio": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Whisper",
+            "index": 0
+          },
+          {
+            "node": "Gemini (Fallback)",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Whisper": {
+      "main": [
+        [
+          {
+            "node": "Consolidar Texto",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini (Fallback)": {
+      "main": [
+        [
+          {
+            "node": "Consolidar Texto",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

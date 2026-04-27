@@ -1,0 +1,38 @@
+{
+  "id": "MC-CIV-005",
+  "disciplina": "civil_execucao",
+  "titulo": "Preparo de base e impermeabilização não podem ser omitidos",
+  "objetivo": "Validar se o especialista lembra de preparação e impermeabilização quando o recorte enfatiza só o acabamento final.",
+  "entrada": {
+    "tipo": "memorial_area_molhada",
+    "fonte": "banheiro_area_servico",
+    "conteudo": "Memorial menciona revestimento cerâmico e piso final em áreas molhadas, mas não detalha explicitamente regularização de base nem impermeabilização."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Áreas molhadas sugerem serviços de preparo e impermeabilização como candidatos",
+      "Sem detalhe, esses itens não devem ser omitidos"
+    ],
+    "campos_obrigatorios": {
+      "itens_orcamentarios_candidatos": 2
+    },
+    "nao_pode_fazer": [
+      "Omitir impermeabilização",
+      "Omitir preparo de base",
+      "Transformar preparação implícita em quantitativo definitivo"
+    ]
+  },
+  "erros_proibidos": [
+    "omissao_critica",
+    "falso_negativo_preparo"
+  ],
+  "gatilhos_hitl": [
+    "Ausência de detalhe de sistema em área molhada"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "preparo_sinalizado": true,
+    "impermeabilizacao_sinalizada": true,
+    "nao_fechou_sem_base": true
+  }
+}

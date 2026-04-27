@@ -1,0 +1,40 @@
+{
+  "id": "MC-EST-001",
+  "disciplina": "estrutural",
+  "titulo": "Conflito de FCK em prancha estrutural",
+  "objetivo": "Validar se o especialista estrutural identifica conflito entre notas gerais e detalhe local sem assumir um lado silenciosamente.",
+  "entrada": {
+    "tipo": "trecho_documental",
+    "fonte": "PDF ou markdown derivado",
+    "conteudo": "Notas gerais indicam concreto C-30. Detalhe ampliado da laje indica C-35."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Existe conflito entre C-30 e C-35",
+      "O conflito precisa ser levado para HITL ou auditoria"
+    ],
+    "campos_obrigatorios": {
+      "conflitos": 1,
+      "perguntas_hitl": 1
+    },
+    "nao_pode_fazer": [
+      "Escolher C-30 sem justificar",
+      "Escolher C-35 sem justificar",
+      "Omitir o conflito"
+    ]
+  },
+  "erros_proibidos": [
+    "omissao_critica",
+    "inferencia_sem_lastro",
+    "conflito_nao_sinalizado"
+  ],
+  "gatilhos_hitl": [
+    "Conflito entre notas gerais e detalhe estrutural"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "conflito_sinalizado": true,
+    "pergunta_hitl_presente": true,
+    "escolha_silenciosa": false
+  }
+}

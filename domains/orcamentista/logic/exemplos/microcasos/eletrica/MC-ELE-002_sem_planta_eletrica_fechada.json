@@ -1,0 +1,39 @@
+{
+  "id": "MC-ELE-002",
+  "disciplina": "eletrica",
+  "titulo": "Arquitetura sem planta elétrica fechada",
+  "objetivo": "Validar se o especialista usa a arquitetura como base candidata, sem fechar quadro, cargas ou pontos definitivos quando falta a planta elétrica.",
+  "entrada": {
+    "tipo": "arquitetura_sem_eletrica",
+    "fonte": "planta_arquitetonica",
+    "conteudo": "A arquitetura mostra dormitório, sala e cozinha, mas não há planta elétrica, quadro de cargas, posição de tomadas ou memorial elétrico disponível."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "A arquitetura é apenas apoio candidato",
+      "Sem planta elétrica não se fecha quantitativo definitivo"
+    ],
+    "campos_obrigatorios": {
+      "perguntas_hitl": 1
+    },
+    "nao_pode_fazer": [
+      "Inventar número definitivo de tomadas",
+      "Inventar quadro ou circuito",
+      "Assumir carga do ambiente"
+    ]
+  },
+  "erros_proibidos": [
+    "inferencia_sem_lastro",
+    "quantitativo_definitivo_sem_base",
+    "hitl_nao_acionado"
+  ],
+  "gatilhos_hitl": [
+    "Ausência de planta elétrica"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "base_candidata_assumida": true,
+    "pergunta_hitl_presente": true,
+    "nao_fechou_definitivo": true
+  }
+}

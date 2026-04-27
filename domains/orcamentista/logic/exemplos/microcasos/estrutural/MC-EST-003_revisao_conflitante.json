@@ -1,0 +1,39 @@
+{
+  "id": "MC-EST-003",
+  "disciplina": "estrutural",
+  "titulo": "Revisão conflitante entre prancha antiga e atual",
+  "objetivo": "Validar se o especialista sinaliza conflito de revisão quando dois documentos estruturais divergirem em quantitativo ou detalhe crítico.",
+  "entrada": {
+    "tipo": "comparacao_documental",
+    "fonte": "prancha_revA_vs_revB",
+    "conteudo": "Prancha Rev A mostra viga V205 com seção 14x40. Prancha Rev B mostra viga V205 com seção 14x50. Não há nota de supersessão clara no recorte fornecido."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Existe divergência de revisão na viga V205",
+      "A seção não pode ser consolidada sem validação"
+    ],
+    "campos_obrigatorios": {
+      "conflitos": 1,
+      "perguntas_hitl": 1
+    },
+    "nao_pode_fazer": [
+      "Escolher 14x40 silenciosamente",
+      "Escolher 14x50 silenciosamente",
+      "Assumir que a revisão mais recente está correta sem evidência"
+    ]
+  },
+  "erros_proibidos": [
+    "conflito_nao_sinalizado",
+    "inferencia_sem_lastro",
+    "hitl_nao_acionado"
+  ],
+  "gatilhos_hitl": [
+    "Divergência de revisão sem supersessão comprovada"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "conflito_sinalizado": true,
+    "pergunta_hitl_presente": true
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "id": "MC-EST-002",
+  "disciplina": "estrutural",
+  "titulo": "Leitura do quadro resumo de armaduras",
+  "objetivo": "Validar se o especialista extrai corretamente pesos e bitolas de armadura de uma tabela estrutural sem inventar diâmetros ou pesos não informados.",
+  "entrada": {
+    "tipo": "tabela_estrutural",
+    "fonte": "quadro_resumo_aco",
+    "conteudo": "Resumo do aço: Ø5.0 = 6,1 kg; Ø8.0 = 11,4 kg; Ø10.0 = 15,5 kg; peso total sem perda = 33,0 kg; peso total com 10% = 36,3 kg."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Bitolas 5.0, 8.0 e 10.0 mm foram identificadas",
+      "Peso total sem perda e com perda foram separados"
+    ],
+    "campos_obrigatorios": {
+      "quantitativos_chave": 2,
+      "conflitos": 0,
+      "perguntas_hitl": 0
+    },
+    "nao_pode_fazer": [
+      "Inventar Ø12.5 mm",
+      "Misturar peso com e sem perda",
+      "Trocar kg por m ou un"
+    ]
+  },
+  "erros_proibidos": [
+    "quantitativo_errado",
+    "unidade_errada",
+    "campo_obrigatorio_ausente"
+  ],
+  "gatilhos_hitl": [],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "bitolas_corretas": true,
+    "peso_total_correto": true,
+    "unidade_em_kg": true
+  }
+}

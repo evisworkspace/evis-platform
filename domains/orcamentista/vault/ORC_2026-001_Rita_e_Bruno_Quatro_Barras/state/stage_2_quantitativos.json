@@ -1,0 +1,43 @@
+{
+  "_metadata": {
+    "etapa": "2_quantitativos",
+    "timestamp": "2026-04-22T21:42:35.924Z",
+    "version": "1.1",
+    "checksum": "JhbCI6OTV9"
+  },
+  "data": {
+    "itens": [
+      {
+        "codigo_nm": "1.1",
+        "equipe_id": "EQ-GEO-01",
+        "descricao": "Escavação mecanizada de valas para fundação",
+        "unidade": "m³",
+        "quantidade": 45.5,
+        "formula_aplicada": "Perímetro_baldrame × Altura_escavação × Largura_vala",
+        "origem": "CALCULADO",
+        "evidencia": {
+          "documento": "Folha 1.pdf",
+          "pagina_ou_detalhe": "Prancha 02 — Planta de Fundações",
+          "timestamp_extracao": "2026-04-22T21:42:35.924Z",
+          "confianca": 90
+        }
+      },
+      {
+        "codigo_nm": "1.2",
+        "equipe_id": "EQ-EST-01",
+        "descricao": "Armação CA-50 em blocos de fundação (Fck 25MPa)",
+        "unidade": "kg",
+        "quantidade": 230,
+        "formula_aplicada": "Peso_teórico_tabela_CA50 × coef_perda(1.10)",
+        "origem": "EXTRAIDO",
+        "evidencia": {
+          "documento": "Folha 1.pdf",
+          "pagina_ou_detalhe": "Tabela Resumo de Armação — Bloco A",
+          "timestamp_extracao": "2026-04-22T21:42:35.924Z",
+          "confianca": 100
+        }
+      }
+    ],
+    "confianca_geral": 95
+  }
+}

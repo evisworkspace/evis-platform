@@ -1,0 +1,18 @@
+[
+  {
+    "role": "user",
+    "parts": [
+      {
+        "text": "ola, temos agum levantamento ja realizado? [+2 arquivo(s)]"
+      }
+    ]
+  },
+  {
+    "role": "model",
+    "parts": [
+      {
+        "text": "Estou analisando os arquivos de projeto que você anexou. Por favor, aguarde enquanto eu processo as informações para realizar o levantamento inicial."
+      }
+    ]
+  }
+]

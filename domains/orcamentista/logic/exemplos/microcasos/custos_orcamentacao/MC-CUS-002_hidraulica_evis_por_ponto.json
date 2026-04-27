@@ -1,0 +1,35 @@
+{
+  "id": "MC-CUS-002",
+  "disciplina": "custos_orcamentacao",
+  "titulo": "Hidráulica residencial por ponto deve priorizar EVIS",
+  "objetivo": "Validar se o especialista de custos prioriza catálogo EVIS para ponto hidráulico residencial.",
+  "entrada": {
+    "tipo": "saida_disciplinar",
+    "fonte": "hidraulica_validada",
+    "conteudo": "Serviço validado: ponto de água fria residencial. O catálogo EVIS da empresa possui composição própria aderente."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Ponto hidráulico residencial deve priorizar EVIS",
+      "A saída deve registrar que é composição por ponto"
+    ],
+    "campos_obrigatorios": {
+      "itens_orcamentarios_candidatos": 1
+    },
+    "nao_pode_fazer": [
+      "Priorizar item genérico não aderente",
+      "Perder a origem EVIS"
+    ]
+  },
+  "erros_proibidos": [
+    "modelo_comercial_incorreto",
+    "origem_omitida"
+  ],
+  "gatilhos_hitl": [],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "evis_priorizado": true,
+    "modelo_por_ponto_preservado": true,
+    "origem_sinalizada": true
+  }
+}

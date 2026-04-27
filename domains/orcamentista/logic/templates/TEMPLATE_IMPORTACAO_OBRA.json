@@ -1,0 +1,222 @@
+{
+  "_comentario": "TEMPLATE OFICIAL DE IMPORTAÇÃO DE OBRA - VERSÃO 1.0",
+  "_data": "2026-04-15",
+  "_schema": "Baseado no mapeamento real do Supabase",
+  "_fluxo": "Orçamento → JSON → Importação → Obra",
+
+  "obra": {
+    "id": "obra-exemplo-2026",
+    "nome": "Reforma Comercial - Loja ABC",
+    "cliente": "João Silva Ltda",
+    "status": "ATIVA",
+    "data_inicio": "2026-03-01",
+    "data_fim": null,
+    "descricao": "Reforma completa de loja comercial com 200m²"
+  },
+
+  "equipes": [
+    {
+      "cod": "EQ-OBR-01",
+      "nome": "Construtora Silva & Filhos",
+      "funcao": "Alvenaria e Estrutura",
+      "telefone": "(41) 99999-0001",
+      "email": "contato@silva.com.br",
+      "pix": "12345678901",
+      "contato": "José Silva",
+      "status": "ativo",
+      "ativo": true,
+      "aliases": ["silva", "construtora", "pedreiro"]
+    },
+    {
+      "cod": "EQ-ELET-01",
+      "nome": "Eletrotécnica Luz do Sul",
+      "funcao": "Instalações Elétricas",
+      "telefone": "(41) 99999-0002",
+      "email": "luz@eletrica.com",
+      "pix": "luz@eletrica.com",
+      "contato": "Carlos Elétrico",
+      "status": "ativo",
+      "ativo": true,
+      "aliases": ["luz", "eletrica", "eletricista"]
+    }
+  ],
+
+  "servicos": [
+    {
+      "id_servico": "SRV-001",
+      "nome": "Demolição de Paredes Internas",
+      "categoria": "Demolição",
+      "avanco_atual": 100,
+      "status": "concluido",
+      "equipe": "EQ-OBR-01",
+      "responsavel": "José Silva",
+      "data_prevista": "2026-03-05",
+      "data_conclusao": "2026-03-04",
+      "aliases": ["demolir", "quebrar parede", "retirar parede"]
+    },
+    {
+      "id_servico": "SRV-002",
+      "nome": "Instalação Elétrica Nova",
+      "categoria": "Elétrica",
+      "avanco_atual": 60,
+      "status": "em_andamento",
+      "equipe": "EQ-ELET-01",
+      "responsavel": "Carlos Elétrico",
+      "data_prevista": "2026-03-20",
+      "data_conclusao": null,
+      "aliases": ["eletrica", "fiação", "pontos de luz"]
+    },
+    {
+      "id_servico": "SRV-003",
+      "nome": "Pintura Interna Geral",
+      "categoria": "Pintura",
+      "avanco_atual": 0,
+      "status": "nao_iniciado",
+      "equipe": null,
+      "responsavel": null,
+      "data_prevista": "2026-04-10",
+      "data_conclusao": null,
+      "aliases": ["pintar", "pintura", "massa corrida"]
+    }
+  ],
+
+  "presenca": [
+    {
+      "equipe_cod": "EQ-OBR-01",
+      "data_presenca": "2026-03-10",
+      "quantidade": 3
+    },
+    {
+      "equipe_cod": "EQ-OBR-01",
+      "data_presenca": "2026-03-11",
+      "quantidade": 3
+    },
+    {
+      "equipe_cod": "EQ-ELET-01",
+      "data_presenca": "2026-03-11",
+      "quantidade": 2
+    }
+  ],
+
+  "diario": [
+    {
+      "transcricao": "Dia 10/03 - Equipe de obra iniciou demolição das paredes antigas. Trabalho fluiu bem, sem intercorrências. Previsão de conclusão amanhã.",
+      "created_at": "2026-03-10T17:00:00Z"
+    },
+    {
+      "transcricao": "Dia 11/03 - Demolição concluída. Eletricista iniciou passagem de eletrodutos. Equipe de obra limpou entulho.",
+      "created_at": "2026-03-11T18:00:00Z"
+    }
+  ],
+
+  "notas": [
+    {
+      "tipo": "observacao",
+      "texto": "Cliente solicitou mudança de cor da pintura - de branco para bege claro",
+      "autor": "Engenheiro João",
+      "data_nota": "2026-03-11T10:00:00Z"
+    },
+    {
+      "tipo": "alerta",
+      "texto": "ATENÇÃO: Verificar se a carga elétrica suporta novos pontos antes de ligar",
+      "autor": "Carlos Elétrico",
+      "data_nota": "2026-03-11T15:00:00Z"
+    }
+  ],
+
+  "pendencias": [
+    {
+      "descricao": "Comprar 10 sacos de cimento para reboco",
+      "prioridade": "alta",
+      "status": "ABERTA"
+    },
+    {
+      "descricao": "Agendar vistoria da concessionária de energia",
+      "prioridade": "media",
+      "status": "ABERTA"
+    }
+  ],
+
+  "fotos": [
+    {
+      "url": "https://i.ibb.co/exemplo1.jpg",
+      "ambiente": "Sala Principal",
+      "legenda": "Estado inicial - antes da demolição",
+      "data_foto": "2026-03-09T14:00:00Z"
+    },
+    {
+      "url": "https://i.ibb.co/exemplo2.jpg",
+      "ambiente": "Sala Principal",
+      "legenda": "Após demolição - paredes retiradas",
+      "data_foto": "2026-03-10T16:00:00Z"
+    }
+  ],
+
+  "_mapeamento_de_campos": {
+    "obras": {
+      "OBRIGATORIOS": ["id", "nome"],
+      "OPCIONAIS": ["cliente", "status", "data_inicio", "data_fim", "descricao"],
+      "NAO_TEM": ["endereco", "responsavel_tecnico"]
+    },
+    "servicos": {
+      "OBRIGATORIOS": ["id_servico", "nome"],
+      "OPCIONAIS": ["categoria", "avanco_atual", "status", "equipe", "responsavel", "data_prevista", "data_conclusao", "aliases"],
+      "DEFAULTS": {
+        "avanco_atual": 0,
+        "status": "nao_iniciado"
+      }
+    },
+    "equipes_cadastro": {
+      "OBRIGATORIOS": ["cod", "nome"],
+      "OPCIONAIS": ["funcao", "telefone", "email", "pix", "contato", "obs_obras", "status", "ativo", "aliases"],
+      "DEFAULTS": {
+        "ativo": true
+      }
+    },
+    "equipes_presenca": {
+      "OBRIGATORIOS": ["equipe_cod", "data_presenca"],
+      "OPCIONAIS": ["quantidade"],
+      "DEFAULTS": {
+        "quantidade": 1
+      },
+      "NAO_TEM": ["dia"]
+    },
+    "diario_obra": {
+      "OBRIGATORIOS": [],
+      "OPCIONAIS": ["transcricao", "created_at"],
+      "NAO_TEM": ["narrativa"]
+    },
+    "notas": {
+      "OBRIGATORIOS": [],
+      "OPCIONAIS": ["tipo", "texto", "autor", "data_nota"]
+    },
+    "pendencias": {
+      "OBRIGATORIOS": ["descricao"],
+      "OPCIONAIS": ["prioridade", "status"],
+      "DEFAULTS": {
+        "prioridade": "media",
+        "status": "ABERTA"
+      }
+    },
+    "fotos": {
+      "OBRIGATORIOS": ["url"],
+      "OPCIONAIS": ["ambiente", "legenda", "data_foto"]
+    }
+  },
+
+  "_instrucoes_de_uso": {
+    "1": "Preencher todos os campos obrigatórios",
+    "2": "Usar status padronizados (veja _opcoes_validas abaixo)",
+    "3": "Datas no formato ISO 8601 (YYYY-MM-DD ou YYYY-MM-DDTHH:MM:SSZ)",
+    "4": "IDs únicos e consistentes (ex: obra-nome-ano, SRV-001, EQ-TIPO-01)",
+    "5": "Executar importação via ConfigPage → 'Inicializar Projeto (JSON)'"
+  },
+
+  "_opcoes_validas": {
+    "obras.status": ["ATIVA", "PAUSADA", "CONCLUIDA", "CANCELADA"],
+    "servicos.status": ["nao_iniciado", "em_andamento", "concluido", "pausado"],
+    "pendencias.status": ["ABERTA", "EM_ANDAMENTO", "RESOLVIDA", "CANCELADA"],
+    "pendencias.prioridade": ["baixa", "media", "alta", "critica"],
+    "notas.tipo": ["observacao", "alerta", "importante", "lembrete"]
+  }
+}

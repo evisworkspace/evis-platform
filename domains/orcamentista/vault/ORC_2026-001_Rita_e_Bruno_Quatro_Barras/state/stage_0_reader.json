@@ -1,0 +1,62 @@
+{
+  "_metadata": {
+    "etapa": "0_reader",
+    "timestamp": "2026-04-22T21:42:16.859Z",
+    "version": "1.1",
+    "checksum": "oyMTB9fQ=="
+  },
+  "data": {
+    "revisao_registry_id": "registry_1776894124534",
+    "documentos": [
+      {
+        "nome": "Folha 1.pdf",
+        "tipo": "arquitetonico",
+        "revisao": "R0",
+        "hash_conteudo": "c81512ffd119",
+        "achados_criticos": [
+          "Implantação escala 1:150",
+          "Planta - Pavimento térreo escala 1:50",
+          "Planta - Cobertura escala 1:50",
+          "Telha metálica sanduíche (isotelha trapezoidal)",
+          "Inclinação de telhado 10%",
+          "Área construída térreo: 106.00 m²",
+          "Área construída superior: 104.00 m²",
+          "Área total construída: 210.00 m²",
+          "Área permeável: 100.00 m²",
+          "Área total do lote: 400.00 m²",
+          "Taxa de ocupação: 26.50%",
+          "Coeficiente de aproveitamento: 0.52",
+          "Taxa de permeabilidade: 25.00%",
+          "Recuo frontal: 5.00 m",
+          "Recuo lateral: 1.50 m",
+          "Recuo fundos: 1.50 m",
+          "Altura máxima: 7.00 m",
+          "Número de pavimentos: 2",
+          "Vagas de estacionamento: 2",
+          "Uso: Residencial unifamiliar",
+          "Ambientes: Dormitório 1, Dormitório 2, Dormitório 3, Banheiro 1, Banheiro 2, Escritório, Sala de Estar, Cozinha, Lavanderia, Varanda"
+        ]
+      },
+      {
+        "nome": "Folha 2.pdf",
+        "tipo": "arquitetonico",
+        "revisao": "R0",
+        "hash_conteudo": "779d3ce3a7b2",
+        "achados_criticos": [
+          "Fachada Norte escala 1:50",
+          "Fachada Leste escala 1:50",
+          "Fachada Sul escala 1:50",
+          "Fachada Oeste escala 1:50",
+          "Corte BB escala 1:50",
+          "Corte AA escala 1:50",
+          "Corte CC escala 1:50",
+          "Corte DD escala 1:50",
+          "Níveis de piso: 0.00, 0.18, 0.36, 3.43"
+        ]
+      }
+    ],
+    "contexto_geral": {
+      "area_total": 210
+    }
+  }
+}

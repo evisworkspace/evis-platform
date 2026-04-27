@@ -1,0 +1,35 @@
+{
+  "id": "MC-ELE-004",
+  "disciplina": "eletrica",
+  "titulo": "Separar pontos especiais de pontos comuns",
+  "objetivo": "Validar se o especialista isola dados, CFTV, interfone e portão de pontos elétricos comuns.",
+  "entrada": {
+    "tipo": "planta_eletrica",
+    "fonte": "garagem_fachada_sala",
+    "conteudo": "A planta indica 1 ponto de interfone na entrada, 2 pontos de CFTV na fachada, 1 espera para motor de portão e 2 TUG na garagem."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Pontos especiais devem aparecer separados dos TUG",
+      "Infraestrutura especial não pode ser colapsada com tomada comum"
+    ],
+    "campos_obrigatorios": {
+      "itens_orcamentarios_candidatos": 2
+    },
+    "nao_pode_fazer": [
+      "Somar CFTV com TUG",
+      "Tratar interfone como tomada comum",
+      "Omitir espera de portão"
+    ]
+  },
+  "erros_proibidos": [
+    "mistura_de_tipos",
+    "omissao_critica"
+  ],
+  "gatilhos_hitl": [],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "pontos_especiais_sinalizados": true,
+    "tug_nao_misturado": true
+  }
+}

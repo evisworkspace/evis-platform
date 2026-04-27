@@ -1,0 +1,34 @@
+{
+  "id": "MC-CIV-001",
+  "disciplina": "civil_execucao",
+  "titulo": "Forro com área líquida e não área bruta",
+  "objetivo": "Validar se o especialista evita medir forro por área bruta quando o recorte indica vazios ou trechos não executáveis.",
+  "entrada": {
+    "tipo": "arquitetura_com_recorte",
+    "fonte": "forro_sala",
+    "conteudo": "Sala com área bruta de 28 m², porém há vazio de pé-direito duplo de 8 m² sem forro. O projeto indica forro apenas no perímetro executável."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "A medição do forro deve considerar a área executável",
+      "A área bruta não pode ser aplicada cegamente"
+    ],
+    "campos_obrigatorios": {
+      "quantitativos_chave": 1
+    },
+    "nao_pode_fazer": [
+      "Fechar forro em 28 m²",
+      "Ignorar o vazio sem forro"
+    ]
+  },
+  "erros_proibidos": [
+    "medicao_area_errada",
+    "omissao_critica"
+  ],
+  "gatilhos_hitl": [],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "area_liquida_sinalizada": true,
+    "nao_usou_area_bruta_cega": true
+  }
+}

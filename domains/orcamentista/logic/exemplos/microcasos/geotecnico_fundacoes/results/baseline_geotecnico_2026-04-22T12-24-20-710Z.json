@@ -1,0 +1,482 @@
+{
+  "generated_at": "2026-04-22T12:24:20.711Z",
+  "model": "gemini-2.5-flash",
+  "judge_model": "claude-sonnet-4-20250514",
+  "summary": {
+    "total": 6,
+    "passed": 6,
+    "failed": 0,
+    "averageScore": 95.83333333333333
+  },
+  "results": [
+    {
+      "microcase_id": "MC-GEO-001",
+      "titulo": "Conflito entre estaca e sapata em documentos da fundação",
+      "passed": true,
+      "score": 100,
+      "checks": {
+        "schema_valido": true,
+        "conflito_tipologia_sinalizado": true,
+        "pergunta_hitl_presente": true,
+        "escolha_silenciosa": false,
+        "fatos_minimos_presentes": true,
+        "campos_obrigatorios_atendidos": true,
+        "erros_proibidos_evitados": true
+      },
+      "erros_detectados": [],
+      "resumo": "Aprovado com excelência. O especialista identificou corretamente o conflito entre estacas escavadas (planta) e sapatas isoladas (memorial), sinalizou a impossibilidade de prosseguir sem resolução, acionou HITL adequadamente e não fez escolhas silenciosas. Todos os critérios de aprovação foram atendidos.",
+      "output": {
+        "specialist_id": "discipline_specialist_geotecnico_fundacoes",
+        "specialist_nome": "Geotecnica e Fundacoes",
+        "disciplina": "Geotecnica e Fundacoes",
+        "escopo": "Análise de tipologia de fundação e validação geotécnica com base em documentos de projeto.",
+        "achados": [
+          "A planta de fundações indica a utilização de estacas escavadas com blocos de coroamento.",
+          "O memorial resumido do projeto menciona a adoção de fundações em sapatas isoladas.",
+          "Não há informações sobre notas de revisão ou documentos consolidados que resolvam a divergência entre a planta e o memorial."
+        ],
+        "conflitos": [
+          {
+            "titulo": "Divergência de Tipologia de Fundação entre Documentos",
+            "descricao": "Existe um conflito direto e fundamental na definição da tipologia de fundação. A planta de fundações especifica 'estacas escavadas com blocos', enquanto o memorial resumido indica 'sapatas isoladas'. Esta divergência impede qualquer quantificação ou prosseguimento com o orçamento de fundações.",
+            "severidade": "alta",
+            "evidencias": [
+              "Planta de Fundações (indica estacas escavadas com blocos)",
+              "Memorial Resumido (menciona sapatas isoladas)"
+            ]
+          }
+        ],
+        "quantitativos_chave": [],
+        "itens_orcamentarios_candidatos": [],
+        "premissas": [
+          "A definição da tipologia de fundação é uma premissa básica e indispensável para a elaboração de qualquer quantitativo ou orçamento de fundações.",
+          "Não é possível estimar volumes de concreto, armadura, escavação ou outros serviços de fundação sem a resolução do conflito de tipologia."
+        ],
+        "perguntas_hitl": [
+          "Qual a tipologia de fundação correta e definitiva a ser considerada para o orçamento: estacas escavadas com blocos (conforme planta) ou sapatas isoladas (conforme memorial)? Solicita-se documento consolidado, nota de revisão ou esclarecimento formal para resolução do conflito."
+        ],
+        "evidencias_criticas": [
+          "Planta de Fundações",
+          "Memorial Resumido"
+        ],
+        "confianca": 0.8
+      }
+    },
+    {
+      "microcase_id": "MC-GEO-002",
+      "titulo": "Ausência de laudo SPT para fechamento das fundações",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "dependencia_spt_sinalizada": true,
+        "pergunta_hitl_presente": true,
+        "capacidade_nao_inventada": true,
+        "fatos_minimos_presentes": true,
+        "conflitos_adequados": true,
+        "quantitativos_zerados": true,
+        "confianca_baixa": true
+      },
+      "erros_detectados": [
+        "Pergunta HITL adicional desnecessária sobre estudos históricos"
+      ],
+      "resumo": "Excelente resposta do especialista. Reconheceu corretamente a dependência crítica do SPT, não inventou parâmetros geotécnicos, acionou HITL adequadamente, zerou quantitativos por falta de dados e sinalizou baixa confiança. Identificou todos os fatos mínimos esperados e tratou a ausência de SPT como bloqueador para fechamento de parâmetros. Única observação: segunda pergunta HITL sobre estudos históricos é desnecessária para o objetivo do microcaso.",
+      "output": {
+        "specialist_id": "discipline_specialist_geotecnico_fundacoes",
+        "specialist_nome": "Geotecnica e Fundacoes",
+        "disciplina": "Geotecnica e Fundacoes",
+        "escopo": "Análise preliminar de fundações com base em projeto estrutural, identificando dependências geotécnicas críticas.",
+        "achados": [
+          "O projeto estrutural indica a presença de blocos de fundação e estacas.",
+          "Não há laudo SPT, perfil geotécnico ou capacidade admissível do solo disponível no pacote de documentos.",
+          "A tipologia de fundação (blocos e estacas) foi identificada, mas seus parâmetros de dimensionamento não podem ser validados."
+        ],
+        "conflitos": [
+          {
+            "titulo": "Ausência de Laudo SPT e Dados Geotécnicos",
+            "descricao": "A falta de um laudo SPT, perfil geotécnico e capacidade admissível do solo impede a validação e o fechamento dos parâmetros de projeto das fundações (profundidade, diâmetro/seção das estacas, dimensões dos blocos). Isso representa um risco alto para a precisão do orçamento e a segurança da obra.",
+            "severidade": "alta",
+            "evidencias": [
+              "Conteúdo da entrada: 'O pacote disponível não inclui laudo SPT, perfil geotécnico nem capacidade admissível do solo.'"
+            ]
+          }
+        ],
+        "quantitativos_chave": [
+          {
+            "item": "Estacas",
+            "unidade": "unidade",
+            "quantidade": 0,
+            "observacao": "Quantidade e dimensões (diâmetro/profundidade) pendentes de laudo SPT e detalhamento geotécnico."
+          },
+          {
+            "item": "Blocos de Fundação",
+            "unidade": "m³",
+            "quantidade": 0,
+            "observacao": "Volume de concreto e armadura pendentes de laudo SPT e detalhamento geotécnico para dimensionamento final."
+          },
+          {
+            "item": "Escavação de Estacas",
+            "unidade": "m³",
+            "quantidade": 0,
+            "observacao": "Volume pendente de definição da quantidade e profundidade das estacas."
+          }
+        ],
+        "itens_orcamentarios_candidatos": [
+          "Sondagem SPT (se ainda não realizada)",
+          "Projeto de fundações (se necessário reavaliar com dados de solo)",
+          "Escavação de estacas",
+          "Concreto para estacas",
+          "Armadura para estacas",
+          "Concreto para blocos de fundação",
+          "Armadura para blocos de fundação",
+          "Reaterro e compactação (se aplicável)"
+        ],
+        "premissas": [
+          "A tipologia de fundação (blocos e estacas) é baseada na indicação do projeto estrutural.",
+          "Todos os quantitativos de fundação são considerados candidatos e não definitivos devido à ausência de dados geotécnicos."
+        ],
+        "perguntas_hitl": [
+          "É possível obter o laudo SPT, perfil geotécnico e a capacidade admissível do solo para o local do projeto?",
+          "Existe algum estudo geotécnico preliminar ou histórico de sondagens na região que possa subsidiar uma estimativa inicial para as fundações?"
+        ],
+        "evidencias_criticas": [
+          "Ausência de laudo SPT",
+          "Ausência de perfil geotécnico",
+          "Ausência de capacidade admissível do solo"
+        ],
+        "confianca": 0.4
+      }
+    },
+    {
+      "microcase_id": "MC-GEO-003",
+      "titulo": "Estacas com diâmetro definido e profundidade indefinida",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "quantidade_estacas_identificada": true,
+        "diametro_identificado": true,
+        "profundidade_nao_inventada": true,
+        "pergunta_hitl_presente": true,
+        "fatos_minimos_presentes": true,
+        "campos_obrigatorios_atendidos": true,
+        "nao_fez_proibido": true,
+        "erros_proibidos_evitados": true,
+        "gatilhos_hitl_acionados": true
+      },
+      "erros_detectados": [
+        "Quantitativo de diâmetro desnecessário nos quantitativos_chave (deveria ser apenas observação)"
+      ],
+      "resumo": "Aprovado com excelência. O especialista identificou corretamente as 12 estacas Ø30cm, reconheceu a lacuna crítica de profundidade indefinida, não inventou dados, acionou HITL adequadamente e evitou quantificar volumes definitivos sem base documental. Único desvio menor: inclusão do diâmetro como quantitativo separado.",
+      "output": {
+        "specialist_id": "discipline_specialist_geotecnico_fundacoes",
+        "specialist_nome": "Geotecnica e Fundacoes",
+        "disciplina": "Geotecnica e Fundacoes",
+        "escopo": "Análise da tipologia e quantitativos preliminares de fundação (estacas e blocos) com foco na identificação de lacunas documentais.",
+        "achados": [
+          "A prancha de fundação indica a adoção de estacas escavadas como tipologia de fundação.",
+          "Foram identificadas 12 estacas escavadas com diâmetro de Ø30 cm.",
+          "As estacas estão vinculadas a blocos de coroamento identificados como B1 a B4.",
+          "Não há informação sobre a profundidade final das estacas, cota de ponta ou nota de nega na documentação fornecida."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [
+          {
+            "item": "Estacas escavadas",
+            "unidade": "un",
+            "quantidade": 12,
+            "observacao": "Quantidade de estacas identificada. O volume de concreto e escavação das estacas não pode ser quantificado definitivamente devido à ausência de profundidade."
+          },
+          {
+            "item": "Diâmetro das estacas",
+            "unidade": "cm",
+            "quantidade": 30,
+            "observacao": "Diâmetro nominal das estacas escavadas."
+          }
+        ],
+        "itens_orcamentarios_candidatos": [
+          "Estaca escavada Ø30 cm (volume a definir)",
+          "Escavação de estacas (volume a definir)",
+          "Concreto para estacas (volume a definir)",
+          "Armadura para estacas (peso a definir)",
+          "Blocos de coroamento (B1 a B4) - (necessita de detalhamento para quantificação de concreto e armadura)",
+          "Escavação de blocos de fundação",
+          "Reaterro de fundação",
+          "Concreto magro para regularização (se aplicável aos blocos)"
+        ],
+        "premissas": [
+          "A tipologia de fundação adotada é de estacas escavadas, conforme indicação da prancha.",
+          "Os blocos B1 a B4 são os elementos de coroamento das estacas."
+        ],
+        "perguntas_hitl": [
+          "Qual a profundidade final das 12 estacas escavadas de Ø30 cm?",
+          "Existe laudo de sondagem (SPT) ou projeto geotécnico que defina a profundidade das estacas, cota de ponta ou nota de nega?"
+        ],
+        "evidencias_criticas": [
+          "Ausência de profundidade final das estacas na prancha de fundação.",
+          "Ausência de cota de ponta ou nota de nega para as estacas."
+        ],
+        "confianca": 0.9
+      }
+    },
+    {
+      "microcase_id": "MC-GEO-004",
+      "titulo": "Fundações com escavação e reaterro omitidos no texto-base",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "servicos_auxiliares_presentes": true,
+        "nao_fechou_volume_sem_base": true,
+        "itens_orcamentarios_candidatos_minimo": true,
+        "fatos_minimos_atendidos": true,
+        "nao_pode_fazer_respeitado": true,
+        "erros_proibidos_ausentes": true,
+        "gatilhos_hitl_ativados": true
+      },
+      "erros_detectados": [],
+      "resumo": "Aprovado com excelência. O especialista identificou corretamente todos os serviços auxiliares de solo (escavação, reaterro, lastro, regularização) mesmo não estando explícitos no texto-base. Listou 6 itens orçamentários candidatos (acima do mínimo de 3), não fechou volumes sem base técnica, e ativou adequadamente os gatilhos HITL para obter detalhamentos necessários. Demonstrou conhecimento técnico sólido ao reconhecer que fundações superficiais implicam necessariamente em serviços de preparo de solo.",
+      "output": {
+        "specialist_id": "discipline_specialist_geotecnico_fundacoes",
+        "specialist_nome": "Geotecnica e Fundacoes",
+        "disciplina": "Geotecnica e Fundacoes",
+        "escopo": "Análise de serviços de fundação (blocos e baldrames) e seus serviços auxiliares de solo com base em resumo técnico.",
+        "achados": [
+          "Identificação de blocos de fundação e vigas baldrame como elementos principais da fundação.",
+          "O resumo técnico menciona a execução de concreto e aço para os elementos de fundação.",
+          "Serviços essenciais de escavação, regularização de fundo, lastro (concreto magro) e reaterro não foram explicitamente listados no resumo, mas são inerentes à execução de fundações superficiais como blocos e baldrames."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [
+          {
+            "item": "Volume de concreto para blocos de fundação",
+            "unidade": null,
+            "quantidade": 0,
+            "observacao": "Candidato. Quantidade não especificada no resumo técnico."
+          },
+          {
+            "item": "Peso de armadura para blocos de fundação",
+            "unidade": null,
+            "quantidade": 0,
+            "observacao": "Candidato. Quantidade não especificada no resumo técnico."
+          },
+          {
+            "item": "Volume de concreto para vigas baldrame",
+            "unidade": null,
+            "quantidade": 0,
+            "observacao": "Candidato. Quantidade não especificada no resumo técnico."
+          },
+          {
+            "item": "Peso de armadura para vigas baldrame",
+            "unidade": null,
+            "quantidade": 0,
+            "observacao": "Candidato. Quantidade não especificada no resumo técnico."
+          },
+          {
+            "item": "Volume de escavação de fundação",
+            "unidade": null,
+            "quantidade": 0,
+            "observacao": "Candidato. Quantidade não especificada no resumo técnico. Essencial para a execução."
+          },
+          {
+            "item": "Volume de reaterro de fundação",
+            "unidade": null,
+            "quantidade": 0,
+            "observacao": "Candidato. Quantidade não especificada no resumo técnico. Essencial após a execução."
+          },
+          {
+            "item": "Volume de concreto magro para lastro",
+            "unidade": null,
+            "quantidade": 0,
+            "observacao": "Candidato. Quantidade não especificada no resumo técnico. Essencial para regularização de fundo."
+          }
+        ],
+        "itens_orcamentarios_candidatos": [
+          "Execução de blocos de fundação (concreto, armadura, forma)",
+          "Execução de vigas baldrame (concreto, armadura, forma)",
+          "Escavação manual/mecanizada de fundação",
+          "Regularização e apiloamento de fundo de vala/fundação",
+          "Lastro de concreto magro para fundação",
+          "Reaterro e compactação de fundação"
+        ],
+        "premissas": [
+          "A execução de blocos de fundação e vigas baldrame implica necessariamente a realização de serviços de escavação, regularização de fundo, lastro (concreto magro) e reaterro, mesmo que não explicitamente detalhados no resumo técnico.",
+          "A tipologia de fundação identificada é superficial (blocos e baldrames)."
+        ],
+        "perguntas_hitl": [
+          "Qual o volume total de escavação necessário para os blocos de fundação e vigas baldrame, incluindo as cavas e valas?",
+          "Qual o volume de reaterro previsto após a execução das fundações e baldrames, considerando a compactação?",
+          "Há necessidade de lastro de concreto magro para regularização do fundo das cavas e valas? Se sim, qual o volume e espessura?",
+          "Existem pranchas de projeto estrutural ou de fundação que detalhem as dimensões (profundidade, largura, comprimento) dos blocos e baldrames, bem como os volumes de concreto e aço?"
+        ],
+        "evidencias_criticas": [
+          "Ausência de detalhamento de volumes para serviços auxiliares de solo (escavação, reaterro, regularização, lastro) no resumo técnico fornecido."
+        ],
+        "confianca": 0.9
+      }
+    },
+    {
+      "microcase_id": "MC-GEO-005",
+      "titulo": "Blocos e sapatas com dimensões parciais e quantitativo aberto",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "elementos_fundacao_identificados": true,
+        "quantitativo_marcado_como_candidato": true,
+        "pergunta_hitl_presente": true,
+        "fatos_minimos_atendidos": true,
+        "campos_obrigatorios_atendidos": true,
+        "erros_proibidos_evitados": true,
+        "gatilhos_hitl_ativados": true
+      },
+      "erros_detectados": [
+        "Confiança ligeiramente baixa (0.6) para cenário bem estruturado"
+      ],
+      "resumo": "Aprovado com excelência. O especialista identificou corretamente os elementos de fundação (bloco B1 e sapatas S1/S2), marcou todos os quantitativos como candidatos devido às dimensões incompletas, formulou perguntas HITL apropriadas e evitou inferências sem lastro. Atendeu todos os critérios obrigatórios e demonstrou comportamento conservador adequado ao não inventar dados ausentes.",
+      "output": {
+        "specialist_id": "discipline_specialist_geotecnico_fundacoes",
+        "specialist_nome": "Geotecnica e Fundacoes",
+        "disciplina": "Geotecnica e Fundacoes",
+        "escopo": "Análise de detalhe de fundação para identificação de tipologia e quantitativos candidatos de blocos e sapatas, com foco em lacunas documentais.",
+        "achados": [
+          "Identificação de elementos de fundação tipo bloco (B1) e sapatas (S1, S2).",
+          "Dimensões parciais para o bloco B1 (1,20 x 1,20 m, sem altura).",
+          "Sapatas S1 e S2 citadas, mas sem dimensões completas ou quantidade total.",
+          "Ausência de informações sobre sondagem ou laudo geotécnico."
+        ],
+        "conflitos": [
+          {
+            "titulo": "Dimensões incompletas de elementos de fundação",
+            "descricao": "O detalhe de fundação apresenta dimensões incompletas para o bloco B1 (altura ausente) e para as sapatas S1 e S2 (dimensões e quantidade total ausentes), impedindo o cálculo definitivo de volumes de concreto e armadura.",
+            "severidade": "alta",
+            "evidencias": [
+              "Detalhe mostra bloco B1 com 1,20 x 1,20 m, mas sem altura.",
+              "Outro quadro cita sapatas S1 e S2 sem tabela completa de dimensões nem quantidade total."
+            ]
+          },
+          {
+            "titulo": "Ausência de laudo geotécnico",
+            "descricao": "Não há menção ou referência a laudo de sondagem (SPT) ou qualquer investigação geotécnica, o que é crítico para a validação da tipologia e profundidade das fundações, bem como para a estimativa de escavação e reaterro.",
+            "severidade": "alta",
+            "evidencias": [
+              "Conteúdo da entrada não menciona sondagem ou laudo de solo."
+            ]
+          }
+        ],
+        "quantitativos_chave": [
+          {
+            "item": "Volume de concreto - Bloco B1",
+            "unidade": "m³",
+            "quantidade": 0,
+            "observacao": "Candidato. A altura do bloco B1 não foi informada, impossibilitando o cálculo definitivo do volume de concreto."
+          },
+          {
+            "item": "Volume de concreto - Sapatas S1 e S2",
+            "unidade": "m³",
+            "quantidade": 0,
+            "observacao": "Candidato. As dimensões completas e a quantidade total das sapatas S1 e S2 não foram informadas, impossibilitando o cálculo definitivo do volume de concreto."
+          },
+          {
+            "item": "Peso de armadura - Bloco B1",
+            "unidade": "kg",
+            "quantidade": 0,
+            "observacao": "Candidato. Dependente da altura do bloco B1 e do detalhamento da armadura, ambos ausentes."
+          },
+          {
+            "item": "Peso de armadura - Sapatas S1 e S2",
+            "unidade": "kg",
+            "quantidade": 0,
+            "observacao": "Candidato. Dependente das dimensões e quantidade total das sapatas S1 e S2, e do detalhamento da armadura, todos ausentes."
+          }
+        ],
+        "itens_orcamentarios_candidatos": [
+          "Concreto para fundações (blocos e sapatas)",
+          "Armadura para fundações (blocos e sapatas)",
+          "Escavação de fundações (manual/mecanizada)",
+          "Reaterro de fundações",
+          "Concreto magro para regularização de fundo de vala/sapata",
+          "Formas para blocos e sapatas (se aplicável)"
+        ],
+        "premissas": [
+          "A análise se baseia exclusivamente nas informações fornecidas no 'conteúdo' da entrada.",
+          "A tipologia de fundação é composta por blocos e sapatas conforme indicação no detalhe."
+        ],
+        "perguntas_hitl": [
+          "Qual a altura do bloco B1 para permitir o cálculo do volume de concreto e armadura?",
+          "Quais as dimensões completas (comprimento, largura, altura) e a quantidade total das sapatas S1 e S2?",
+          "Existe um laudo de sondagem (SPT) ou relatório geotécnico disponível para validação da tipologia e profundidade das fundações?",
+          "Há um projeto estrutural completo que detalhe as fundações e suas quantidades?"
+        ],
+        "evidencias_criticas": [
+          "Detalhe mostra bloco B1 com 1,20 x 1,20 m, mas sem altura.",
+          "Outro quadro cita sapatas S1 e S2 sem tabela completa de dimensões nem quantidade total.",
+          "Ausência de laudo de sondagem ou relatório geotécnico."
+        ],
+        "confianca": 0.6
+      }
+    },
+    {
+      "microcase_id": "MC-GEO-006",
+      "titulo": "Risco geotécnico com lençol freático e solo de baixa resistência",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "risco_geotecnico_sinalizado": true,
+        "agua_sinalizada": true,
+        "pergunta_hitl_presente": true,
+        "conflitos_identificados": true,
+        "evidencias_criticas_presentes": true,
+        "itens_orcamentarios_pertinentes": true,
+        "nao_assumiu_solucao_fechada": true,
+        "nao_ignorou_riscos": true
+      },
+      "erros_detectados": [],
+      "resumo": "Aprovado com excelência. O especialista identificou corretamente todos os riscos geotécnicos críticos (solo argiloso mole e lençol freático a 1,40m), sinalizou adequadamente a ausência de soluções executivas no projeto, acionou HITL com pergunta pertinente sobre mitigação de riscos, e sugeriu itens orçamentários apropriados sem assumir soluções definitivas. Atendeu integralmente aos critérios de aprovação e evitou todos os erros proibidos.",
+      "output": {
+        "specialist_id": "discipline_specialist_geotecnico_fundacoes",
+        "specialist_nome": "Geotecnica e Fundacoes",
+        "disciplina": "Geotecnica e Fundacoes",
+        "escopo": "Análise de risco geotécnico com base em resumo de laudo de solo e ausência de solução executiva no projeto.",
+        "achados": [
+          "Solo argiloso mole identificado em camada superficial do terreno.",
+          "Presença de lençol freático a 1,40 m de profundidade.",
+          "Recomendação explícita de atenção à escavação devido às condições do solo e água.",
+          "O projeto recebido não apresenta solução executiva específica para contenção ou drenagem provisória."
+        ],
+        "conflitos": [
+          {
+            "titulo": "Ausência de solução para riscos geotécnicos identificados",
+            "descricao": "O resumo do terreno aponta solo argiloso mole e presença de água a 1,40 m, com recomendação de atenção à escavação. No entanto, o projeto não detalha soluções executivas para contenção ou drenagem provisória, criando uma lacuna crítica entre as condições do local e o planejamento da obra.",
+            "severidade": "alta",
+            "evidencias": [
+              "Conteúdo do 'resumo_solo': 'solo argiloso mole em camada superficial, presença de água a 1,40 m e recomendação de atenção à escavação.'",
+              "Conteúdo do 'resumo_solo': 'O projeto recebido não traz solução executiva específica para contenção ou drenagem provisória.'"
+            ]
+          }
+        ],
+        "quantitativos_chave": [],
+        "itens_orcamentarios_candidatos": [
+          "Serviços de rebaixamento de lençol freático (drenagem provisória)",
+          "Serviços de contenção provisória para escavação (ex: escoramento, cortinas)",
+          "Bota-fora de solo escavado (se o solo mole não for reutilizável)",
+          "Lastro de brita ou concreto magro para regularização de base de fundação"
+        ],
+        "premissas": [
+          "A análise é baseada exclusivamente no 'resumo_solo' fornecido, sem acesso a laudos geotécnicos completos ou pranchas de projeto de fundação."
+        ],
+        "perguntas_hitl": [
+          "Quais soluções de engenharia (contenção, drenagem, tipo de fundação) foram consideradas ou serão adotadas para mitigar os riscos do solo argiloso mole e do lençol freático a 1,40 m, visto que o projeto não as detalha?"
+        ],
+        "evidencias_criticas": [
+          "resumo_solo: 'solo argiloso mole em camada superficial'",
+          "resumo_solo: 'presença de água a 1,40 m'",
+          "resumo_solo: 'recomendação de atenção à escavação'",
+          "resumo_solo: 'O projeto recebido não traz solução executiva específica para contenção ou drenagem provisória.'"
+        ],
+        "confianca": 0.95
+      }
+    }
+  ]
+}

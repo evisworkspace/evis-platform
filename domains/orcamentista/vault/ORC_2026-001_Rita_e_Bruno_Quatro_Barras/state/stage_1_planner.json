@@ -1,0 +1,136 @@
+{
+  "_metadata": {
+    "etapa": "1_planner",
+    "timestamp": "2026-04-22T21:42:35.922Z",
+    "version": "1.1",
+    "checksum": "pmYWxzZX0="
+  },
+  "data": {
+    "roteiro": [
+      {
+        "id": 1,
+        "etapa": "Definição do Tipo de Fundação e Dimensionamento Preliminar",
+        "agente_responsavel": "geotecnico",
+        "dependencias": [],
+        "hitl_obrigatorio": true
+      },
+      {
+        "id": 2,
+        "etapa": "Levantamento de Quantitativos de Fundação",
+        "agente_responsavel": "geotecnico",
+        "dependencias": [
+          1
+        ],
+        "hitl_obrigatorio": true
+      },
+      {
+        "id": 3,
+        "etapa": "Definição do Sistema Estrutural e Pré-Dimensionamento (Concreto, Aço, Lajes, Vigas, Pilares)",
+        "agente_responsavel": "estrutural",
+        "dependencias": [
+          2
+        ],
+        "hitl_obrigatorio": true
+      },
+      {
+        "id": 4,
+        "etapa": "Levantamento de Quantitativos Estruturais (Concreto, Aço, Formas)",
+        "agente_responsavel": "estrutural",
+        "dependencias": [
+          3
+        ],
+        "hitl_obrigatorio": false
+      },
+      {
+        "id": 5,
+        "etapa": "Levantamento de Quantitativos de Alvenaria",
+        "agente_responsavel": "arquitetonico",
+        "dependencias": [
+          4
+        ],
+        "hitl_obrigatorio": false
+      },
+      {
+        "id": 6,
+        "etapa": "Levantamento de Quantitativos de Cobertura (Telha metálica sanduíche)",
+        "agente_responsavel": "arquitetonico",
+        "dependencias": [
+          4
+        ],
+        "hitl_obrigatorio": false
+      },
+      {
+        "id": 7,
+        "etapa": "Levantamento de Quantitativos de Esquadrias (Portas e Janelas)",
+        "agente_responsavel": "arquitetonico",
+        "dependencias": [
+          5
+        ],
+        "hitl_obrigatorio": false
+      },
+      {
+        "id": 8,
+        "etapa": "Levantamento de Quantitativos de Revestimentos (Pisos, Paredes, Pintura)",
+        "agente_responsavel": "arquitetonico",
+        "dependencias": [
+          5
+        ],
+        "hitl_obrigatorio": false
+      },
+      {
+        "id": 9,
+        "etapa": "Definição e Levantamento de Quantitativos de Instalações Hidráulicas",
+        "agente_responsavel": "instalacoes",
+        "dependencias": [
+          5
+        ],
+        "hitl_obrigatorio": false
+      },
+      {
+        "id": 10,
+        "etapa": "Definição e Levantamento de Quantitativos de Instalações Elétricas",
+        "agente_responsavel": "instalacoes",
+        "dependencias": [
+          5
+        ],
+        "hitl_obrigatorio": false
+      },
+      {
+        "id": 11,
+        "etapa": "Definição e Levantamento de Quantitativos de Instalações de Ar-Condicionado (se aplicável)",
+        "agente_responsavel": "instalacoes",
+        "dependencias": [
+          5
+        ],
+        "hitl_obrigatorio": false
+      },
+      {
+        "id": 12,
+        "etapa": "Consolidação de Quantitativos e Composição de Custos Unitários",
+        "agente_responsavel": "quantitativos",
+        "dependencias": [
+          2,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ],
+        "hitl_obrigatorio": false
+      },
+      {
+        "id": 13,
+        "etapa": "Elaboração do Orçamento Final e Análise de Viabilidade",
+        "agente_responsavel": "quantitativos",
+        "dependencias": [
+          12
+        ],
+        "hitl_obrigatorio": true
+      }
+    ],
+    "prioridade_geotecnica": false
+  }
+}

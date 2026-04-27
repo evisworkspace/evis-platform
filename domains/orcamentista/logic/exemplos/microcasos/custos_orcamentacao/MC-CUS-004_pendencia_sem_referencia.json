@@ -1,0 +1,39 @@
+{
+  "id": "MC-CUS-004",
+  "disciplina": "custos_orcamentacao",
+  "titulo": "Sem referência aderente o item deve permanecer pendente",
+  "objetivo": "Validar se o especialista não inventa preço ou composição definitiva quando falta referência técnica aderente.",
+  "entrada": {
+    "tipo": "saida_disciplinar",
+    "fonte": "item_sem_base",
+    "conteudo": "Serviço validado: elemento especial de obra sem equivalente claro no catálogo EVIS e sem referência SINAPI aderente disponível na consulta atual."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "O item deve sair como candidato ou pendente",
+      "Não pode haver custo definitivo sem referência"
+    ],
+    "campos_obrigatorios": {
+      "perguntas_hitl": 1
+    },
+    "nao_pode_fazer": [
+      "Inventar preço unitário definitivo",
+      "Inventar código de referência",
+      "Fechar custo total sem lastro"
+    ]
+  },
+  "erros_proibidos": [
+    "inferencia_sem_lastro",
+    "preco_sem_referencia",
+    "hitl_nao_acionado"
+  ],
+  "gatilhos_hitl": [
+    "Ausência de referência aderente"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "item_permanece_pendente": true,
+    "pergunta_hitl_presente": true,
+    "nao_inventou_preco": true
+  }
+}

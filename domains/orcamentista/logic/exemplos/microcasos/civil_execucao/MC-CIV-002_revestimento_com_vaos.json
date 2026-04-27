@@ -1,0 +1,38 @@
+{
+  "id": "MC-CIV-002",
+  "disciplina": "civil_execucao",
+  "titulo": "Revestimento com vãos e descontos",
+  "objetivo": "Validar se o especialista reconhece necessidade de desconto de vãos ou, na dúvida, sobe HITL sem fechar pano de parede errado.",
+  "entrada": {
+    "tipo": "parede_com_aberturas",
+    "fonte": "banheiro_revestimento",
+    "conteudo": "Banheiro com duas paredes revestidas até o teto. Em uma delas há porta de 0,80 x 2,10 m e nicho embutido. O trecho não informa a política final de desconto adotada."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Há vãos ou descontinuidades relevantes no pano",
+      "Sem política fechada de medição a leitura deve permanecer conservadora"
+    ],
+    "campos_obrigatorios": {
+      "perguntas_hitl": 1
+    },
+    "nao_pode_fazer": [
+      "Fechar revestimento sem considerar vãos",
+      "Inventar regra de desconto sem base"
+    ]
+  },
+  "erros_proibidos": [
+    "medicao_area_errada",
+    "inferencia_sem_lastro",
+    "hitl_nao_acionado"
+  ],
+  "gatilhos_hitl": [
+    "Vãos e política de desconto não consolidada"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "vao_sinalizado": true,
+    "pergunta_hitl_presente": true,
+    "nao_fechou_sem_regra": true
+  }
+}

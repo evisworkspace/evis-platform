@@ -1,0 +1,90 @@
+{
+  "entities": {
+    "projects": {
+      "title": "Project",
+      "description": "Details of a construction project executed by the company.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Name of the project" },
+        "location": { "type": "string", "description": "Geographic location" },
+        "year": { "type": "string", "description": "Year of completion" },
+        "duration": { "type": "string", "description": "Time taken to complete" },
+        "area": { "type": "string", "description": "Built area in m2" },
+        "system": { "type": "string", "description": "Construction system used" },
+        "description": { "type": "string", "description": "Detailed project description" },
+        "photos": { "type": "array", "items": { "type": "string" }, "description": "List of image URLs" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "location", "createdAt"]
+    },
+    "testimonials": {
+      "title": "Testimonial",
+      "description": "Customer reviews and feedback.",
+      "type": "object",
+      "properties": {
+        "clientName": { "type": "string", "description": "Name of the customer" },
+        "workTitle": { "type": "string", "description": "Reference project title" },
+        "rating": { "type": "number", "description": "Rating from 1 to 5" },
+        "review": { "type": "string", "description": "Review text" },
+        "imageUrl": { "type": "string", "description": "Customer photo or avatar" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["clientName", "rating", "review", "createdAt"]
+    },
+    "adminConfig": {
+      "title": "Admin Config",
+      "description": "Restricted configuration for site admins",
+      "type": "object",
+      "properties": {
+        "role": { "type": "string", "enum": ["admin"] }
+      }
+    },
+    "siteConfig": {
+      "title": "Site Config",
+      "description": "General settings for the website content",
+      "type": "object",
+      "properties": {
+        "heroTitle": { "type": "string" },
+        "heroSubtitle": { "type": "string" },
+        "contactEmail": { "type": "string" },
+        "contactPhone": { "type": "string" },
+        "whatsappNumber": { "type": "string" },
+        "instagramUrl": { "type": "string" },
+        "address": { "type": "string" }
+      }
+    },
+    "concepts": {
+      "title": "Concept Photo",
+      "description": "Technical or conceptual photos for the horizontal gallery on the landing page.",
+      "type": "object",
+      "properties": {
+        "url": { "type": "string", "description": "URL of the image" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["url", "createdAt"]
+    }
+  },
+  "firestore": {
+    "projects": {
+      "schema": "projects",
+      "description": "Public portfolio projects"
+    },
+    "testimonials": {
+      "schema": "testimonials",
+      "description": "Public customer feedback"
+    },
+    "concepts": {
+      "schema": "concepts",
+      "description": "Concept photos for the horizontal gallery"
+    },
+    "admins": {
+      "schema": "adminConfig",
+      "description": "Admin roles mapping"
+    },
+    "siteConfig": {
+      "schema": "siteConfig",
+      "description": "Website global configuration"
+    }
+  }
+}

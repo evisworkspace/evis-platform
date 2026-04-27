@@ -1,0 +1,35 @@
+{
+  "id": "MC-CUS-003",
+  "disciplina": "custos_orcamentacao",
+  "titulo": "Elétrica residencial por ponto deve priorizar EVIS",
+  "objetivo": "Validar se o especialista de custos prioriza catálogo EVIS para ponto elétrico residencial.",
+  "entrada": {
+    "tipo": "saida_disciplinar",
+    "fonte": "eletrica_validada",
+    "conteudo": "Serviço validado: ponto tomada TUG 20A residencial. O catálogo EVIS da empresa possui composição própria aderente."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Ponto elétrico residencial deve priorizar EVIS",
+      "A saída deve preservar origem e aderência residencial"
+    ],
+    "campos_obrigatorios": {
+      "itens_orcamentarios_candidatos": 1
+    },
+    "nao_pode_fazer": [
+      "Usar item de incêndio ou industrial",
+      "Perder a origem EVIS"
+    ]
+  },
+  "erros_proibidos": [
+    "classificacao_sem_aderencia",
+    "origem_omitida"
+  ],
+  "gatilhos_hitl": [],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "evis_priorizado": true,
+    "aderencia_residencial_preservada": true,
+    "origem_sinalizada": true
+  }
+}

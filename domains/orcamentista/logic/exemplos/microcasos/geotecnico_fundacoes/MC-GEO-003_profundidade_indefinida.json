@@ -1,0 +1,41 @@
+{
+  "id": "MC-GEO-003",
+  "disciplina": "geotecnico_fundacoes",
+  "titulo": "Estacas com diâmetro definido e profundidade indefinida",
+  "objetivo": "Validar se o especialista trata profundidade de estaca como lacuna quando ela não está especificada no projeto.",
+  "entrada": {
+    "tipo": "detalhe_estrutural",
+    "fonte": "prancha_fundacao",
+    "conteudo": "A prancha informa 12 estacas escavadas de Ø30 cm vinculadas a blocos B1 a B4. Não há profundidade final, cota de ponta nem nota de nega."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "A quantidade e o diâmetro das estacas estão evidentes",
+      "A profundidade está indefinida e impede quantitativo definitivo"
+    ],
+    "campos_obrigatorios": {
+      "quantitativos_chave": 1,
+      "perguntas_hitl": 1
+    },
+    "nao_pode_fazer": [
+      "Inventar metragem total de estaca",
+      "Assumir profundidade padrão",
+      "Fechar concreto/escavação da estaca como definitivo"
+    ]
+  },
+  "erros_proibidos": [
+    "inferencia_sem_lastro",
+    "hitl_nao_acionado",
+    "quantitativo_definitivo_sem_base"
+  ],
+  "gatilhos_hitl": [
+    "Profundidade da estaca não definida"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "quantidade_estacas_identificada": true,
+    "diametro_identificado": true,
+    "profundidade_nao_inventada": true,
+    "pergunta_hitl_presente": true
+  }
+}

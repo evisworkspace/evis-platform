@@ -1,0 +1,117 @@
+{
+  "_metadata": {
+    "etapa": "1_planner",
+    "timestamp": "2026-04-22T21:35:57.131Z",
+    "version": "1.1",
+    "checksum": "p0cnVlfQ=="
+  },
+  "data": {
+    "roteiro": [
+      {
+        "id": 1,
+        "etapa": "Levantamento Geotécnico (Sondagem)",
+        "agente_responsavel": "geotecnico",
+        "dependencias": [],
+        "hitl_obrigatorio": true
+      },
+      {
+        "id": 2,
+        "etapa": "Projeto de Fundação",
+        "agente_responsavel": "geotecnico",
+        "dependencias": [
+          1
+        ],
+        "hitl_obrigatorio": true
+      },
+      {
+        "id": 3,
+        "etapa": "Projeto Estrutural",
+        "agente_responsavel": "estrutural",
+        "dependencias": [
+          2
+        ],
+        "hitl_obrigatorio": true
+      },
+      {
+        "id": 4,
+        "etapa": "Levantamento de Alvenaria",
+        "agente_responsavel": "arquitetonico",
+        "dependencias": [
+          3
+        ],
+        "hitl_obrigatorio": false
+      },
+      {
+        "id": 5,
+        "etapa": "Levantamento de Cobertura (Telha Metálica Sanduíche)",
+        "agente_responsavel": "arquitetonico",
+        "dependencias": [
+          3
+        ],
+        "hitl_obrigatorio": false
+      },
+      {
+        "id": 6,
+        "etapa": "Levantamento de Esquadrias",
+        "agente_responsavel": "arquitetonico",
+        "dependencias": [
+          4
+        ],
+        "hitl_obrigatorio": false
+      },
+      {
+        "id": 7,
+        "etapa": "Levantamento de Instalações Hidráulicas",
+        "agente_responsavel": "instalacoes",
+        "dependencias": [
+          4
+        ],
+        "hitl_obrigatorio": false
+      },
+      {
+        "id": 8,
+        "etapa": "Levantamento de Instalações Elétricas",
+        "agente_responsavel": "instalacoes",
+        "dependencias": [
+          4
+        ],
+        "hitl_obrigatorio": false
+      },
+      {
+        "id": 9,
+        "etapa": "Levantamento de Revestimentos",
+        "agente_responsavel": "arquitetonico",
+        "dependencias": [
+          4,
+          7,
+          8
+        ],
+        "hitl_obrigatorio": false
+      },
+      {
+        "id": 10,
+        "etapa": "Levantamento Quantitativo Consolidado",
+        "agente_responsavel": "quantitativos",
+        "dependencias": [
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "hitl_obrigatorio": false
+      },
+      {
+        "id": 11,
+        "etapa": "Composição de Custos Final",
+        "agente_responsavel": "quantitativos",
+        "dependencias": [
+          10
+        ],
+        "hitl_obrigatorio": true
+      }
+    ],
+    "prioridade_geotecnica": true
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "id": "MC-HID-003",
+  "disciplina": "hidraulica_sanitaria",
+  "titulo": "Diferenciar pluvial de esgoto sanitário",
+  "objetivo": "Validar se o especialista não mistura drenagem pluvial com esgoto sanitário.",
+  "entrada": {
+    "tipo": "trecho_documental",
+    "fonte": "planta_hidrossanitaria",
+    "conteudo": "Cobertura com calhas e descidas pluviais até caixa de águas pluviais. Banheiro com esgoto sanitário da bacia, lavatório e ralo. O trecho disponível não traz memorial complementar."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Há dois sistemas distintos: pluvial e esgoto sanitário",
+      "Os itens candidatos devem refletir essa separação"
+    ],
+    "campos_obrigatorios": {
+      "itens_orcamentarios_candidatos": 2
+    },
+    "nao_pode_fazer": [
+      "Classificar calha ou descida pluvial como esgoto",
+      "Omitir esgoto sanitário do banheiro"
+    ]
+  },
+  "erros_proibidos": [
+    "mistura_de_sistemas",
+    "omissao_critica"
+  ],
+  "gatilhos_hitl": [],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "pluvial_sinalizado": true,
+    "esgoto_sinalizado": true,
+    "sistemas_nao_misturados": true
+  }
+}

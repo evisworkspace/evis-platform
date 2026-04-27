@@ -1,0 +1,42 @@
+{
+  "id": "MC-EST-001",
+  "disciplina": "estrutural",
+  "titulo": "Conflito de FCK entre notas gerais e detalhe estrutural",
+  "objetivo": "Validar se o especialista estrutural identifica conflito entre resistência do concreto informada em notas gerais e detalhe local, sem escolher um lado silenciosamente.",
+  "entrada": {
+    "tipo": "trecho_documental",
+    "fonte": "prancha_estrutural_pdf",
+    "conteudo": "Notas gerais: concreto C-30 para elementos estruturais. Detalhe ampliado da laje técnica: concreto C-35."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Existe conflito entre C-30 e C-35",
+      "O conflito impede fechamento silencioso da composição estrutural"
+    ],
+    "campos_obrigatorios": {
+      "conflitos": 1,
+      "perguntas_hitl": 1,
+      "premissas": 0
+    },
+    "nao_pode_fazer": [
+      "Assumir C-30 como fato fechado",
+      "Assumir C-35 como fato fechado",
+      "Omitir o conflito"
+    ]
+  },
+  "erros_proibidos": [
+    "omissao_critica",
+    "inferencia_sem_lastro",
+    "conflito_nao_sinalizado",
+    "hitl_nao_acionado"
+  ],
+  "gatilhos_hitl": [
+    "Conflito entre notas gerais e detalhe local de concreto"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "conflito_sinalizado": true,
+    "pergunta_hitl_presente": true,
+    "escolha_silenciosa": false
+  }
+}

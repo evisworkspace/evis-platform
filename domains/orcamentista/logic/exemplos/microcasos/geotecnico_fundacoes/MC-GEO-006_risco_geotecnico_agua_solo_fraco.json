@@ -1,0 +1,43 @@
+{
+  "id": "MC-GEO-006",
+  "disciplina": "geotecnico_fundacoes",
+  "titulo": "Risco geotécnico com lençol freático e solo de baixa resistência",
+  "objetivo": "Validar se o especialista reconhece risco geotécnico elevado e pede validação quando o texto-base aponta água ou solo fraco.",
+  "entrada": {
+    "tipo": "laudo_resumido",
+    "fonte": "resumo_solo",
+    "conteudo": "Resumo do terreno: solo argiloso mole em camada superficial, presença de água a 1,40 m e recomendação de atenção à escavação. O projeto recebido não traz solução executiva específica para contenção ou drenagem provisória."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Existe risco geotécnico relevante",
+      "A presença de água e solo fraco deve aparecer como alerta"
+    ],
+    "campos_obrigatorios": {
+      "conflitos": 0,
+      "premissas": 0,
+      "perguntas_hitl": 1
+    },
+    "nao_pode_fazer": [
+      "Assumir solução executiva fechada",
+      "Ignorar risco de água",
+      "Ignorar risco de solo mole"
+    ]
+  },
+  "erros_proibidos": [
+    "omissao_critica",
+    "inferencia_sem_lastro",
+    "hitl_nao_acionado"
+  ],
+  "gatilhos_hitl": [
+    "Solo mole",
+    "Presença de água",
+    "Ausência de solução executiva consolidada"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "risco_geotecnico_sinalizado": true,
+    "agua_sinalizada": true,
+    "pergunta_hitl_presente": true
+  }
+}

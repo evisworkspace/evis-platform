@@ -1,0 +1,36 @@
+{
+  "id": "MC-CIV-003",
+  "disciplina": "civil_execucao",
+  "titulo": "Separar contrapiso, regularização e acabamento",
+  "objetivo": "Validar se o especialista não mistura as camadas de base e acabamento como se fossem um único serviço.",
+  "entrada": {
+    "tipo": "memorial_piso",
+    "fonte": "sala_cozinha",
+    "conteudo": "Memorial indica contrapiso, regularização e piso final em porcelanato para sala e cozinha. O recorte não traz espessuras nem quadro de áreas por ambiente."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Base e acabamento são frentes distintas",
+      "As camadas precisam virar itens candidatos separados"
+    ],
+    "campos_obrigatorios": {
+      "itens_orcamentarios_candidatos": 3
+    },
+    "nao_pode_fazer": [
+      "Colapsar tudo em um único item de piso",
+      "Omitir regularização"
+    ]
+  },
+  "erros_proibidos": [
+    "mistura_de_camadas",
+    "omissao_critica"
+  ],
+  "gatilhos_hitl": [
+    "Área ou espessura não consolidada"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "camadas_separadas": true,
+    "itens_candidatos_adequados": true
+  }
+}

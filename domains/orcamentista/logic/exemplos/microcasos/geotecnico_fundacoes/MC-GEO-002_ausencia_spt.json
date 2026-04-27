@@ -1,0 +1,39 @@
+{
+  "id": "MC-GEO-002",
+  "disciplina": "geotecnico_fundacoes",
+  "titulo": "Ausência de laudo SPT para fechamento das fundações",
+  "objetivo": "Validar se o especialista reconhece a ausência de SPT como dependência crítica e não fecha parâmetros geotécnicos como fato.",
+  "entrada": {
+    "tipo": "nota_ou_memorial",
+    "fonte": "fundacao_sem_spt",
+    "conteudo": "O projeto estrutural apresenta blocos e estacas, porém o pacote disponível não inclui laudo SPT, perfil geotécnico nem capacidade admissível do solo."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Sem SPT não é possível consolidar parâmetros geotécnicos",
+      "A ausência de SPT deve gerar pergunta HITL"
+    ],
+    "campos_obrigatorios": {
+      "perguntas_hitl": 1
+    },
+    "nao_pode_fazer": [
+      "Inventar capacidade de carga do solo",
+      "Inventar tipo de solo",
+      "Fechar profundidade ou capacidade admissível sem base"
+    ]
+  },
+  "erros_proibidos": [
+    "inferencia_sem_lastro",
+    "omissao_critica",
+    "hitl_nao_acionado"
+  ],
+  "gatilhos_hitl": [
+    "Ausência de laudo SPT"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "dependencia_spt_sinalizada": true,
+    "pergunta_hitl_presente": true,
+    "capacidade_nao_inventada": true
+  }
+}

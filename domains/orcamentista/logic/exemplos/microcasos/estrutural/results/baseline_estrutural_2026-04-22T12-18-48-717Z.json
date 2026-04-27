@@ -1,0 +1,356 @@
+{
+  "generated_at": "2026-04-22T12:18:48.717Z",
+  "model": "gemini-2.5-flash",
+  "judge_model": "claude-sonnet-4-20250514",
+  "summary": {
+    "total": 6,
+    "passed": 6,
+    "failed": 0,
+    "averageScore": 96.66666666666667
+  },
+  "results": [
+    {
+      "microcase_id": "MC-EST-001",
+      "titulo": "Conflito de FCK entre notas gerais e detalhe estrutural",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "conflito_sinalizado": true,
+        "pergunta_hitl_presente": true,
+        "escolha_silenciosa": false,
+        "fatos_minimos_identificados": true,
+        "campos_obrigatorios_atendidos": true,
+        "erros_proibidos_evitados": true,
+        "gatilhos_hitl_acionados": true
+      },
+      "erros_detectados": [],
+      "resumo": "Aprovado com excelência. O especialista identificou corretamente o conflito entre C-30 e C-35, sinalizou que impede fechamento silencioso, acionou HITL adequadamente e evitou todos os erros proibidos. Atendeu rigorosamente aos critérios do microcaso ouro.",
+      "output": {
+        "specialist_id": "discipline_specialist_estrutural",
+        "specialist_nome": "Estrutural",
+        "disciplina": "Estrutural",
+        "escopo": "Análise de resistência do concreto (FCK) em projeto estrutural.",
+        "achados": [
+          "As notas gerais da prancha estrutural indicam concreto C-30 para elementos estruturais.",
+          "O detalhe ampliado da laje técnica especifica concreto C-35."
+        ],
+        "conflitos": [
+          {
+            "titulo": "Divergência de FCK entre notas gerais e detalhe específico",
+            "descricao": "Existe um conflito direto na especificação da resistência do concreto (FCK). As notas gerais da prancha indicam C-30 para todos os elementos estruturais, enquanto o detalhe ampliado da laje técnica especifica C-35. Esta divergência impede a definição unívoca do tipo de concreto a ser utilizado, impactando diretamente o dimensionamento, custo e execução.",
+            "severidade": "alta",
+            "evidencias": [
+              "Notas gerais: concreto C-30 para elementos estruturais.",
+              "Detalhe ampliado da laje técnica: concreto C-35."
+            ]
+          }
+        ],
+        "quantitativos_chave": [],
+        "itens_orcamentarios_candidatos": [
+          "Concreto C-30 (m³)",
+          "Concreto C-35 (m³)"
+        ],
+        "premissas": [],
+        "perguntas_hitl": [
+          "Qual FCK deve ser considerado para a laje técnica e demais elementos estruturais? Deve-se priorizar a nota geral (C-30) ou o detalhe específico (C-35) para a laje técnica? Há alguma revisão de projeto que harmonize esta divergência?"
+        ],
+        "evidencias_criticas": [
+          "Notas gerais da prancha estrutural",
+          "Detalhe ampliado da laje técnica"
+        ],
+        "confianca": 0.7
+      }
+    },
+    {
+      "microcase_id": "MC-EST-002",
+      "titulo": "Leitura do quadro resumo de armaduras",
+      "passed": true,
+      "score": 100,
+      "checks": {
+        "schema_valido": true,
+        "bitolas_corretas": true,
+        "peso_total_correto": true,
+        "unidade_em_kg": true,
+        "quantitativos_chave": true,
+        "conflitos": true,
+        "perguntas_hitl": true,
+        "fatos_minimos": true,
+        "nao_inventou_dados": true
+      },
+      "erros_detectados": [],
+      "resumo": "Aprovado. O especialista extraiu corretamente todas as bitolas (5.0, 8.0, 10.0 mm) com seus respectivos pesos, separou adequadamente peso total com e sem perda, manteve unidades em kg, não inventou dados inexistentes e atendeu todos os critérios obrigatórios. Quantitativos_chave=5 (>2 exigido), conflitos=0, perguntas_hitl=0.",
+      "output": {
+        "specialist_id": "discipline_specialist_estrutural",
+        "specialist_nome": "Estrutural",
+        "disciplina": "Estrutural",
+        "escopo": "Leitura e quantificação de armaduras a partir de quadro resumo.",
+        "achados": [
+          "Identificação de armaduras por bitola: Ø5.0, Ø8.0, Ø10.0 mm.",
+          "Quantificação de peso de aço por bitola conforme quadro resumo.",
+          "Quantificação de peso total de aço, com e sem consideração de perda, conforme quadro resumo."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [
+          {
+            "item": "Aço CA-50 Ø5.0 mm",
+            "unidade": "kg",
+            "quantidade": 6.1,
+            "observacao": "Peso de armadura conforme quadro resumo de aço."
+          },
+          {
+            "item": "Aço CA-50 Ø8.0 mm",
+            "unidade": "kg",
+            "quantidade": 11.4,
+            "observacao": "Peso de armadura conforme quadro resumo de aço."
+          },
+          {
+            "item": "Aço CA-50 Ø10.0 mm",
+            "unidade": "kg",
+            "quantidade": 15.5,
+            "observacao": "Peso de armadura conforme quadro resumo de aço."
+          },
+          {
+            "item": "Aço CA-50 - Peso total sem perda",
+            "unidade": "kg",
+            "quantidade": 33,
+            "observacao": "Peso total de armadura conforme quadro resumo de aço, sem considerar perdas."
+          },
+          {
+            "item": "Aço CA-50 - Peso total com 10% de perda",
+            "unidade": "kg",
+            "quantidade": 36.3,
+            "observacao": "Peso total de armadura conforme quadro resumo de aço, com 10% de perda."
+          }
+        ],
+        "itens_orcamentarios_candidatos": [
+          "Fornecimento e instalação de aço CA-50 Ø5.0 mm",
+          "Fornecimento e instalação de aço CA-50 Ø8.0 mm",
+          "Fornecimento e instalação de aço CA-50 Ø10.0 mm",
+          "Fornecimento e instalação de aço CA-50 (peso total sem perda)",
+          "Fornecimento e instalação de aço CA-50 (peso total com 10% de perda)"
+        ],
+        "premissas": [
+          "Os pesos de armadura informados no quadro resumo são considerados válidos e completos para quantificação.",
+          "A consideração de 10% de perda para o aço é uma premissa do quadro resumo fornecido."
+        ],
+        "perguntas_hitl": [],
+        "evidencias_criticas": [
+          "Quadro resumo de aço fornecido na entrada: 'Resumo do aço: Ø5.0 = 6,1 kg; Ø8.0 = 11,4 kg; Ø10.0 = 15,5 kg; peso total sem perda = 33,0 kg; peso total com 10% = 36,3 kg.'"
+        ],
+        "confianca": 1
+      }
+    },
+    {
+      "microcase_id": "MC-EST-003",
+      "titulo": "Revisão conflitante entre prancha antiga e atual",
+      "passed": true,
+      "score": 100,
+      "checks": {
+        "schema_valido": true,
+        "conflito_sinalizado": true,
+        "pergunta_hitl_presente": true,
+        "fatos_minimos_presentes": true,
+        "campos_obrigatorios_atendidos": true,
+        "erros_proibidos_evitados": true
+      },
+      "erros_detectados": [],
+      "resumo": "Aprovado com excelência. O especialista identificou corretamente a divergência de revisão na viga V205 (14x40 vs 14x50), sinalizou o conflito com severidade alta, acionou HITL adequadamente solicitando validação da revisão correta, e suspendeu a quantificação até resolução do conflito. Todos os critérios obrigatórios foram atendidos e nenhum erro proibido foi cometido.",
+      "output": {
+        "specialist_id": "discipline_specialist_estrutural",
+        "specialist_nome": "Estrutural",
+        "disciplina": "Estrutural",
+        "escopo": "Análise de compatibilidade de revisões para elementos estruturais, especificamente viga V205.",
+        "achados": [
+          "A Prancha Rev A indica a viga V205 com seção de 14x40 cm.",
+          "A Prancha Rev B indica a viga V205 com seção de 14x50 cm.",
+          "Não há nota de supersessão clara ou justificativa para a alteração da seção da viga V205 entre as revisões A e B no recorte fornecido."
+        ],
+        "conflitos": [
+          {
+            "titulo": "Divergência de seção da viga V205 entre revisões de prancha",
+            "descricao": "Existe um conflito direto na dimensão da seção da viga V205. A Prancha Rev A especifica 14x40 cm, enquanto a Prancha Rev B especifica 14x50 cm. Esta divergência impacta diretamente o volume de concreto, área de forma e peso de armação da viga, e não pode ser resolvida sem uma validação da revisão correta ou uma nota de supersessão.",
+            "severidade": "alta",
+            "evidencias": [
+              "Prancha Rev A (Viga V205: 14x40 cm)",
+              "Prancha Rev B (Viga V205: 14x50 cm)"
+            ]
+          }
+        ],
+        "quantitativos_chave": [],
+        "itens_orcamentarios_candidatos": [
+          "Volume de concreto para Viga V205 (dependente da seção)",
+          "Área de forma para Viga V205 (dependente da seção)",
+          "Peso de armação para Viga V205 (dependente da seção)"
+        ],
+        "premissas": [
+          "A quantificação de concreto, forma e armação para a viga V205 está suspensa até a resolução do conflito de revisão."
+        ],
+        "perguntas_hitl": [
+          "Qual revisão da prancha (Rev A ou Rev B) deve ser considerada como válida para a viga V205? Por favor, forneça a prancha com a nota de supersessão ou a decisão de projeto consolidada."
+        ],
+        "evidencias_criticas": [
+          "Prancha Rev A (detalhe da Viga V205)",
+          "Prancha Rev B (detalhe da Viga V205)"
+        ],
+        "confianca": 0.9
+      }
+    },
+    {
+      "microcase_id": "MC-EST-004",
+      "titulo": "Laje pré-moldada sem quantitativo fechado",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "laje_premoldada_identificada": true,
+        "quantitativo_marcado_como_candidato": true,
+        "pergunta_hitl_presente": true,
+        "fatos_minimos_atendidos": true,
+        "campos_obrigatorios_atendidos": true,
+        "erros_proibidos_evitados": true,
+        "gatilhos_hitl_acionados": true
+      },
+      "erros_detectados": [],
+      "resumo": "Especialista estrutural atendeu plenamente aos critérios do microcaso. Identificou corretamente o sistema de laje pré-moldada com vigotas VT1026-271 e VT101c-201, marcou o quantitativo como candidato (quantidade=0) devido à ausência de somatório total, acionou adequadamente o HITL com perguntas específicas sobre comprimentos das vigotas, e não cometeu inferências sem lastro. A abordagem foi conservadora e tecnicamente correta.",
+      "output": {
+        "specialist_id": "discipline_specialist_estrutural",
+        "specialist_nome": "Estrutural",
+        "disciplina": "Estrutural",
+        "escopo": "Análise de planta de laje pré-moldada para identificação de elementos e quantitativos candidatos.",
+        "achados": [
+          "Identificação de sistema de laje pré-moldada com vigotas.",
+          "Tipos de vigotas identificados na planta: VT1026-271 e VT101c-201.",
+          "O arranjo das vigotas é visível no recorte da planta de cobertura."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [
+          {
+            "item": "Vigotas pré-moldadas (comprimento total)",
+            "unidade": "m",
+            "quantidade": 0,
+            "observacao": "Quantitativo candidato. O somatório total de comprimentos das vigotas não está informado na planta ou em quadro resumo. A quantidade '0' indica a ausência de um valor fechado para orçamentação."
+          }
+        ],
+        "itens_orcamentarios_candidatos": [
+          "Laje pré-moldada (fornecimento e montagem de vigotas e lajotas/trelissas)",
+          "Concreto para capeamento de laje",
+          "Armação complementar de laje (negativos, distribuição)",
+          "Formas e escoramento para laje (se aplicável ao sistema)"
+        ],
+        "premissas": [],
+        "perguntas_hitl": [
+          "Qual o somatório total de comprimentos das vigotas pré-moldadas (VT1026-271 e VT101c-201) para a laje de cobertura?",
+          "Existe um quadro resumo de lajes ou memorial descritivo que detalhe os quantitativos de vigotas por tipo e comprimento?"
+        ],
+        "evidencias_criticas": [
+          "Ausência de quadro resumo ou somatório de comprimentos das vigotas na planta de laje de cobertura, impedindo o fechamento do quantitativo."
+        ],
+        "confianca": 0.8
+      }
+    },
+    {
+      "microcase_id": "MC-EST-005",
+      "titulo": "Formas estruturais sem área consolidada",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "item_forma_presente": true,
+        "quantitativo_como_lacuna_ou_candidato": true,
+        "fatos_minimos_presentes": true,
+        "campos_obrigatorios_completos": true,
+        "nao_inventou_area": true,
+        "nao_omitiu_forma": true,
+        "nao_transformou_hipotese_em_definitivo": true,
+        "gatilho_hitl_acionado": true
+      },
+      "erros_detectados": [
+        "Quantidade zerada pode ser interpretada como omissão, mesmo com observação explicativa"
+      ],
+      "resumo": "Especialista atendeu criteriosamente ao microcaso. Reconheceu a necessidade de formas para vigas e lajes, identificou corretamente que a área não está consolidada na prancha, não inventou quantitativos, incluiu itens orçamentários candidatos apropriados e acionou HITL adequadamente. Pequena penalização pela quantidade zerada que poderia ser melhor representada como 'não determinado'.",
+      "output": {
+        "specialist_id": "discipline_specialist_estrutural",
+        "specialist_nome": "Estrutural",
+        "disciplina": "Estrutural",
+        "escopo": "Análise de formas estruturais para vigas e lajes conforme prancha fornecida.",
+        "achados": [
+          "A prancha indica a necessidade de formas para as vigas V201 a V210.",
+          "A prancha indica a necessidade de formas para o pavimento da caixa d'água (laje).",
+          "Não há quadro de área de formas ou memória de cálculo consolidada na prancha para as formas identificadas."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [
+          {
+            "item": "Área de formas para vigas e lajes",
+            "unidade": "m²",
+            "quantidade": 0,
+            "observacao": "Quantitativo não consolidado na prancha. Requer levantamento detalhado ou memória de cálculo específica."
+          }
+        ],
+        "itens_orcamentarios_candidatos": [
+          "Formas para vigas (V201-V210)",
+          "Formas para laje (pavimento caixa d'água)"
+        ],
+        "premissas": [
+          "A prancha fornecida é a única fonte de informação para o levantamento das formas."
+        ],
+        "perguntas_hitl": [
+          "É necessário realizar o levantamento detalhado da área de formas das vigas V201-V210 e do pavimento da caixa d'água, ou existe uma memória de cálculo complementar ou quadro de resumo de formas em outro documento?"
+        ],
+        "evidencias_criticas": [
+          "A prancha mostra a forma das vigas V201-V210 e o pavimento da caixa d'água, sem quadro de área de formas ou memória de cálculo."
+        ],
+        "confianca": 1
+      }
+    },
+    {
+      "microcase_id": "MC-EST-006",
+      "titulo": "Dependência geotécnica para fundações",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "dependencia_geotecnica_sinalizada": true,
+        "pergunta_hitl_presente": true,
+        "profundidade_nao_inventada": true,
+        "conflitos_zero": true,
+        "premissas_zero": true,
+        "perguntas_hitl_uma": true,
+        "fatos_minimos_presentes": true,
+        "erros_proibidos_ausentes": true,
+        "gatilhos_hitl_acionados": true
+      },
+      "erros_detectados": [],
+      "resumo": "Aprovado com excelência. O especialista estrutural reconheceu corretamente a dependência geotécnica, sinalizou a ausência de SPT como crítica, acionou HITL adequadamente e não inventou dados. Todos os critérios de aprovação foram atendidos.",
+      "output": {
+        "specialist_id": "discipline_specialist_estrutural",
+        "specialist_nome": "Estrutural",
+        "disciplina": "Estrutural",
+        "escopo": "Análise preliminar de elementos de fundação com foco na dependência de dados geotécnicos.",
+        "achados": [
+          "O projeto estrutural menciona a utilização de estacas e blocos como elementos de fundação.",
+          "Não há laudo SPT (Standard Penetration Test) ou dados geotécnicos complementares disponíveis no trecho analisado.",
+          "A profundidade final das fundações não está definida na documentação fornecida."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [],
+        "itens_orcamentarios_candidatos": [
+          "Estacas de fundação",
+          "Blocos de fundação",
+          "Escavação para fundações",
+          "Concreto para fundações",
+          "Armação para fundações"
+        ],
+        "premissas": [],
+        "perguntas_hitl": [
+          "É possível obter o laudo SPT ou dados geotécnicos complementares para determinar a profundidade final das estacas e blocos de fundação, essencial para o dimensionamento e quantificação?"
+        ],
+        "evidencias_criticas": [
+          "Ausência de laudo SPT ou dados geotécnicos mínimos para a definição da profundidade das fundações."
+        ],
+        "confianca": 0.9
+      }
+    }
+  ]
+}

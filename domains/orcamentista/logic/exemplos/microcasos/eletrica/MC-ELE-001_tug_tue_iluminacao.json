@@ -1,0 +1,37 @@
+{
+  "id": "MC-ELE-001",
+  "disciplina": "eletrica",
+  "titulo": "Diferenciar TUG, TUE e iluminação por ambiente",
+  "objetivo": "Validar se o especialista separa corretamente TUG, TUE e iluminação sem colapsar os pontos em uma categoria genérica.",
+  "entrada": {
+    "tipo": "planta_eletrica",
+    "fonte": "suite_cozinha_lavanderia",
+    "conteudo": "Suíte com 3 TUG e 1 ponto de iluminação. Cozinha com 4 TUG, 1 TUE 220V para forno e 1 ponto de iluminação. Lavanderia com 1 TUG, 1 TUE 220V para máquina de lavar e 1 ponto de iluminação."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "TUG, TUE e iluminação devem estar separados por ambiente",
+      "Pontos 220V especiais não podem ser tratados como tomada comum"
+    ],
+    "campos_obrigatorios": {
+      "quantitativos_chave": 3
+    },
+    "nao_pode_fazer": [
+      "Misturar TUE com TUG",
+      "Omitir iluminação",
+      "Tratar todos os pontos como um único pacote indistinto"
+    ]
+  },
+  "erros_proibidos": [
+    "mistura_de_tipos",
+    "omissao_critica",
+    "contagem_generica_sem_separacao"
+  ],
+  "gatilhos_hitl": [],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "tug_sinalizado": true,
+    "tue_sinalizado": true,
+    "iluminacao_sinalizada": true
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "id": "MC-EST-004",
+  "disciplina": "estrutural",
+  "titulo": "Laje pré-moldada sem quantitativo fechado",
+  "objetivo": "Validar se o especialista identifica a presença de laje pré-moldada e vigotas, mas devolve quantitativo como candidato quando o comprimento total não estiver fechando no recorte.",
+  "entrada": {
+    "tipo": "planta_estrutural",
+    "fonte": "laje_cobertura",
+    "conteudo": "Planta de vigotas pré-moldadas com indicação dos tipos VT1026-271 e VT101c-201. O recorte mostra o arranjo, mas não informa quadro final com somatório de comprimentos."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Existe sistema de laje pré-moldada/vigotas",
+      "O quantitativo total não está fechado no recorte"
+    ],
+    "campos_obrigatorios": {
+      "quantitativos_chave": 1,
+      "perguntas_hitl": 1,
+      "premissas": 0
+    },
+    "nao_pode_fazer": [
+      "Inventar metragem total de vigotas",
+      "Assumir um único tipo de vigota para toda a laje",
+      "Fechar custo sem base de medição"
+    ]
+  },
+  "erros_proibidos": [
+    "inferencia_sem_lastro",
+    "quantitativo_errado",
+    "hitl_nao_acionado"
+  ],
+  "gatilhos_hitl": [
+    "Ausência de somatório final de vigotas"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "laje_premoldada_identificada": true,
+    "quantitativo_marcado_como_candidato": true,
+    "pergunta_hitl_presente": true
+  }
+}

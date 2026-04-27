@@ -1,0 +1,38 @@
+{
+  "id": "MC-CIV-004",
+  "disciplina": "civil_execucao",
+  "titulo": "Esquadrias sem quadro ou dimensões completas",
+  "objetivo": "Validar se o especialista trata esquadrias como candidato quando a arquitetura menciona aberturas, mas não há quadro fechado.",
+  "entrada": {
+    "tipo": "arquitetura_sem_quadro_esquadrias",
+    "fonte": "fachada_e_planta",
+    "conteudo": "A planta e a fachada mostram portas e janelas, porém não há quadro de esquadrias com dimensão, material, número de folhas ou especificação final."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Há esquadrias evidentes, mas sem base completa de quantificação",
+      "A disciplina deve permanecer candidata e pedir validação"
+    ],
+    "campos_obrigatorios": {
+      "perguntas_hitl": 1
+    },
+    "nao_pode_fazer": [
+      "Inventar material de esquadria",
+      "Inventar quantitativo fechado de portas e janelas",
+      "Assumir tipologia final sem quadro"
+    ]
+  },
+  "erros_proibidos": [
+    "inferencia_sem_lastro",
+    "quantitativo_definitivo_sem_base"
+  ],
+  "gatilhos_hitl": [
+    "Ausência de quadro de esquadrias"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "esquadrias_identificadas": true,
+    "pergunta_hitl_presente": true,
+    "nao_fechou_sem_quadro": true
+  }
+}

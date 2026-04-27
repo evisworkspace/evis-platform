@@ -1,0 +1,38 @@
+{
+  "id": "MC-ELE-003",
+  "disciplina": "eletrica",
+  "titulo": "Não assumir quadro ou circuitos sem evidência",
+  "objetivo": "Validar se o especialista não fecha quadro de distribuição e circuitos quando o documento não traz quadro de cargas ou legenda suficiente.",
+  "entrada": {
+    "tipo": "planta_parcial",
+    "fonte": "planta_sem_quadro",
+    "conteudo": "A prancha mostra alguns pontos de tomada e iluminação, porém não apresenta quadro de cargas, número de circuitos, disjuntores ou especificação do quadro."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Há leitura parcial de pontos",
+      "Quadro e circuitos permanecem como lacuna"
+    ],
+    "campos_obrigatorios": {
+      "perguntas_hitl": 1
+    },
+    "nao_pode_fazer": [
+      "Inventar quantidade de circuitos",
+      "Inventar quadro final",
+      "Assumir disjuntores ou cargas sem base"
+    ]
+  },
+  "erros_proibidos": [
+    "inferencia_sem_lastro",
+    "hitl_nao_acionado"
+  ],
+  "gatilhos_hitl": [
+    "Ausência de quadro de cargas"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "lacuna_quadro_sinalizada": true,
+    "pergunta_hitl_presente": true,
+    "nao_inventou_circuito": true
+  }
+}

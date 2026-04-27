@@ -1,0 +1,37 @@
+{
+  "id": "MC-HID-001",
+  "disciplina": "hidraulica_sanitaria",
+  "titulo": "Contagem de pontos em banheiro e cozinha",
+  "objetivo": "Validar se o especialista diferencia água fria, água quente e esgoto por ambiente sem colapsar tudo em um ponto genérico.",
+  "entrada": {
+    "tipo": "trecho_documental",
+    "fonte": "planta_hidraulica_residencial",
+    "conteudo": "Banheiro suíte: lavatório com água fria e quente, chuveiro com água fria e quente, bacia sanitária com água fria, ralo de box e esgoto do lavatório. Cozinha: pia com água fria, água quente e esgoto."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Banheiro e cozinha devem ser lidos por ambiente e por tipo de ponto",
+      "Água fria, água quente e esgoto precisam aparecer separados"
+    ],
+    "campos_obrigatorios": {
+      "quantitativos_chave": 3
+    },
+    "nao_pode_fazer": [
+      "Tratar banheiro como ponto único",
+      "Omitir esgoto da pia ou do lavatório",
+      "Assumir drenagem pluvial onde não existe"
+    ]
+  },
+  "erros_proibidos": [
+    "omissao_critica",
+    "mistura_de_sistemas",
+    "contagem_generica_sem_separacao"
+  ],
+  "gatilhos_hitl": [],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "ambientes_identificados": true,
+    "sistemas_separados": true,
+    "esgoto_presente": true
+  }
+}

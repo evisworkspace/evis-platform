@@ -1,0 +1,354 @@
+{
+  "generated_at": "2026-04-22T12:38:48.371Z",
+  "model": "gemini-2.5-flash",
+  "judge_model": "claude-sonnet-4-20250514",
+  "summary": {
+    "total": 6,
+    "passed": 6,
+    "failed": 0,
+    "averageScore": 95.83333333333333
+  },
+  "results": [
+    {
+      "microcase_id": "MC-CIV-001",
+      "titulo": "Forro com área líquida e não área bruta",
+      "passed": true,
+      "score": 100,
+      "checks": {
+        "schema_valido": true,
+        "area_liquida_sinalizada": true,
+        "nao_usou_area_bruta_cega": true,
+        "fatos_minimos_presentes": true,
+        "quantitativos_chave_corretos": true,
+        "erros_proibidos_ausentes": true
+      },
+      "erros_detectados": [],
+      "resumo": "Aprovado com excelência. O especialista identificou corretamente que a medição deve considerar área executável (20 m²) e não área bruta (28 m²), descontando adequadamente o vazio de pé-direito duplo de 8 m². Todos os fatos mínimos foram contemplados e nenhum erro proibido foi cometido.",
+      "output": {
+        "specialist_id": "discipline_specialist_civil_execucao",
+        "specialist_nome": "Civil e Execucao",
+        "disciplina": "Civil e Execucao",
+        "escopo": "Leitura e quantificação de forro em sala com vazio de pé-direito duplo, conforme indicação de projeto arquitetônico.",
+        "achados": [
+          "A medição do forro deve considerar a área efetivamente executável, descontando vazios e trechos sem forro.",
+          "A sala possui uma área bruta de 28 m².",
+          "Há um vazio de pé-direito duplo de 8 m² onde não será executado forro.",
+          "A área líquida para execução do forro é de 20 m² (28 m² - 8 m²)."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [
+          {
+            "item": "Forro (área executável)",
+            "unidade": "m²",
+            "quantidade": 20,
+            "observacao": "Área líquida calculada descontando o vazio de pé-direito duplo de 8 m² da área bruta de 28 m²."
+          }
+        ],
+        "itens_orcamentarios_candidatos": [
+          "Forro de gesso acartonado, incluindo estrutura e fixação",
+          "Preparação de base para forro"
+        ],
+        "premissas": [
+          "As áreas de sala (bruta) e vazio de pé-direito duplo são precisas conforme o projeto arquitetônico."
+        ],
+        "perguntas_hitl": [],
+        "evidencias_criticas": [
+          "Indicação de área bruta da sala",
+          "Indicação de vazio de pé-direito duplo sem forro"
+        ],
+        "confianca": 1
+      }
+    },
+    {
+      "microcase_id": "MC-CIV-002",
+      "titulo": "Revestimento com vãos e descontos",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "vao_sinalizado": true,
+        "pergunta_hitl_presente": true,
+        "nao_fechou_sem_regra": true,
+        "fatos_minimos_identificados": true,
+        "erros_proibidos_evitados": true,
+        "gatilhos_hitl_acionados": true
+      },
+      "erros_detectados": [],
+      "resumo": "Aprovado com excelência. O especialista identificou corretamente os vãos (porta e nicho), reconheceu a ausência da política de desconto, manteve postura conservadora não fechando quantitativos sem base, e acionou HITL adequadamente com perguntas específicas sobre política de desconto e dimensões do nicho. Demonstrou rigor técnico ao calcular área da porta (1,68m²) e deixar zeradas as quantidades que não poderiam ser determinadas sem informações adicionais.",
+      "output": {
+        "specialist_id": "discipline_specialist_civil_execucao",
+        "specialist_nome": "Civil e Execucao",
+        "disciplina": "Civil e Execucao",
+        "escopo": "Leitura executiva para quantificação de revestimento de parede em banheiro com aberturas.",
+        "achados": [
+          "Duas paredes de banheiro serão revestidas até o teto.",
+          "Uma das paredes possui uma porta de 0,80 x 2,10 m.",
+          "A mesma parede da porta possui um nicho embutido.",
+          "A política de desconto para vãos e aberturas na medição de revestimentos não foi informada."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [
+          {
+            "item": "Área de vão de porta",
+            "unidade": "m²",
+            "quantidade": 1.68,
+            "observacao": "Vão da porta (0,80m x 2,10m) que deverá ser descontado da área total de revestimento, conforme política de medição."
+          },
+          {
+            "item": "Área de vão de nicho embutido",
+            "unidade": "m²",
+            "quantidade": 0,
+            "observacao": "Área do nicho embutido a ser descontada. Quantidade não pode ser fechada sem as dimensões do nicho."
+          },
+          {
+            "item": "Área de revestimento de parede (candidata)",
+            "unidade": "m²",
+            "quantidade": 0,
+            "observacao": "Quantidade não pode ser fechada sem as dimensões das paredes e a política de desconto para vãos e aberturas."
+          }
+        ],
+        "itens_orcamentarios_candidatos": [
+          "Revestimento cerâmico/porcelanato de parede",
+          "Argamassa de assentamento para revestimento",
+          "Rejunte para revestimento",
+          "Preparo de base para revestimento de parede"
+        ],
+        "premissas": [
+          "O revestimento será aplicado em duas paredes do banheiro até o teto.",
+          "A porta e o nicho embutido representam vãos que exigem desconto na área líquida de revestimento."
+        ],
+        "perguntas_hitl": [
+          "Qual a política de desconto para vãos (portas, janelas, nichos) na medição de revestimentos de parede? (Ex: descontar acima de 2m², descontar integralmente, etc.)",
+          "Quais as dimensões exatas (largura x altura x profundidade) do nicho embutido para o cálculo preciso da área a descontar?"
+        ],
+        "evidencias_criticas": [
+          "Ausência da política de desconto para vãos e aberturas.",
+          "Falta de dimensões para o nicho embutido."
+        ],
+        "confianca": 0.7
+      }
+    },
+    {
+      "microcase_id": "MC-CIV-003",
+      "titulo": "Separar contrapiso, regularização e acabamento",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "camadas_separadas": true,
+        "itens_candidatos_adequados": true,
+        "fatos_minimos_atendidos": true,
+        "campos_obrigatorios_ok": true,
+        "nao_fez_proibido": true,
+        "erros_proibidos_evitados": true,
+        "gatilhos_hitl_acionados": true
+      },
+      "erros_detectados": [],
+      "resumo": "Aprovado com excelência. O especialista separou corretamente as três camadas (contrapiso, regularização e porcelanato) em itens orçamentários distintos, evitou colapsar em item único, identificou corretamente a ausência de áreas/espessuras e acionou adequadamente os gatilhos HITL. Atendeu todos os critérios obrigatórios e demonstrou compreensão técnica adequada da sequência executiva.",
+      "output": {
+        "specialist_id": "discipline_specialist_civil_execucao",
+        "specialist_nome": "Civil e Execucao",
+        "disciplina": "Civil e Execucao",
+        "escopo": "Leitura executiva das camadas de piso (contrapiso, regularização e acabamento) para sala e cozinha.",
+        "achados": [
+          "O memorial de piso para sala e cozinha indica a execução de contrapiso, regularização e piso final em porcelanato.",
+          "As camadas de base (contrapiso e regularização) e acabamento (piso porcelanato) são serviços distintos e com sequências executivas independentes, conforme lógica de execução civil."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [
+          {
+            "item": "Contrapiso",
+            "unidade": "m²",
+            "quantidade": 0,
+            "observacao": "Quantitativo candidato. Área e espessura não definidas no recorte do memorial."
+          },
+          {
+            "item": "Regularização de piso",
+            "unidade": "m²",
+            "quantidade": 0,
+            "observacao": "Quantitativo candidato. Área e espessura não definidas no recorte do memorial."
+          },
+          {
+            "item": "Piso porcelanato",
+            "unidade": "m²",
+            "quantidade": 0,
+            "observacao": "Quantitativo candidato. Área não definida no recorte do memorial."
+          }
+        ],
+        "itens_orcamentarios_candidatos": [
+          "Execução de Contrapiso para Sala e Cozinha",
+          "Execução de Regularização de Piso para Sala e Cozinha",
+          "Assentamento de Piso Porcelanato para Sala e Cozinha"
+        ],
+        "premissas": [
+          "A sequência executiva considerada é: contrapiso, seguido de regularização e, por fim, assentamento do piso porcelanato.",
+          "A área de contrapiso, regularização e piso porcelanato será a mesma para sala e cozinha, correspondendo à área total dos ambientes."
+        ],
+        "perguntas_hitl": [
+          "Qual a área total da sala e da cozinha para quantificação dos serviços de piso?",
+          "Quais as espessuras do contrapiso e da camada de regularização?",
+          "Há detalhes específicos de paginação ou juntas para o porcelanato?"
+        ],
+        "evidencias_criticas": [
+          "Ausência de quadro de áreas por ambiente (sala e cozinha) no memorial.",
+          "Ausência de indicação de espessuras para o contrapiso e a camada de regularização."
+        ],
+        "confianca": 0.7
+      }
+    },
+    {
+      "microcase_id": "MC-CIV-004",
+      "titulo": "Esquadrias sem quadro ou dimensões completas",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "esquadrias_identificadas": true,
+        "pergunta_hitl_presente": true,
+        "nao_fechou_sem_quadro": true,
+        "fatos_minimos_presentes": true,
+        "nao_inventou_especificacoes": true,
+        "tratou_como_candidato": true
+      },
+      "erros_detectados": [],
+      "resumo": "Excelente execução. O especialista identificou corretamente as esquadrias nas plantas/fachadas, reconheceu a ausência do quadro de esquadrias como limitação crítica, manteve todos os itens como candidatos sem inventar especificações, e formulou perguntas HITL adequadas para obter as informações faltantes. Demonstrou disciplina ao não quantificar definitivamente sem base documental.",
+      "output": {
+        "specialist_id": "discipline_specialist_civil_execucao",
+        "specialist_nome": "Civil e Execucao",
+        "disciplina": "Civil e Execucao",
+        "escopo": "Análise de aberturas para esquadrias básicas (portas e janelas) com foco na identificação de lacunas para quantificação e orçamentação.",
+        "achados": [
+          "A planta e a fachada indicam claramente a presença de aberturas para portas e janelas.",
+          "Não foi fornecido um quadro de esquadrias detalhado, impedindo a especificação de dimensões, materiais, tipologias e número de folhas.",
+          "A ausência de detalhes impede a quantificação precisa de esquadrias e serviços correlatos como requadros e vergas/contravergas."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [
+          {
+            "item": "Esquadrias (portas e janelas) - Candidato",
+            "unidade": "un",
+            "quantidade": 0,
+            "observacao": "Identificadas visualmente em planta e fachada, mas sem dados para quantificação precisa de unidades, dimensões ou tipologias."
+          }
+        ],
+        "itens_orcamentarios_candidatos": [
+          "Fornecimento e instalação de portas (tipo e dimensões a definir)",
+          "Fornecimento e instalação de janelas (tipo e dimensões a definir)",
+          "Execução de vergas e contravergas para vãos de esquadrias (quantificar após definição de dimensões)",
+          "Requadros de vãos (material e dimensões a definir)"
+        ],
+        "premissas": [
+          "A quantificação e especificação detalhada das esquadrias dependerão da apresentação de um quadro de esquadrias completo.",
+          "Os vãos para as esquadrias serão considerados conforme indicados em planta para fins de alvenaria, mas suas dimensões exatas para acabamentos e elementos estruturais menores (vergas/contravergas) dependem da especificação final das esquadrias."
+        ],
+        "perguntas_hitl": [
+          "Existe um quadro de esquadrias completo com dimensões, materiais, tipologias, número de folhas e especificações para todas as portas e janelas indicadas em planta e fachada?",
+          "Quais são as dimensões exatas (largura x altura) e o tipo de material/acabamento para cada esquadria (porta e janela) identificada no projeto?"
+        ],
+        "evidencias_criticas": [
+          "Ausência de quadro de esquadrias no projeto arquitetônico.",
+          "Falta de dimensões e especificações para portas e janelas em qualquer documento fornecido."
+        ],
+        "confianca": 0.7
+      }
+    },
+    {
+      "microcase_id": "MC-CIV-005",
+      "titulo": "Preparo de base e impermeabilização não podem ser omitidos",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "preparo_sinalizado": true,
+        "impermeabilizacao_sinalizada": true,
+        "nao_fechou_sem_base": true
+      },
+      "erros_detectados": [],
+      "resumo": "Especialista atendeu todos os critérios obrigatórios: identificou corretamente a necessidade de regularização de base e impermeabilização como candidatos, não omitiu itens críticos, sinalizou adequadamente a ausência de detalhamento e formulou perguntas HITL apropriadas. Demonstrou conhecimento técnico sólido sobre sequência executiva em áreas molhadas.",
+      "output": {
+        "specialist_id": "discipline_specialist_civil_execucao",
+        "specialist_nome": "Civil e Execucao",
+        "disciplina": "Civil e Execucao",
+        "escopo": "Análise de memorial descritivo para áreas molhadas (banheiro e área de serviço) com foco em preparo de base e impermeabilização para orçamentação civil.",
+        "achados": [
+          "O memorial de áreas molhadas (banheiro e área de serviço) especifica a aplicação de revestimento cerâmico e piso final.",
+          "Não há detalhamento explícito no memorial sobre a regularização de base para o piso ou sobre o sistema de impermeabilização para estas áreas.",
+          "A lógica executiva da obra civil para áreas molhadas exige a inclusão de serviços de preparo de base e impermeabilização para garantir a funcionalidade e durabilidade do sistema."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [],
+        "itens_orcamentarios_candidatos": [
+          "Regularização de base para assentamento de piso em áreas molhadas (candidato)",
+          "Impermeabilização de piso e rodapé em áreas molhadas (candidato)",
+          "Assentamento de revestimento cerâmico em piso de áreas molhadas (mencionado)",
+          "Assentamento de revestimento cerâmico em paredes de áreas molhadas (implícito)"
+        ],
+        "premissas": [
+          "Assume-se que as áreas molhadas (banheiro e área de serviço) requerem regularização de base e impermeabilização, conforme boas práticas de engenharia civil, mesmo que não detalhado explicitamente no memorial.",
+          "A ausência de detalhamento específico impede o fechamento de quantitativos definitivos para esses serviços."
+        ],
+        "perguntas_hitl": [
+          "Qual o detalhamento específico para a regularização de base (ex: espessura, tipo de argamassa) para o assentamento do revestimento cerâmico nas áreas molhadas?",
+          "Existe um projeto ou especificação técnica para o sistema de impermeabilização das áreas molhadas (ex: tipo de manta/argamassa polimérica, altura de rodapé impermeabilizado, detalhes de ralos e tubulações)?"
+        ],
+        "evidencias_criticas": [
+          "Memorial menciona 'revestimento cerâmico e piso final em áreas molhadas', mas omite 'regularização de base' e 'impermeabilização'."
+        ],
+        "confianca": 0.6
+      }
+    },
+    {
+      "microcase_id": "MC-CIV-006",
+      "titulo": "Evitar dupla contagem do mesmo pano ou forro",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "duplicidade_evitada": true,
+        "detalhe_tratado_como_repeticao": true,
+        "fatos_minimos_presentes": true,
+        "campos_obrigatorios_atendidos": true,
+        "erros_proibidos_evitados": true
+      },
+      "erros_detectados": [],
+      "resumo": "Especialista demonstrou excelente compreensão do problema de dupla contagem. Identificou corretamente que o detalhe ampliado é apenas para paginação/níveis e não representa área adicional. Estabeleceu premissa clara de medição única a partir da planta geral. Quantitativo zerado apropriadamente como candidato. Perguntas HITL pertinentes para definição da área exata. Atendeu todos os critérios de aprovação.",
+      "output": {
+        "specialist_id": "discipline_specialist_civil_execucao",
+        "specialist_nome": "Civil e Execucao",
+        "disciplina": "Civil e Execucao",
+        "escopo": "Análise da documentação de projeto para quantificação de forro de corredor, com foco em evitar dupla contagem de áreas representadas em diferentes vistas.",
+        "achados": [
+          "O forro do corredor é apresentado tanto em planta geral quanto em um detalhe ampliado.",
+          "O detalhe ampliado tem como finalidade a especificação de paginação e níveis, não representando uma área adicional de forro.",
+          "A medição da área do forro do corredor deve ser realizada uma única vez, considerando a totalidade do trecho representado."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [
+          {
+            "item": "Forro de corredor",
+            "unidade": "m²",
+            "quantidade": 0,
+            "observacao": "Quantidade candidata. A área do forro do corredor deve ser medida uma única vez, evitando duplicidade entre a planta geral e o detalhe ampliado, que representa o mesmo pano."
+          }
+        ],
+        "itens_orcamentarios_candidatos": [
+          "Forro de gesso/PVC em corredor (incluindo estrutura de suporte)",
+          "Instalação de forro (mão de obra e materiais auxiliares)"
+        ],
+        "premissas": [
+          "A área do forro do corredor será determinada a partir da planta geral, descontando eventuais vãos ou elementos que não recebam forro.",
+          "O detalhe ampliado é interpretado como uma representação complementar do mesmo pano de forro, sem adicionar nova área ao quantitativo."
+        ],
+        "perguntas_hitl": [
+          "Qual a área exata do forro do corredor conforme as dimensões da planta geral?",
+          "Existem elementos na planta geral ou no detalhe que impliquem em descontos ou variações na área do forro do corredor que não foram explicitados?"
+        ],
+        "evidencias_criticas": [
+          "Planta geral do corredor com indicação do forro",
+          "Detalhe ampliado do forro do corredor (paginação e níveis)"
+        ],
+        "confianca": 0.9
+      }
+    }
+  ]
+}

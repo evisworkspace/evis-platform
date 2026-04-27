@@ -1,0 +1,37 @@
+{
+  "id": "MC-CUS-006",
+  "disciplina": "custos_orcamentacao",
+  "titulo": "Item específico da obra não pode virar catálogo global automaticamente",
+  "objetivo": "Validar se o especialista diferencia item específico da obra de item reaproveitável do catálogo principal.",
+  "entrada": {
+    "tipo": "saida_disciplinar",
+    "fonte": "item_personalizado",
+    "conteudo": "Serviço validado: solução personalizada de obra, feita sob medida para o cliente e sem recorrência comprovada no acervo EVIS."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "O item pode ser específico da obra",
+      "A saída deve evitar promoção automática ao catálogo global"
+    ],
+    "campos_obrigatorios": {
+      "premissas": 1
+    },
+    "nao_pode_fazer": [
+      "Marcar o item como padrão global sem validação",
+      "Tratar item específico como recorrente por padrão"
+    ]
+  },
+  "erros_proibidos": [
+    "promocao_indevida_catalogo",
+    "classificacao_incorreta"
+  ],
+  "gatilhos_hitl": [
+    "Decisão de promoção ao catálogo principal"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "item_especifico_sinalizado": true,
+    "nao_promoveu_global": true,
+    "pergunta_hitl_presente": true
+  }
+}

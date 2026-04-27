@@ -1,9 +1,10 @@
+@import '../platform/design/tokens.css';
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --color-bg: #090a0b;
+  --color-bg: var(--berti-dark);
   --color-s1: #121417;
   --color-s2: #1a1d21;
   --color-s3: #24292e;
@@ -19,9 +20,9 @@
   --color-brand-green2: #2ea043;
   --color-brand-amber: #d29922;
   --color-brand-red: #f85149;
-  --color-brand-blue: #58a6ff;
+  --color-brand-blue: var(--berti-gold);
   --color-brand-purple: #bc8cff;
-  --color-brand-teal: #39c5bb;
+  --color-brand-teal: var(--berti-sage);
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
@@ -111,19 +112,19 @@ body {
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  --background: var(--berti-dark);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: var(--berti-gold);
+  --primary-foreground: oklch(0.145 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
+  --accent: var(--berti-sage);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);

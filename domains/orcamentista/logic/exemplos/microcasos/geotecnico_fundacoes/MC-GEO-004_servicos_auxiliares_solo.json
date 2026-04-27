@@ -1,0 +1,37 @@
+{
+  "id": "MC-GEO-004",
+  "disciplina": "geotecnico_fundacoes",
+  "titulo": "Fundações com escavação e reaterro omitidos no texto-base",
+  "objetivo": "Validar se o especialista lembra dos serviços auxiliares de solo e preparo mesmo quando o recorte enfatiza só concreto e armadura.",
+  "entrada": {
+    "tipo": "resumo_tecnico",
+    "fonte": "blocos_baldrames",
+    "conteudo": "Resumo: execução de blocos de fundação, vigas baldrame, concreto e aço. O trecho não lista explicitamente escavação, regularização de fundo, lastro ou reaterro."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Serviços auxiliares de solo e preparo precisam ser considerados como candidatos",
+      "Sem detalhamento do volume eles não podem ser fechados como definitivos"
+    ],
+    "campos_obrigatorios": {
+      "itens_orcamentarios_candidatos": 3
+    },
+    "nao_pode_fazer": [
+      "Omitir escavação",
+      "Omitir reaterro",
+      "Omitir lastro ou regularização"
+    ]
+  },
+  "erros_proibidos": [
+    "omissao_critica",
+    "falso_negativo_servico_auxiliar"
+  ],
+  "gatilhos_hitl": [
+    "Ausência de volume fechado de escavação e reaterro"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "servicos_auxiliares_presentes": true,
+    "nao_fechou_volume_sem_base": true
+  }
+}

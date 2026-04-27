@@ -1,0 +1,35 @@
+{
+  "id": "MC-ELE-006",
+  "disciplina": "eletrica",
+  "titulo": "Priorizar composição elétrica residencial por ponto",
+  "objetivo": "Validar se o especialista direciona a saída para composição por ponto residencial, compatível com o catálogo EVIS.",
+  "entrada": {
+    "tipo": "resumo_comercial_tecnico",
+    "fonte": "orcamento_residencial",
+    "conteudo": "Residência unifamiliar com leitura preliminar de 12 TUG, 3 TUE 220V e 10 pontos de iluminação. O modelo comercial da empresa trabalha elétrica residencial por ponto."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "A medição comercial correta é por ponto",
+      "TUG, TUE e iluminação devem virar itens candidatos separados"
+    ],
+    "campos_obrigatorios": {
+      "itens_orcamentarios_candidatos": 3
+    },
+    "nao_pode_fazer": [
+      "Colapsar todos os pontos em um item único",
+      "Usar item não aderente ao modelo residencial"
+    ]
+  },
+  "erros_proibidos": [
+    "modelo_comercial_incorreto",
+    "classificacao_sem_aderencia"
+  ],
+  "gatilhos_hitl": [],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "modelo_por_ponto_sinalizado": true,
+    "tipos_separados": true,
+    "itens_candidatos_adequados": true
+  }
+}

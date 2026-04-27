@@ -1,0 +1,18 @@
+/* ── BERTI DESIGN SYSTEM — tokens globais ── */
+
+:root {
+  /* Cores */
+  --berti-dark:  #141614;
+  --berti-sage:  #3D5A46;
+  --berti-gold:  #D4AE37;
+  --berti-ink:   #8D1E00;
+  --berti-light: #F9F8F6;
+
+  /* Tipografia */
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-sans:    'Outfit', system-ui, sans-serif;
+
+  /* Espaçamentos padrão */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+}

@@ -1,0 +1,47 @@
+{
+  "_metadata": {
+    "etapa": "0_reader",
+    "timestamp": "2026-04-22T21:35:44.233Z",
+    "version": "1.1",
+    "checksum": "oxMzB9fQ=="
+  },
+  "data": {
+    "revisao_registry_id": "registry_1776893724568",
+    "documentos": [
+      {
+        "nome": "Folha 1.pdf",
+        "tipo": "arquitetonico",
+        "revisao": "R0",
+        "hash_conteudo": "c81512ffd119",
+        "achados_criticos": [
+          "Projeto Arquitetônico de Residência Unifamiliar",
+          "Área construída total: 130.00 m²",
+          "Área total do lote: 400.00 m²",
+          "Taxa de ocupação: 32.50%",
+          "Coeficiente de aproveitamento: 0.32",
+          "Recuos: Frontal 5.00m, Lateral 1.50m, Fundos 1.50m",
+          "Nível do piso térreo: 0.00m",
+          "Nível da cobertura/cumeeira/platibanda/laje: 3.43m",
+          "Cobertura com telha metálica sanduíche (isotelha trapezoidal) com inclinação de 10%",
+          "Plantas: Implantação (escala 1:150), Pavimento Térreo (escala 1:50), Cobertura (escala 1:50)",
+          "Ambientes no pavimento térreo: 3 Dormitórios, 2 Banheiros, Escritório, Sala de Estar, Cozinha, Lavanderia, Varanda"
+        ]
+      },
+      {
+        "nome": "Folha 2.pdf",
+        "tipo": "arquitetonico",
+        "revisao": "R0",
+        "hash_conteudo": "779d3ce3a7b2",
+        "achados_criticos": [
+          "Projeto Arquitetônico de Residência Unifamiliar",
+          "Elevações (Fachadas Norte, Leste, Sul, Oeste) na escala 1:50",
+          "Cortes (AA, BB, CC, DD) na escala 1:50",
+          "Níveis de piso e cobertura consistentes com Folha 1 (0.00m e 3.43m)"
+        ]
+      }
+    ],
+    "contexto_geral": {
+      "area_total": 130
+    }
+  }
+}

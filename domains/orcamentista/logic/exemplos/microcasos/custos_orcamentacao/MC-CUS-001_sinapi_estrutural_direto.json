@@ -1,0 +1,35 @@
+{
+  "id": "MC-CUS-001",
+  "disciplina": "custos_orcamentacao",
+  "titulo": "Estrutural com referência SINAPI direta",
+  "objetivo": "Validar se o especialista de custos prioriza SINAPI direto para item estrutural aderente.",
+  "entrada": {
+    "tipo": "saida_disciplinar",
+    "fonte": "estrutural_validado",
+    "conteudo": "Serviço validado: concreto estrutural FCK 25 MPa para vigas e lajes. Snapshot de referência pré-consultado: SINAPI código 94971, competência 03/2026, aderente ao serviço."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Item estrutural aderente deve apontar para SINAPI direto",
+      "Origem e competência precisam aparecer"
+    ],
+    "campos_obrigatorios": {
+      "itens_orcamentarios_candidatos": 1
+    },
+    "nao_pode_fazer": [
+      "Trocar SINAPI aderente por referência genérica",
+      "Omitir origem da referência"
+    ]
+  },
+  "erros_proibidos": [
+    "classificacao_sem_aderencia",
+    "origem_omitida"
+  ],
+  "gatilhos_hitl": [],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "sinapi_priorizado": true,
+    "origem_sinalizada": true,
+    "competencia_sinalizada": true
+  }
+}

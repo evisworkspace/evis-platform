@@ -1,0 +1,55 @@
+@import '../../../../platform/design/tokens.css';
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-serif: "Cormorant Garamond", Georgia, serif;
+
+  --color-berti-dark: var(--berti-dark);
+  --color-berti-sage: var(--berti-sage);
+  --color-berti-gold: var(--berti-gold);
+  --color-berti-gold-dark: #8A7023;
+  --color-berti-ink: #0D110D;
+  --color-berti-accent: #E5C361;
+  --color-berti-light: var(--berti-light);
+}
+
+@layer base {
+  body {
+    @apply font-sans bg-berti-light text-berti-ink antialiased leading-relaxed;
+  }
+  h1 {
+    @apply font-display font-extrabold tracking-tightest;
+  }
+  h2 {
+    @apply font-display font-bold tracking-tighter;
+  }
+  h3 {
+    @apply font-display font-semibold tracking-tight;
+  }
+  h4 {
+    @apply font-display font-medium;
+  }
+}
+
+@utility tracking-tightest {
+  letter-spacing: -0.06em;
+}
+
+@utility tracking-widest-xl {
+  letter-spacing: 0.6em;
+}
+
+@utility tracking-widest-2xl {
+  letter-spacing: 0.8em;
+}
+
+@utility no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}

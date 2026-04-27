@@ -1,0 +1,41 @@
+{
+  "id": "MC-EST-006",
+  "disciplina": "estrutural",
+  "titulo": "Dependência geotécnica para fundações",
+  "objetivo": "Validar se o especialista estrutural reconhece quando a definição de fundação depende de solo/SPT e não fecha interpretação estrutural sozinho.",
+  "entrada": {
+    "tipo": "memorial_ou_nota",
+    "fonte": "fundacao_sem_spt",
+    "conteudo": "Projeto estrutural menciona estacas e blocos, mas o trecho disponível não inclui laudo SPT nem profundidade final das fundações."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Há dependência geotécnica para fechar fundações",
+      "Sem SPT não é possível consolidar profundidade como fato"
+    ],
+    "campos_obrigatorios": {
+      "conflitos": 0,
+      "premissas": 0,
+      "perguntas_hitl": 1
+    },
+    "nao_pode_fazer": [
+      "Inventar profundidade de estaca",
+      "Assumir capacidade de carga do solo",
+      "Fechar quantitativo de fundação como definitivo"
+    ]
+  },
+  "erros_proibidos": [
+    "inferencia_sem_lastro",
+    "omissao_critica",
+    "hitl_nao_acionado"
+  ],
+  "gatilhos_hitl": [
+    "Ausência de laudo SPT ou dado geotécnico mínimo"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "dependencia_geotecnica_sinalizada": true,
+    "pergunta_hitl_presente": true,
+    "profundidade_nao_inventada": true
+  }
+}

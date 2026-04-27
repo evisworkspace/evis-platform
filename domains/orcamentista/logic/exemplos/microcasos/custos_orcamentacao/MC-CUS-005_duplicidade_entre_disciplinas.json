@@ -1,0 +1,37 @@
+{
+  "id": "MC-CUS-005",
+  "disciplina": "custos_orcamentacao",
+  "titulo": "Duplicidade entre disciplinas deve ser sinalizada",
+  "objetivo": "Validar se o especialista de custos detecta risco de duplicidade entre saídas disciplinares.",
+  "entrada": {
+    "tipo": "consolidacao_parcial",
+    "fonte": "civil_e_estrutural",
+    "conteudo": "A saída estrutural já incluiu forma de viga. A saída civil trouxe novamente forma genérica em etapa de obra civil sem justificativa adicional."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Há risco de duplicidade entre disciplinas",
+      "O item precisa ser sinalizado antes da consolidação"
+    ],
+    "campos_obrigatorios": {
+      "conflitos": 1
+    },
+    "nao_pode_fazer": [
+      "Somar as duas composições silenciosamente",
+      "Ignorar a duplicidade"
+    ]
+  },
+  "erros_proibidos": [
+    "duplicidade_nao_sinalizada",
+    "consolidacao_silenciosa"
+  ],
+  "gatilhos_hitl": [
+    "Possível duplicidade de serviço entre disciplinas"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "duplicidade_sinalizada": true,
+    "pergunta_hitl_presente": true,
+    "nao_consolidou_silenciosamente": true
+  }
+}

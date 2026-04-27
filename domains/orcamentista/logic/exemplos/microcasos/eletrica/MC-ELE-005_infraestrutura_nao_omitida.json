@@ -1,0 +1,37 @@
+{
+  "id": "MC-ELE-005",
+  "disciplina": "eletrica",
+  "titulo": "Infraestrutura elétrica não pode ser omitida",
+  "objetivo": "Validar se o especialista lembra da infraestrutura mínima quando o texto-base destaca apenas dispositivos finais.",
+  "entrada": {
+    "tipo": "resumo_tecnico",
+    "fonte": "resumo_pontos",
+    "conteudo": "Resumo: instalação de tomadas, interruptores e luminárias da residência. O trecho não menciona eletrodutos, caixas ou cabeamento."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "A infraestrutura elétrica associada deve aparecer como candidata",
+      "Sem metragem ou detalhamento ela não pode ser fechada"
+    ],
+    "campos_obrigatorios": {
+      "itens_orcamentarios_candidatos": 3
+    },
+    "nao_pode_fazer": [
+      "Omitir eletrodutos",
+      "Omitir caixas",
+      "Omitir cabeamento"
+    ]
+  },
+  "erros_proibidos": [
+    "omissao_critica",
+    "falso_negativo_infraestrutura"
+  ],
+  "gatilhos_hitl": [
+    "Ausência de detalhamento de infraestrutura"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "infraestrutura_presente": true,
+    "nao_fechou_metragem_sem_base": true
+  }
+}

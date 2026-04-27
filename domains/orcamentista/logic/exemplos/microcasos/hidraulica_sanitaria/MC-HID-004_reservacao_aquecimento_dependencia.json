@@ -1,0 +1,38 @@
+{
+  "id": "MC-HID-004",
+  "disciplina": "hidraulica_sanitaria",
+  "titulo": "Reservação e aquecimento como dependência de fechamento",
+  "objetivo": "Validar se o especialista sobe HITL quando reservatório, aquecedor ou pressurização são citados sem detalhamento suficiente.",
+  "entrada": {
+    "tipo": "memorial_parcial",
+    "fonte": "memorial_hidraulico",
+    "conteudo": "O memorial menciona reservatório superior, aquecimento de água e possível pressurização, mas não informa volume do reservatório, potência do aquecedor, tipo de sistema nem posicionamento."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Há sistemas especiais dependentes de detalhamento",
+      "Sem detalhamento não é possível fechar quantitativo definitivo"
+    ],
+    "campos_obrigatorios": {
+      "perguntas_hitl": 1
+    },
+    "nao_pode_fazer": [
+      "Inventar volume do reservatório",
+      "Inventar capacidade do aquecedor",
+      "Fechar bomba ou pressurizador sem especificação"
+    ]
+  },
+  "erros_proibidos": [
+    "inferencia_sem_lastro",
+    "hitl_nao_acionado"
+  ],
+  "gatilhos_hitl": [
+    "Sistema de reservação ou aquecimento sem especificação"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "dependencia_sinalizada": true,
+    "pergunta_hitl_presente": true,
+    "nao_inventou_equipamento": true
+  }
+}

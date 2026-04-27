@@ -1,0 +1,460 @@
+{
+  "generated_at": "2026-04-22T12:33:56.566Z",
+  "model": "gemini-2.5-flash",
+  "judge_model": "claude-sonnet-4-20250514",
+  "summary": {
+    "total": 6,
+    "passed": 6,
+    "failed": 0,
+    "averageScore": 95.83333333333333
+  },
+  "results": [
+    {
+      "microcase_id": "MC-ELE-001",
+      "titulo": "Diferenciar TUG, TUE e iluminação por ambiente",
+      "passed": true,
+      "score": 100,
+      "checks": {
+        "schema_valido": true,
+        "tug_sinalizado": true,
+        "tue_sinalizado": true,
+        "iluminacao_sinalizada": true,
+        "separacao_por_ambiente": true,
+        "nao_misturou_tipos": true,
+        "nao_omitiu_criticos": true,
+        "quantitativos_corretos": true
+      },
+      "erros_detectados": [],
+      "resumo": "Aprovado com excelência. O especialista separou corretamente TUG, TUE e iluminação por ambiente, identificou todos os 8 pontos esperados com quantidades exatas, diferenciou adequadamente TUE 220V de TUG comum, e apresentou estrutura organizacional clara sem colapsar tipos distintos em categorias genéricas.",
+      "output": {
+        "specialist_id": "discipline_specialist_eletrica",
+        "specialist_nome": "Eletrica",
+        "disciplina": "Eletrica",
+        "escopo": "Leitura e quantificação de pontos elétricos (TUG, TUE e iluminação) por ambiente, conforme descrição textual da planta elétrica para Suíte, Cozinha e Lavanderia.",
+        "achados": [
+          "Identificação e separação clara de pontos de Tomada de Uso Geral (TUG) por ambiente.",
+          "Identificação e separação clara de pontos de Tomada de Uso Específico (TUE) 220V para forno e máquina de lavar, diferenciados por ambiente.",
+          "Identificação e separação clara de pontos de iluminação por ambiente."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [
+          {
+            "item": "Ponto de Tomada de Uso Geral (TUG)",
+            "unidade": "un",
+            "quantidade": 3,
+            "observacao": "Suíte"
+          },
+          {
+            "item": "Ponto de Iluminação",
+            "unidade": "un",
+            "quantidade": 1,
+            "observacao": "Suíte"
+          },
+          {
+            "item": "Ponto de Tomada de Uso Geral (TUG)",
+            "unidade": "un",
+            "quantidade": 4,
+            "observacao": "Cozinha"
+          },
+          {
+            "item": "Ponto de Tomada de Uso Específico (TUE) 220V para Forno",
+            "unidade": "un",
+            "quantidade": 1,
+            "observacao": "Cozinha"
+          },
+          {
+            "item": "Ponto de Iluminação",
+            "unidade": "un",
+            "quantidade": 1,
+            "observacao": "Cozinha"
+          },
+          {
+            "item": "Ponto de Tomada de Uso Geral (TUG)",
+            "unidade": "un",
+            "quantidade": 1,
+            "observacao": "Lavanderia"
+          },
+          {
+            "item": "Ponto de Tomada de Uso Específico (TUE) 220V para Máquina de Lavar",
+            "unidade": "un",
+            "quantidade": 1,
+            "observacao": "Lavanderia"
+          },
+          {
+            "item": "Ponto de Iluminação",
+            "unidade": "un",
+            "quantidade": 1,
+            "observacao": "Lavanderia"
+          }
+        ],
+        "itens_orcamentarios_candidatos": [
+          "Composição por ponto de TUG residencial (incluindo infraestrutura básica)",
+          "Composição por ponto de TUE 220V residencial (incluindo infraestrutura básica e disjuntor dedicado)",
+          "Composição por ponto de iluminação residencial (incluindo infraestrutura básica e interruptor)"
+        ],
+        "premissas": [
+          "A contagem de pontos é baseada estritamente na descrição textual fornecida, simulando uma planta elétrica detalhada por ambiente.",
+          "Não foram consideradas informações sobre quadros de distribuição, circuitos, eletrodutos, cabos ou dispositivos de proteção, além do ponto em si."
+        ],
+        "perguntas_hitl": [
+          "Existe uma prancha de quadro de cargas ou diagrama unifilar para detalhar os circuitos e dispositivos de proteção para cada TUE e iluminação?",
+          "Há informações sobre a infraestrutura (eletrodutos, caixas, cabos) para os pontos identificados, ou a composição por ponto deve englobar a infraestrutura padrão?"
+        ],
+        "evidencias_criticas": [],
+        "confianca": 1
+      }
+    },
+    {
+      "microcase_id": "MC-ELE-002",
+      "titulo": "Arquitetura sem planta elétrica fechada",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "base_candidata_assumida": true,
+        "pergunta_hitl_presente": true,
+        "nao_fechou_definitivo": true,
+        "fatos_minimos_presentes": true,
+        "nao_inventou_quantitativos": true,
+        "hitl_acionado_corretamente": true
+      },
+      "erros_detectados": [],
+      "resumo": "Excelente execução. O especialista corretamente identificou a arquitetura como apoio candidato, não fechou quantitativos definitivos sem base técnica, acionou HITL adequadamente com perguntas pertinentes, e demonstrou postura conservadora ao manter quantitativos_chave e itens_orcamentarios_candidatos vazios. Todos os critérios de aprovação foram atendidos com rigor técnico apropriado.",
+      "output": {
+        "specialist_id": "discipline_specialist_eletrica",
+        "specialist_nome": "Eletrica",
+        "disciplina": "Eletrica",
+        "escopo": "Análise preliminar de ambientes para infraestrutura elétrica com base em planta arquitetônica, na ausência de projeto elétrico completo. Não é possível fechar quantitativos definitivos ou itens orçamentários sem o projeto elétrico.",
+        "achados": [
+          "Identificação dos ambientes principais (Dormitório, Sala, Cozinha) conforme planta arquitetônica.",
+          "A planta arquitetônica serve como apoio candidato para a localização espacial dos ambientes.",
+          "Ausência completa de planta elétrica detalhada, quadro de cargas, memorial descritivo elétrico e indicação de pontos elétricos (iluminação, TUG, TUE, interruptores)."
+        ],
+        "conflitos": [
+          {
+            "titulo": "Lacuna Crítica: Ausência de Projeto Elétrico",
+            "descricao": "A falta de uma planta elétrica completa impede qualquer contagem ou dimensionamento preciso de pontos elétricos, circuitos, quadros e infraestrutura. Não é possível determinar quantitativos definitivos ou itens orçamentários elétricos sem esta documentação.",
+            "severidade": "alta",
+            "evidencias": [
+              "Conteúdo da entrada: 'não há planta elétrica, quadro de cargas, posição de tomadas ou memorial elétrico disponível.'"
+            ]
+          }
+        ],
+        "quantitativos_chave": [],
+        "itens_orcamentarios_candidatos": [],
+        "premissas": [
+          "A planta arquitetônica é a única base documental disponível e é utilizada apenas para identificar os ambientes e sua disposição espacial.",
+          "Não é possível assumir ou inferir quantitativos de pontos elétricos, quadros, circuitos ou cargas sem a documentação elétrica específica.",
+          "Qualquer orçamentação elétrica baseada apenas na arquitetura seria uma estimativa de alto risco e não um quantitativo definitivo."
+        ],
+        "perguntas_hitl": [
+          "É possível obter a planta elétrica completa do projeto, incluindo quadro de cargas, detalhamento de pontos (TUG, TUE, iluminação), circuitos e infraestrutura?",
+          "Na ausência da planta elétrica, há um memorial descritivo ou um padrão de pontos elétricos mínimos por ambiente (Dormitório, Sala, Cozinha) a ser seguido para uma orçamentação preliminar?"
+        ],
+        "evidencias_criticas": [
+          "Ausência de planta elétrica.",
+          "Ausência de quadro de cargas.",
+          "Ausência de detalhamento de pontos elétricos (TUG, TUE, iluminação, interruptores)."
+        ],
+        "confianca": 0.2
+      }
+    },
+    {
+      "microcase_id": "MC-ELE-003",
+      "titulo": "Não assumir quadro ou circuitos sem evidência",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "lacuna_quadro_sinalizada": true,
+        "pergunta_hitl_presente": true,
+        "nao_inventou_circuito": true,
+        "fatos_minimos_presentes": true,
+        "evidencias_criticas_adequadas": true,
+        "confianca_baixa_apropriada": true
+      },
+      "erros_detectados": [
+        "Quantidades zeradas podem gerar confusão - melhor seria 'A definir' ou similar"
+      ],
+      "resumo": "Excelente aderência ao microcaso. O especialista corretamente identificou as lacunas, não inventou informações sobre quadro/circuitos, acionou HITL adequadamente e sinalizou todas as ausências críticas. Único ponto de melhoria: quantidades em zero podem ser ambíguas.",
+      "output": {
+        "specialist_id": "discipline_specialist_eletrica",
+        "specialist_nome": "Eletrica",
+        "disciplina": "Eletrica",
+        "escopo": "Análise preliminar de pontos elétricos em planta parcial, com foco na identificação de lacunas sobre quadro de distribuição e circuitos.",
+        "achados": [
+          "A prancha apresenta a localização de alguns pontos de tomada (TUG/TUE).",
+          "A prancha apresenta a localização de alguns pontos de iluminação.",
+          "Não há quadro de cargas detalhado na prancha.",
+          "Não há especificação de número de circuitos, disjuntores ou tipo de quadro de distribuição."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [
+          {
+            "item": "Pontos de tomada (TUG/TUE)",
+            "unidade": "un",
+            "quantidade": 0,
+            "observacao": "Pontos identificados parcialmente na planta. Quantidade exata e diferenciação TUG/TUE a serem confirmadas com projeto elétrico completo."
+          },
+          {
+            "item": "Pontos de iluminação",
+            "unidade": "un",
+            "quantidade": 0,
+            "observacao": "Pontos identificados parcialmente na planta. Quantidade exata a ser confirmada com projeto elétrico completo."
+          }
+        ],
+        "itens_orcamentarios_candidatos": [
+          "Instalação de ponto de tomada (TUG/TUE) - Candidato",
+          "Instalação de ponto de iluminação - Candidato",
+          "Infraestrutura para eletrodutos e cabos (parcial) - Candidato"
+        ],
+        "premissas": [
+          "A leitura é baseada em uma planta parcial e não representa o projeto elétrico completo.",
+          "A quantificação de pontos é preliminar e sujeita a confirmação com o projeto elétrico detalhado.",
+          "Não foram assumidos circuitos, cargas ou especificações de quadro de distribuição devido à ausência de documentação."
+        ],
+        "perguntas_hitl": [
+          "É possível fornecer o projeto elétrico completo, incluindo o quadro de cargas, diagrama unifilar, número de circuitos, disjuntores e especificações do quadro de distribuição?",
+          "Existe um memorial descritivo ou legenda que detalhe os tipos de pontos de tomada (TUG/TUE) e suas respectivas cargas para cada ambiente?"
+        ],
+        "evidencias_criticas": [
+          "Ausência de quadro de cargas.",
+          "Ausência de detalhamento de circuitos e disjuntores.",
+          "Ausência de especificação do quadro de distribuição."
+        ],
+        "confianca": 0.3
+      }
+    },
+    {
+      "microcase_id": "MC-ELE-004",
+      "titulo": "Separar pontos especiais de pontos comuns",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "pontos_especiais_sinalizados": true,
+        "tug_nao_misturado": true,
+        "campos_obrigatorios": true,
+        "fatos_minimos_atendidos": true,
+        "nao_pode_fazer_respeitado": true
+      },
+      "erros_detectados": [
+        "Campo 'itens_orcamentarios_candidatos' contém 4 itens ao invés dos 2 esperados pelo microcaso"
+      ],
+      "resumo": "Especialista atendeu corretamente ao objetivo principal de separar pontos especiais de comuns. Identificou e categorizou adequadamente todos os elementos: 2 TUG, 1 interfone, 2 CFTV e 1 espera de portão. Não misturou tipos diferentes e sinalizou claramente a separação. Único desvio foi no número de itens orçamentários candidatos (4 vs 2 esperados), mas isso não compromete a qualidade técnica da análise.",
+      "output": {
+        "specialist_id": "discipline_specialist_eletrica",
+        "specialist_nome": "Eletrica",
+        "disciplina": "Eletrica",
+        "escopo": "Leitura e quantificação de pontos elétricos comuns e especiais em garagem, fachada e entrada, com foco na diferenciação de tipos.",
+        "achados": [
+          "Identificados 2 pontos de Tomada de Uso Geral (TUG) na garagem.",
+          "Identificado 1 ponto especial de interfone na entrada.",
+          "Identificados 2 pontos especiais de CFTV na fachada.",
+          "Identificada 1 espera para motor de portão, que configura um ponto especial de alimentação elétrica.",
+          "Todos os pontos especiais foram devidamente separados dos pontos comuns (TUG), conforme diretriz de orçamentação residencial."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [
+          {
+            "item": "Ponto de Tomada de Uso Geral (TUG)",
+            "unidade": "un",
+            "quantidade": 2,
+            "observacao": "Localizado na garagem."
+          },
+          {
+            "item": "Ponto especial de interfone",
+            "unidade": "un",
+            "quantidade": 1,
+            "observacao": "Localizado na entrada."
+          },
+          {
+            "item": "Ponto especial de CFTV",
+            "unidade": "un",
+            "quantidade": 2,
+            "observacao": "Localizado na fachada."
+          },
+          {
+            "item": "Espera elétrica para motor de portão",
+            "unidade": "un",
+            "quantidade": 1,
+            "observacao": "Considera a infraestrutura e ponto de alimentação para o motor."
+          }
+        ],
+        "itens_orcamentarios_candidatos": [
+          "Ponto de Tomada de Uso Geral (TUG) - Garagem (Composição por ponto EVIS)",
+          "Ponto especial de interfone - Entrada (Composição por ponto EVIS)",
+          "Ponto especial de CFTV - Fachada (Composição por ponto EVIS)",
+          "Espera elétrica para motor de portão (Composição por ponto EVIS ou SINAPI, dependendo da complexidade)"
+        ],
+        "premissas": [
+          "A contagem dos pontos é baseada exclusivamente na descrição textual fornecida.",
+          "A 'espera para motor de portão' é interpretada como a infraestrutura elétrica necessária para a alimentação do motor, incluindo o ponto de conexão."
+        ],
+        "perguntas_hitl": [
+          "Existe um detalhamento da infraestrutura (eletrodutos, cabos, caixas) para os pontos especiais (interfone, CFTV, motor de portão) ou deve-se considerar uma composição padrão de infraestrutura por ponto?",
+          "A espera para motor de portão deve ser orçada como uma Tomada de Uso Específico (TUE) ou como um circuito dedicado com ponto de conexão específico, considerando a carga do motor?"
+        ],
+        "evidencias_criticas": [],
+        "confianca": 1
+      }
+    },
+    {
+      "microcase_id": "MC-ELE-005",
+      "titulo": "Infraestrutura elétrica não pode ser omitida",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "infraestrutura_presente": true,
+        "nao_fechou_metragem_sem_base": true,
+        "itens_candidatos_minimo": true,
+        "nao_omitiu_eletrodutos": true,
+        "nao_omitiu_caixas": true,
+        "nao_omitiu_cabeamento": true
+      },
+      "erros_detectados": [],
+      "resumo": "Aprovado com excelência. O especialista identificou corretamente todos os componentes de infraestrutura elétrica (eletrodutos, caixas, cabeamento) mesmo não sendo mencionados na entrada, manteve quantidades zeradas por falta de detalhamento, e apresentou 6 itens candidatos superando o mínimo exigido de 3. Demonstrou conhecimento técnico sólido ao não omitir elementos críticos da infraestrutura elétrica.",
+      "output": {
+        "specialist_id": "discipline_specialist_eletrica",
+        "specialist_nome": "Eletrica",
+        "disciplina": "Eletrica",
+        "escopo": "Análise de resumo de pontos elétricos residenciais com foco na identificação da infraestrutura mínima necessária para orçamentação.",
+        "achados": [
+          "O resumo da entrada menciona a instalação de dispositivos finais como tomadas, interruptores e luminárias na residência.",
+          "A entrada explicitamente não menciona eletrodutos, caixas ou cabeamento, que são componentes essenciais da infraestrutura elétrica.",
+          "A infraestrutura elétrica (eletrodutos, caixas de passagem/derivação, cabeamento) é intrínseca à instalação dos pontos mencionados e não pode ser omitida na orçamentação.",
+          "Não há quantitativos específicos para os pontos (tomadas, interruptores, luminárias) nem para a infraestrutura."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [
+          {
+            "item": "Ponto de Tomada (TUG/TUE)",
+            "unidade": "ponto",
+            "quantidade": 0,
+            "observacao": "Quantidade a ser definida com projeto elétrico detalhado ou levantamento em campo."
+          },
+          {
+            "item": "Ponto de Interruptor",
+            "unidade": "ponto",
+            "quantidade": 0,
+            "observacao": "Quantidade a ser definida com projeto elétrico detalhado ou levantamento em campo."
+          },
+          {
+            "item": "Ponto de Iluminação",
+            "unidade": "ponto",
+            "quantidade": 0,
+            "observacao": "Quantidade a ser definida com projeto elétrico detalhado ou levantamento em campo."
+          },
+          {
+            "item": "Eletroduto",
+            "unidade": "m",
+            "quantidade": 0,
+            "observacao": "Metragem a ser definida com projeto elétrico detalhado. Essencial para a instalação dos pontos."
+          },
+          {
+            "item": "Caixa de Passagem/Derivação",
+            "unidade": "un",
+            "quantidade": 0,
+            "observacao": "Quantidade a ser definida com projeto elétrico detalhado. Essencial para a instalação dos pontos."
+          },
+          {
+            "item": "Cabeamento Elétrico",
+            "unidade": "m",
+            "quantidade": 0,
+            "observacao": "Metragem e seções a serem definidas com projeto elétrico detalhado e quadro de cargas. Essencial para a instalação dos pontos."
+          }
+        ],
+        "itens_orcamentarios_candidatos": [
+          "Ponto de Tomada (TUG/TUE) - Composição EVIS",
+          "Ponto de Interruptor - Composição EVIS",
+          "Ponto de Iluminação - Composição EVIS",
+          "Eletroduto PVC Rígido/Flexível (diversos diâmetros)",
+          "Caixa de Passagem/Derivação (diversos tamanhos)",
+          "Cabo Elétrico (diversas seções e cores)"
+        ],
+        "premissas": [
+          "A residência requer uma infraestrutura elétrica completa e funcional para suportar os pontos de tomada, interruptores e luminárias.",
+          "A orçamentação será baseada em composições por ponto do catálogo EVIS para os dispositivos finais, e itens de infraestrutura para os componentes de base.",
+          "A ausência de detalhamento impede a quantificação precisa, sendo necessário um projeto ou levantamento mais completo."
+        ],
+        "perguntas_hitl": [
+          "É possível obter o projeto elétrico completo ou planta baixa com detalhamento dos pontos e da infraestrutura (eletrodutos, caixas, cabeamento) para quantificação precisa?",
+          "Qual o número exato de pontos de tomada, interruptores e luminárias por ambiente para a residência?",
+          "Há necessidade de diferenciar tomadas TUG e TUE por ambiente, e qual a potência prevista para as TUEs?"
+        ],
+        "evidencias_criticas": [
+          "O conteúdo da entrada ('O trecho não menciona eletrodutos, caixas ou cabeamento') indica uma lacuna crítica na informação para orçamentação elétrica completa."
+        ],
+        "confianca": 0.6
+      }
+    },
+    {
+      "microcase_id": "MC-ELE-006",
+      "titulo": "Priorizar composição elétrica residencial por ponto",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "modelo_por_ponto_sinalizado": true,
+        "tipos_separados": true,
+        "itens_candidatos_adequados": true,
+        "fatos_minimos_atendidos": true,
+        "campos_obrigatorios_atendidos": true,
+        "nao_fez_proibido": true
+      },
+      "erros_detectados": [],
+      "resumo": "Saída aprovada com excelência. O especialista identificou corretamente o modelo comercial por ponto, separou adequadamente os três tipos de pontos elétricos (TUG, TUE 220V, iluminação) em itens orçamentários candidatos distintos, e demonstrou aderência completa ao modelo residencial. Todos os critérios de aprovação foram atendidos: schema válido, modelo por ponto sinalizado, tipos separados e itens candidatos adequados. A estruturação em 3 itens candidatos específicos para cada tipo de ponto está alinhada com o catálogo EVIS e o modelo comercial da empresa.",
+      "output": {
+        "specialist_id": "discipline_specialist_eletrica",
+        "specialist_nome": "Eletrica",
+        "disciplina": "Eletrica",
+        "escopo": "Leitura preliminar de pontos elétricos para orçamento residencial, com foco na aplicação do modelo comercial por ponto.",
+        "achados": [
+          "Identificação de 12 pontos de Tomada de Uso Geral (TUG) para a residência unifamiliar.",
+          "Identificação de 3 pontos de Tomada de Uso Específico (TUE 220V) para a residência unifamiliar.",
+          "Identificação de 10 pontos de iluminação para a residência unifamiliar.",
+          "O modelo comercial da empresa para a disciplina elétrica residencial é baseado na composição por ponto."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [
+          {
+            "item": "Ponto de Tomada de Uso Geral (TUG)",
+            "unidade": "un",
+            "quantidade": 12,
+            "observacao": "Contagem preliminar de pontos TUG, conforme resumo comercial."
+          },
+          {
+            "item": "Ponto de Tomada de Uso Específico (TUE 220V)",
+            "unidade": "un",
+            "quantidade": 3,
+            "observacao": "Contagem preliminar de pontos TUE 220V, conforme resumo comercial."
+          },
+          {
+            "item": "Ponto de Iluminação",
+            "unidade": "un",
+            "quantidade": 10,
+            "observacao": "Contagem preliminar de pontos de iluminação, conforme resumo comercial."
+          }
+        ],
+        "itens_orcamentarios_candidatos": [
+          "Composição EVIS: Ponto Elétrico Residencial - Tomada de Uso Geral (TUG)",
+          "Composição EVIS: Ponto Elétrico Residencial - Tomada de Uso Específico (TUE 220V)",
+          "Composição EVIS: Ponto Elétrico Residencial - Iluminação"
+        ],
+        "premissas": [
+          "A contagem de pontos (TUG, TUE, Iluminação) é preliminar e baseada exclusivamente no resumo comercial fornecido, sem verificação em planta detalhada.",
+          "O modelo de precificação adotado para a disciplina elétrica é por ponto, conforme diretriz da empresa, priorizando composições do catálogo EVIS.",
+          "Não há informações sobre quadros de distribuição, circuitos, eletrodutos, cabos ou outros itens de infraestrutura além dos pontos, sendo a análise restrita ao escopo informado."
+        ],
+        "perguntas_hitl": [
+          "Existe planta elétrica detalhada (ou arquitetura com indicação de pontos) para validação e refinamento da contagem de pontos por ambiente?",
+          "Há necessidade de considerar pontos especiais (dados, CFTV, interfone, portão eletrônico, etc.) não mencionados no resumo preliminar?",
+          "Qual o código ou descrição exata das composições por ponto do catálogo EVIS para 'Ponto Elétrico Residencial - Tomada de Uso Geral (TUG)', 'Ponto Elétrico Residencial - Tomada de Uso Específico (TUE 220V)' e 'Ponto Elétrico Residencial - Iluminação'?"
+        ],
+        "evidencias_criticas": [],
+        "confianca": 0.8
+      }
+    }
+  ]
+}

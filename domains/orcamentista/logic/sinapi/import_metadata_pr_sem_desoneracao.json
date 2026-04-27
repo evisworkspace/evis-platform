@@ -1,0 +1,16 @@
+{
+  "uf": "PR",
+  "regime_desoneracao": "SEM_DESONERACAO",
+  "competencia": "2026-03-01",
+  "total_composicoes_csd": 10284,
+  "com_analitico": 10284,
+  "com_percentual_mao_de_obra": 8238,
+  "com_manutencoes": 9712,
+  "arquivos": {
+    "referencia": "orcamentista/templates/SINAPI_Referência_2026_03.xlsx",
+    "mao_de_obra": "orcamentista/templates/SINAPI_mao_de_obra_2026_03.xlsx",
+    "manutencoes": "orcamentista/templates/SINAPI_Manutenções_2026_03.xlsx"
+  },
+  "log_file": "orcamentista\\sinapi\\logs\\import_sinapi_20260416_123222.log",
+  "env_file": "C:\\Users\\User\\Evis AI\\.env"
+}

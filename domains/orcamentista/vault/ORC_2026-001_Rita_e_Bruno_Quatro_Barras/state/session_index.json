@@ -1,0 +1,54 @@
+{
+  "history": [
+    {
+      "etapa": "registry",
+      "ts": "2026-04-22T21:18:48.005Z"
+    },
+    {
+      "etapa": "0_reader",
+      "ts": "2026-04-22T21:18:52.572Z"
+    },
+    {
+      "etapa": "1_planner",
+      "ts": "2026-04-22T21:19:09.324Z"
+    },
+    {
+      "etapa": "2_quantitativos",
+      "ts": "2026-04-22T21:19:09.325Z"
+    },
+    {
+      "etapa": "registry",
+      "ts": "2026-04-22T21:35:24.567Z"
+    },
+    {
+      "etapa": "0_reader",
+      "ts": "2026-04-22T21:35:44.234Z"
+    },
+    {
+      "etapa": "1_planner",
+      "ts": "2026-04-22T21:35:57.132Z"
+    },
+    {
+      "etapa": "2_quantitativos",
+      "ts": "2026-04-22T21:35:57.134Z"
+    },
+    {
+      "etapa": "registry",
+      "ts": "2026-04-22T21:42:04.533Z"
+    },
+    {
+      "etapa": "0_reader",
+      "ts": "2026-04-22T21:42:16.860Z"
+    },
+    {
+      "etapa": "1_planner",
+      "ts": "2026-04-22T21:42:35.923Z"
+    },
+    {
+      "etapa": "2_quantitativos",
+      "ts": "2026-04-22T21:42:35.925Z"
+    }
+  ],
+  "ultimaEtapa": "2_quantitativos",
+  "updatedAt": "2026-04-22T21:42:35.925Z"
+}

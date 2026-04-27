@@ -1,0 +1,34 @@
+{
+  "id": "MC-CIV-006",
+  "disciplina": "civil_execucao",
+  "titulo": "Evitar dupla contagem do mesmo pano ou forro",
+  "objetivo": "Validar se o especialista evita somar duas vezes o mesmo pano quando ele aparece em planta e em detalhamento executivo.",
+  "entrada": {
+    "tipo": "planta_com_detalhe",
+    "fonte": "forro_corredor",
+    "conteudo": "O forro do corredor aparece em planta geral e em detalhe ampliado apenas para paginação e níveis. O detalhe não introduz nova área, apenas repete o mesmo trecho."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Detalhe ampliado não representa nova quantidade",
+      "A medição deve evitar duplicidade"
+    ],
+    "campos_obrigatorios": {
+      "quantitativos_chave": 1
+    },
+    "nao_pode_fazer": [
+      "Somar a área do detalhe como área nova",
+      "Duplicar o mesmo corredor"
+    ]
+  },
+  "erros_proibidos": [
+    "dupla_contagem",
+    "inferencia_sem_lastro"
+  ],
+  "gatilhos_hitl": [],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "duplicidade_evitada": true,
+    "detalhe_tratado_como_repeticao": true
+  }
+}

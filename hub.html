@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Evis AI — Hub</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #090a0b;
+      color: #c9d1d9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 24px 64px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+
+    header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #f0f6fc;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      font-size: 13px;
+      color: #586069;
+      margin-top: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── seções ────────────────────────────────── */
+
+    section {
+      width: 100%;
+      max-width: 980px;
+      margin-bottom: 48px;
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #444d56;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #21262d;
+    }
+
+    .cards {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* ── card principal ────────────────────────── */
+
+    .card {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      width: 300px;
+      padding: 28px;
+      background: #121417;
+      border: 1px solid #30363d;
+      border-radius: 16px;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.2s;
+      border-radius: inherit;
+    }
+
+    .card.obra::before   { background: radial-gradient(circle at top left, rgba(88,166,255,0.06), transparent 60%); }
+    .card.orca::before   { background: radial-gradient(circle at top left, rgba(63,185,80,0.06), transparent 60%); }
+    .card.proposta::before { background: radial-gradient(circle at top left, rgba(210,153,34,0.06), transparent 60%); }
+
+    .card:hover { transform: translateY(-3px); }
+    .card:hover::before { opacity: 1; }
+    .card.obra:hover      { border-color: #58a6ff; box-shadow: 0 8px 32px rgba(88,166,255,0.12); }
+    .card.orca:hover      { border-color: #3fb950; box-shadow: 0 8px 32px rgba(63,185,80,0.12); }
+    .card.proposta:hover  { border-color: #d29922; box-shadow: 0 8px 32px rgba(210,153,34,0.12); }
+
+    .card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+      font-size: 22px;
+    }
+    .card.obra     .card-icon { background: rgba(88,166,255,0.1);  border: 1px solid rgba(88,166,255,0.2); }
+    .card.orca     .card-icon { background: rgba(63,185,80,0.1);   border: 1px solid rgba(63,185,80,0.2); }
+    .card.proposta .card-icon { background: rgba(210,153,34,0.1);  border: 1px solid rgba(210,153,34,0.2); }
+
+    .card-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #f0f6fc;
+      margin-bottom: 8px;
+    }
+
+    .card-desc {
+      font-size: 12px;
+      color: #8b929a;
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    .card-tag {
+      margin-top: 20px;
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+    .card.obra     .card-tag { background: rgba(88,166,255,0.1);  color: #58a6ff;  border: 1px solid rgba(88,166,255,0.2); }
+    .card.orca     .card-tag { background: rgba(63,185,80,0.1);   color: #3fb950;  border: 1px solid rgba(63,185,80,0.2); }
+    .card.proposta .card-tag { background: rgba(210,153,34,0.1);  color: #d29922;  border: 1px solid rgba(210,153,34,0.2); }
+
+    .card-arrow {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      color: #444d56;
+      font-size: 18px;
+      transition: color 0.2s, transform 0.2s;
+    }
+    .card:hover .card-arrow { color: #8b929a; transform: translate(2px, -2px); }
+
+    /* ── card modelo (menor) ───────────────────── */
+
+    .model-cards {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .model-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 10px;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      min-width: 200px;
+      flex: 1;
+    }
+
+    .model-card:hover {
+      border-color: #3fb950;
+      background: #121417;
+    }
+
+    .model-icon {
+      font-size: 20px;
+      width: 32px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .model-info {}
+
+    .model-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #e6edf3;
+      margin-bottom: 2px;
+    }
+
+    .model-sub {
+      font-size: 11px;
+      color: #586069;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .badge-wip {
+      font-size: 9px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(210,153,34,0.1);
+      color: #d29922;
+      border: 1px solid rgba(210,153,34,0.2);
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .badge-soon {
+      font-size: 9px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(88,166,255,0.08);
+      color: #58a6ff;
+      border: 1px solid rgba(88,166,255,0.15);
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    /* ── footer ────────────────────────────────── */
+
+    footer {
+      margin-top: 16px;
+      font-size: 10px;
+      color: #444d56;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #3fb950;
+      box-shadow: 0 0 6px rgba(63,185,80,0.4);
+    }
+
+    @media (max-width: 680px) {
+      .cards, .model-cards { flex-direction: column; }
+      .card { width: 100%; }
+      .model-card { min-width: unset; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Evis AI</h1>
+    <p>Ponto de entrada e retorno do ecossistema</p>
+  </header>
+
+  <!-- ── Sistemas ─────────────────────────────────────── -->
+  <section>
+    <div class="section-label">Sistemas</div>
+    <div class="cards">
+
+      <a class="card orca" href="/orcamentista" target="_blank">
+        <span class="card-arrow">↗</span>
+        <div class="card-icon">📋</div>
+        <div class="card-title">Evis Orçamentista</div>
+        <div class="card-desc">
+          Orçamentação assistida por IA com fluxo HITL. Leitura de projeto, quantitativos, SINAPI, BDI, cronograma e exportação JSON.
+        </div>
+        <span class="card-tag">orcamentista</span>
+      </a>
+
+      <a class="card proposta" href="/proposta" target="_blank">
+        <span class="card-arrow">↗</span>
+        <div class="card-icon">📄</div>
+        <div class="card-title">Evis Proposta</div>
+        <div class="card-desc">
+          Geração de proposta comercial a partir do orçamento aprovado. Formatação, apresentação ao cliente e aprovação.
+        </div>
+        <span class="card-tag">proposta</span>
+      </a>
+
+      <a class="card obra" href="/" target="_blank">
+        <span class="card-arrow">↗</span>
+        <div class="card-icon">🏗️</div>
+        <div class="card-title">Evis Obra</div>
+        <div class="card-desc">
+          Cockpit de gestão da obra em andamento. Diário, presença, fotos, pendências, notas e acompanhamento da execução real.
+        </div>
+        <span class="card-tag">obra · pausado</span>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ── Modelos de Orçamento ──────────────────────────── -->
+  <section>
+    <div class="section-label">Modelos de Orçamento</div>
+    <div class="model-cards">
+
+      <a class="model-card" href="/orcamentista?modelo=residencial" target="_blank">
+        <span class="model-icon">🏠</span>
+        <div class="model-info">
+          <div class="model-title">Residencial</div>
+          <div class="model-sub">casa / apartamento / unifamiliar</div>
+        </div>
+      </a>
+
+      <a class="model-card" href="/orcamentista?modelo=comercial" target="_blank">
+        <span class="model-icon">🏪</span>
+        <div class="model-info">
+          <div class="model-title">Comercial</div>
+          <div class="model-sub">loja / restaurante / escritório</div>
+        </div>
+      </a>
+
+      <a class="model-card" href="/orcamentista?modelo=reforma" target="_blank">
+        <span class="model-icon">🔨</span>
+        <div class="model-info">
+          <div class="model-title">Reforma</div>
+          <div class="model-sub">retrofit / renovação / ampliação</div>
+        </div>
+      </a>
+
+      <a class="model-card" href="/orcamentista?modelo=modular" target="_blank">
+        <span class="model-icon">📦</span>
+        <div class="model-info">
+          <div class="model-title">Modular</div>
+          <div class="model-sub">pré-fabricado / steel frame / container</div>
+        </div>
+        <span class="badge-soon">em breve</span>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ── Orçamentos em andamento ──────────────────────── -->
+  <section>
+    <div class="section-label">Orçamentos em Andamento</div>
+    <div class="model-cards">
+
+      <a class="model-card" href="#" onclick="return false;">
+        <span class="model-icon">📁</span>
+        <div class="model-info">
+          <div class="model-title">ORC_2026-001 — Rita e Bruno</div>
+          <div class="model-sub">Residencial · Quatro Barras/PR · 138,9 m²</div>
+        </div>
+        <span class="badge-wip">em andamento</span>
+      </a>
+
+    </div>
+  </section>
+
+  <footer>
+    <span class="status">
+      <span class="dot"></span>
+      HUB — ponto de retorno central do ecossistema EVIS
+    </span>
+  </footer>
+
+</body>
+</html>

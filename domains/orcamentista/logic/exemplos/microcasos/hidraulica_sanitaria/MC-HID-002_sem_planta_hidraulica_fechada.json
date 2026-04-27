@@ -1,0 +1,39 @@
+{
+  "id": "MC-HID-002",
+  "disciplina": "hidraulica_sanitaria",
+  "titulo": "Arquitetura sem planta hidráulica completa",
+  "objetivo": "Validar se o especialista usa a arquitetura apenas como base candidata quando a planta hidráulica não foi fornecida.",
+  "entrada": {
+    "tipo": "arquitetura_sem_hidraulica",
+    "fonte": "planta_arquitetonica",
+    "conteudo": "A arquitetura mostra banheiro social, cozinha e lavanderia com equipamentos aparentes, mas não há planta hidráulica, traçado de tubulação nem memorial hidrossanitário."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "A arquitetura pode sugerir pontos candidatos",
+      "Sem planta hidráulica a leitura não é definitiva"
+    ],
+    "campos_obrigatorios": {
+      "perguntas_hitl": 1
+    },
+    "nao_pode_fazer": [
+      "Fechar quantitativo definitivo por ambiente",
+      "Inventar diâmetros ou materiais",
+      "Assumir água quente sem evidência"
+    ]
+  },
+  "erros_proibidos": [
+    "inferencia_sem_lastro",
+    "quantitativo_definitivo_sem_base",
+    "hitl_nao_acionado"
+  ],
+  "gatilhos_hitl": [
+    "Ausência de planta hidráulica"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "base_candidata_assumida": true,
+    "pergunta_hitl_presente": true,
+    "nao_fechou_definitivo": true
+  }
+}

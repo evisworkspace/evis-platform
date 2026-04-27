@@ -1,0 +1,39 @@
+{
+  "id": "MC-GEO-005",
+  "disciplina": "geotecnico_fundacoes",
+  "titulo": "Blocos e sapatas com dimensões parciais e quantitativo aberto",
+  "objetivo": "Validar se o especialista consegue marcar quantitativos como candidatos quando só parte das dimensões de blocos/sapatas está disponível.",
+  "entrada": {
+    "tipo": "detalhe_fundacao",
+    "fonte": "blocos_sapatas_parciais",
+    "conteudo": "Detalhe mostra bloco B1 com 1,20 x 1,20 m, mas sem altura. Outro quadro cita sapatas S1 e S2 sem tabela completa de dimensões nem quantidade total."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Há elementos de fundação identificáveis",
+      "As dimensões estão incompletas e o quantitativo deve permanecer candidato"
+    ],
+    "campos_obrigatorios": {
+      "quantitativos_chave": 1,
+      "perguntas_hitl": 1
+    },
+    "nao_pode_fazer": [
+      "Inventar altura do bloco",
+      "Inventar quantidade total de sapatas",
+      "Fechar volume definitivo com base parcial"
+    ]
+  },
+  "erros_proibidos": [
+    "inferencia_sem_lastro",
+    "quantitativo_definitivo_sem_base"
+  ],
+  "gatilhos_hitl": [
+    "Dimensão parcial de bloco ou sapata"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "elementos_fundacao_identificados": true,
+    "quantitativo_marcado_como_candidato": true,
+    "pergunta_hitl_presente": true
+  }
+}

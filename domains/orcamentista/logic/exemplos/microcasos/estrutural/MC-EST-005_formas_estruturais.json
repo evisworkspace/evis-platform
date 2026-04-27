@@ -1,0 +1,40 @@
+{
+  "id": "MC-EST-005",
+  "disciplina": "estrutural",
+  "titulo": "Formas estruturais sem área consolidada",
+  "objetivo": "Validar se o especialista reconhece a necessidade de formas para lajes e vigas, mas não inventa área de forma quando a prancha não a entrega diretamente.",
+  "entrada": {
+    "tipo": "prancha_estrutura",
+    "fonte": "forma_lajes_vigas",
+    "conteudo": "A prancha mostra a forma das vigas V201-V210 e o pavimento da caixa d'água, sem quadro de área de formas ou memória de cálculo."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Formas de vigas/lajes são necessárias no escopo",
+      "A área de formas não está fechada"
+    ],
+    "campos_obrigatorios": {
+      "itens_orcamentarios_candidatos": 1,
+      "quantitativos_chave": 1,
+      "perguntas_hitl": 1
+    },
+    "nao_pode_fazer": [
+      "Inventar área de forma em m²",
+      "Omitir forma como item orçamentário",
+      "Transformar hipótese em quantitativo definitivo"
+    ]
+  },
+  "erros_proibidos": [
+    "omissao_critica",
+    "inferencia_sem_lastro",
+    "quantitativo_errado"
+  ],
+  "gatilhos_hitl": [
+    "Área de forma não consolidada no documento"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "item_forma_presente": true,
+    "quantitativo_como_lacuna_ou_candidato": true
+  }
+}

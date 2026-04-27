@@ -1,0 +1,53 @@
+{
+  "_meta": {
+    "versao": "3.0",
+    "data_geracao": "",
+    "sistema": "EVIS Orçamentos",
+    "status_orcamento": "rascunho",
+    "total_servicos": 0,
+    "itens_excluidos_escopo": []
+  },
+  "obra": {
+    "id": "",
+    "nome": "",
+    "endereco": "",
+    "cliente": "",
+    "tipo_obra": "",
+    "area_total_m2": null,
+    "status": "Planejada",
+    "regime_tributario": "",
+    "rt_estrutural": null,
+    "rt_arquitetonico": null,
+    "data_inicio_prevista": "",
+    "data_fim_prevista": "",
+    "prazo_dias_uteis": null,
+    "valor_custos_diretos": null,
+    "bdi_percentual": null,
+    "bdi_valor": null,
+    "valor_total_com_bdi": null,
+    "custo_direto_por_m2": null,
+    "valor_total_por_m2": null,
+    "observacoes": null
+  },
+  "bdi_detalhamento": {
+    "modelo": "",
+    "gerenciamento_pct": null,
+    "gerenciamento_valor": null,
+    "impostos_pct": null,
+    "impostos_valor": null,
+    "total_pct": null,
+    "total_valor": null,
+    "observacao": null
+  },
+  "equipes": [],
+  "servicos": [],
+  "cronograma_financeiro": [],
+  "fontes_entrada": [],
+  "premissas": [],
+  "pendencias": [],
+  "decisoes_usuario": [],
+  "itens_pontuais_obra": [],
+  "itens_avaliar_catalogo": [],
+  "itens_reutilizaveis": [],
+  "fornecedores_negociados": []
+}

@@ -1,0 +1,93 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- Projects ---
+    match /projects/{projectId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidId(projectId) && isValidProject(request.resource.data);
+      allow update: if isAdmin() && isValidProject(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    function isValidProject(data) {
+      return data.keys().hasAll(['title', 'location', 'createdAt'])
+        && data.title is string && data.title.size() <= 200
+        && data.location is string && data.location.size() <= 500
+        && (data.get('year', '') is string && data.get('year', '').size() <= 20)
+        && (data.get('area', '') is string && data.get('area', '').size() <= 50)
+        && (data.get('system', '') is string && data.get('system', '').size() <= 100)
+        && (data.get('description', '') is string && data.get('description', '').size() <= 2000)
+        && (data.get('photos', []) is list)
+        && data.createdAt is timestamp;
+    }
+
+    // --- Testimonials ---
+    match /testimonials/{id} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidTestimonial(request.resource.data);
+      allow update: if isAdmin() && isValidTestimonial(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    function isValidTestimonial(data) {
+      return data.keys().hasAll(['clientName', 'rating', 'review', 'createdAt', 'workTitle'])
+        && data.clientName is string && data.clientName.size() <= 150
+        && data.rating is number && data.rating >= 1 && data.rating <= 5
+        && data.review is string && data.review.size() <= 1000
+        && data.createdAt is timestamp;
+    }
+
+    // --- Concepts ---
+    match /concepts/{conceptId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidConcept(request.resource.data);
+      allow update: if isAdmin() && isValidConcept(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    function isValidConcept(data) {
+      return data.keys().hasAll(['url', 'createdAt'])
+        && data.url is string && data.url.size() <= 2000
+        && data.createdAt is timestamp;
+    }
+
+    // --- Admins Mapping ---
+    match /admins/{userId} {
+      allow get: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && request.auth.uid == userId && request.auth.token.email == 'berti@curitibaconstrutora.com.br';
+    }
+
+    // --- Site Config & General Config ---
+    match /siteConfig/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /config/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        request.auth.token.email == 'berti@curitibaconstrutora.com.br'
+      );
+    }
+  }
+}

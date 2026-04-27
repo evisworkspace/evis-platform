@@ -1,0 +1,34 @@
+{
+  "id": "MC-HID-005",
+  "disciplina": "hidraulica_sanitaria",
+  "titulo": "Evitar dupla contagem entre ambiente e detalhe ampliado",
+  "objetivo": "Validar se o especialista evita contar a mesma peça duas vezes quando ela aparece na planta e no detalhe.",
+  "entrada": {
+    "tipo": "planta_com_detalhe",
+    "fonte": "banheiro_com_detalhe",
+    "conteudo": "O box do banheiro aparece na planta com ralo e chuveiro. Um detalhe ampliado do banheiro repete o mesmo ralo linear e o mesmo chuveiro para posicionamento. Não há nova peça no detalhe, apenas ampliação gráfica."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "O detalhe ampliado não representa necessariamente nova quantidade",
+      "A contagem deve evitar duplicidade"
+    ],
+    "campos_obrigatorios": {
+      "quantitativos_chave": 1
+    },
+    "nao_pode_fazer": [
+      "Contar o mesmo chuveiro duas vezes",
+      "Contar o mesmo ralo duas vezes"
+    ]
+  },
+  "erros_proibidos": [
+    "dupla_contagem",
+    "inferencia_sem_lastro"
+  ],
+  "gatilhos_hitl": [],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "duplicidade_evitada": true,
+    "detalhe_tratado_como_repeticao": true
+  }
+}

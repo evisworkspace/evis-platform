@@ -1,0 +1,40 @@
+{
+  "id": "MC-GEO-001",
+  "disciplina": "geotecnico_fundacoes",
+  "titulo": "Conflito entre estaca e sapata em documentos da fundação",
+  "objetivo": "Validar se o especialista geotécnico identifica conflito de tipologia de fundação e não escolhe uma solução sem lastro documental.",
+  "entrada": {
+    "tipo": "trecho_documental",
+    "fonte": "planta_fundacao_e_memorial",
+    "conteudo": "A planta de fundações indica estacas escavadas com blocos. O memorial resumido menciona fundação em sapatas isoladas. Não há nota de revisão consolidada."
+  },
+  "saida_esperada": {
+    "fatos_minimos": [
+      "Existe conflito entre tipologias de fundação",
+      "A tipologia não pode ser fechada sem validação humana ou revisão consolidada"
+    ],
+    "campos_obrigatorios": {
+      "conflitos": 1,
+      "perguntas_hitl": 1
+    },
+    "nao_pode_fazer": [
+      "Escolher estaca silenciosamente",
+      "Escolher sapata silenciosamente",
+      "Misturar as duas tipologias como solução consolidada"
+    ]
+  },
+  "erros_proibidos": [
+    "conflito_nao_sinalizado",
+    "inferencia_sem_lastro",
+    "hitl_nao_acionado"
+  ],
+  "gatilhos_hitl": [
+    "Conflito de tipologia entre planta e memorial"
+  ],
+  "criterio_aprovacao": {
+    "schema_valido": true,
+    "conflito_tipologia_sinalizado": true,
+    "pergunta_hitl_presente": true,
+    "escolha_silenciosa": false
+  }
+}

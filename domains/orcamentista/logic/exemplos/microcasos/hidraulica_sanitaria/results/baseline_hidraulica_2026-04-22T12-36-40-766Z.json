@@ -1,0 +1,478 @@
+{
+  "generated_at": "2026-04-22T12:36:40.767Z",
+  "model": "gemini-2.5-flash",
+  "judge_model": "claude-sonnet-4-20250514",
+  "summary": {
+    "total": 6,
+    "passed": 6,
+    "failed": 0,
+    "averageScore": 95.83333333333333
+  },
+  "results": [
+    {
+      "microcase_id": "MC-HID-001",
+      "titulo": "Contagem de pontos em banheiro e cozinha",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "ambientes_identificados": true,
+        "sistemas_separados": true,
+        "esgoto_presente": true,
+        "quantitativos_chave_corretos": true,
+        "sem_omissao_critica": true,
+        "sem_mistura_sistemas": true,
+        "sem_contagem_generica": true
+      },
+      "erros_detectados": [
+        "Pequena inconsistência: quantitativos_chave tem 8 itens ao invés dos 3 esperados pelo critério, mas todos os itens principais estão corretos"
+      ],
+      "resumo": "Aprovado com excelência. O especialista identificou corretamente todos os ambientes (banheiro suíte e cozinha), separou adequadamente os sistemas (água fria, água quente e esgoto), contabilizou todos os pontos sem omissões críticas e evitou contagem genérica. A análise é detalhada, precisa e atende todos os critérios de aprovação. Única observação menor: o campo quantitativos_chave expandiu além do mínimo esperado, mas isso demonstra completude ao invés de deficiência.",
+      "output": {
+        "specialist_id": "discipline_specialist_hidraulica_sanitaria",
+        "specialist_nome": "Hidraulica e Sanitaria",
+        "disciplina": "Hidraulica e Sanitaria",
+        "escopo": "Leitura hidrossanitária de pontos de água fria, água quente e esgoto em banheiro suíte e cozinha.",
+        "achados": [
+          "No Banheiro suíte, foram identificados os seguintes pontos:",
+          "- Lavatório: 1 ponto de água fria, 1 ponto de água quente, 1 ponto de esgoto.",
+          "- Chuveiro: 1 ponto de água fria, 1 ponto de água quente.",
+          "- Bacia sanitária: 1 ponto de água fria, 1 ponto de esgoto (implícito para o aparelho).",
+          "- Ralo de box: 1 ponto de esgoto.",
+          "Na Cozinha, foram identificados os seguintes pontos:",
+          "- Pia: 1 ponto de água fria, 1 ponto de água quente, 1 ponto de esgoto."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [
+          {
+            "item": "Ponto de Água Fria",
+            "unidade": "un",
+            "quantidade": 4,
+            "observacao": "3 no banheiro (lavatório, chuveiro, bacia) e 1 na cozinha (pia)."
+          },
+          {
+            "item": "Ponto de Água Quente",
+            "unidade": "un",
+            "quantidade": 3,
+            "observacao": "2 no banheiro (lavatório, chuveiro) e 1 na cozinha (pia)."
+          },
+          {
+            "item": "Ponto de Esgoto Sanitário",
+            "unidade": "un",
+            "quantidade": 4,
+            "observacao": "3 no banheiro (lavatório, bacia, ralo de box) e 1 na cozinha (pia)."
+          },
+          {
+            "item": "Bacia Sanitária",
+            "unidade": "un",
+            "quantidade": 1,
+            "observacao": "No banheiro suíte."
+          },
+          {
+            "item": "Lavatório",
+            "unidade": "un",
+            "quantidade": 1,
+            "observacao": "No banheiro suíte."
+          },
+          {
+            "item": "Chuveiro",
+            "unidade": "un",
+            "quantidade": 1,
+            "observacao": "No banheiro suíte."
+          },
+          {
+            "item": "Ralo de Box",
+            "unidade": "un",
+            "quantidade": 1,
+            "observacao": "No banheiro suíte."
+          },
+          {
+            "item": "Pia de Cozinha",
+            "unidade": "un",
+            "quantidade": 1,
+            "observacao": "Na cozinha."
+          }
+        ],
+        "itens_orcamentarios_candidatos": [
+          "Ponto de Água Fria (composição EVIS residencial)",
+          "Ponto de Água Quente (composição EVIS residencial)",
+          "Ponto de Esgoto Sanitário (composição EVIS residencial)",
+          "Instalação de Bacia Sanitária (composição EVIS residencial)",
+          "Instalação de Lavatório (composição EVIS residencial)",
+          "Instalação de Chuveiro (composição EVIS residencial)",
+          "Instalação de Ralo de Box (composição EVIS residencial)",
+          "Instalação de Pia de Cozinha (composição EVIS residencial)"
+        ],
+        "premissas": [
+          "A contagem de pontos de esgoto para bacia sanitária é considerada junto ao aparelho, conforme prática comum em orçamentação por ponto.",
+          "A descrição fornecida é suficiente para a contagem dos pontos hidrossanitários sem a necessidade de planta detalhada."
+        ],
+        "perguntas_hitl": [],
+        "evidencias_criticas": [],
+        "confianca": 1
+      }
+    },
+    {
+      "microcase_id": "MC-HID-002",
+      "titulo": "Arquitetura sem planta hidráulica completa",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "base_candidata_assumida": true,
+        "pergunta_hitl_presente": true,
+        "nao_fechou_definitivo": true,
+        "fatos_minimos_presentes": true,
+        "erros_proibidos_evitados": true
+      },
+      "erros_detectados": [
+        "Quantitativos zerados desnecessariamente - poderia ter indicado contagem candidata mesmo que preliminar"
+      ],
+      "resumo": "Excelente execução do microcaso. O especialista corretamente identificou a arquitetura como base candidata, não fechou quantitativos definitivos, acionou HITL com 5 perguntas pertinentes, e demonstrou consciência das limitações. Reconheceu explicitamente que sem planta hidráulica a leitura não é definitiva. Evitou todos os erros proibidos: não inventou diâmetros/materiais, não assumiu água quente sem evidência, não fez inferências sem lastro. Única observação menor: poderia ter indicado contagens candidatas ao invés de zerar todos os quantitativos.",
+      "output": {
+        "specialist_id": "discipline_specialist_hidraulica_sanitaria",
+        "specialist_nome": "Hidraulica e Sanitaria",
+        "disciplina": "Hidraulica e Sanitaria",
+        "escopo": "Análise preliminar de pontos hidrossanitários com base em planta arquitetônica, devido à ausência de projeto hidráulico completo. Identificação de pontos candidatos e lacunas para orçamentação.",
+        "achados": [
+          "A planta arquitetônica indica a existência de ambientes molhados: Banheiro Social, Cozinha e Lavanderia.",
+          "No Banheiro Social, são visíveis equipamentos como vaso sanitário e lavatório, sugerindo pontos de água fria e esgoto, além de um ponto para chuveiro e ralo de piso.",
+          "Na Cozinha, a pia é visível, sugerindo pontos de água fria e esgoto, e a necessidade de um ralo de piso.",
+          "Na Lavanderia, a presença de tanque e espaço para máquina de lavar roupa sugere pontos de água fria e esgoto, e a necessidade de um ralo de piso.",
+          "Não há indicação explícita de pontos de água quente em nenhum ambiente na planta arquitetônica.",
+          "Não há traçado de tubulações, diâmetros, materiais ou detalhes de instalação hidráulica e sanitária.",
+          "Não há memorial descritivo hidrossanitário que complemente as informações."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [
+          {
+            "item": "Pontos de Água Fria (candidatos)",
+            "unidade": "un",
+            "quantidade": 0,
+            "observacao": "Quantitativo preliminar, baseado em inferência arquitetônica. Não é possível fechar o quantitativo definitivo sem o projeto hidráulico completo."
+          },
+          {
+            "item": "Pontos de Esgoto Sanitário (candidatos)",
+            "unidade": "un",
+            "quantidade": 0,
+            "observacao": "Quantitativo preliminar, baseado em inferência arquitetônica. Não é possível fechar o quantitativo definitivo sem o projeto hidráulico completo."
+          },
+          {
+            "item": "Louças Sanitárias (candidatas)",
+            "unidade": "un",
+            "quantidade": 0,
+            "observacao": "Quantitativo preliminar, baseado em inferência arquitetônica. Não é possível fechar o quantitativo definitivo sem o projeto hidráulico completo."
+          },
+          {
+            "item": "Metais Sanitários (candidatos)",
+            "unidade": "un",
+            "quantidade": 0,
+            "observacao": "Quantitativo preliminar, baseado em inferência arquitetônica. Não é possível fechar o quantitativo definitivo sem o projeto hidráulico completo."
+          }
+        ],
+        "itens_orcamentarios_candidatos": [
+          "Ponto de água fria para vaso sanitário (Banheiro Social) - Candidato",
+          "Ponto de esgoto para vaso sanitário (Banheiro Social) - Candidato",
+          "Ponto de água fria para lavatório (Banheiro Social) - Candidato",
+          "Ponto de esgoto para lavatório (Banheiro Social) - Candidato",
+          "Ponto de água fria para chuveiro (Banheiro Social) - Candidato",
+          "Ponto de esgoto para ralo de piso (Banheiro Social) - Candidato",
+          "Ponto de água fria para pia (Cozinha) - Candidato",
+          "Ponto de esgoto para pia (Cozinha) - Candidato",
+          "Ponto de esgoto para ralo de piso (Cozinha) - Candidato",
+          "Ponto de água fria para tanque (Lavanderia) - Candidato",
+          "Ponto de esgoto para tanque (Lavanderia) - Candidato",
+          "Ponto de água fria para máquina de lavar (Lavanderia) - Candidato",
+          "Ponto de esgoto para máquina de lavar (Lavanderia) - Candidato",
+          "Ponto de esgoto para ralo de piso (Lavanderia) - Candidato"
+        ],
+        "premissas": [
+          "A análise é baseada exclusivamente na interpretação da planta arquitetônica e na lógica de uso dos ambientes molhados.",
+          "A ausência de projeto hidráulico completo impede a quantificação definitiva de pontos, tubulações, diâmetros, materiais e acessórios.",
+          "Não há previsão de água quente, pressurização, reservação ou sistemas especiais sem evidência explícita no projeto arquitetônico ou memorial.",
+          "A contagem de pontos é preliminar e candidata, sujeita a confirmação e detalhamento com o projeto hidráulico e sanitário completo."
+        ],
+        "perguntas_hitl": [
+          "É possível obter a planta hidráulica e sanitária completa do projeto, incluindo traçado, diâmetros, materiais e detalhes de instalação?",
+          "Existe memorial descritivo ou especificações técnicas para os sistemas hidráulico e sanitário que possam complementar a planta arquitetônica?",
+          "Há previsão de água quente em algum ambiente (ex: chuveiro, pia da cozinha, lavatório)? Em caso afirmativo, qual o sistema de aquecimento?",
+          "Quais os tipos e modelos de louças e metais sanitários a serem utilizados para cada ambiente, para uma orçamentação mais precisa?",
+          "Há necessidade de sistema de drenagem pluvial, reuso de água ou outros sistemas especiais não evidentes na arquitetura?"
+        ],
+        "evidencias_criticas": [
+          "Ausência total de planta hidráulica e sanitária detalhada.",
+          "Ausência de memorial descritivo hidrossanitário.",
+          "Dependência exclusiva da planta arquitetônica para inferência de pontos, o que impede a quantificação definitiva e detalhada."
+        ],
+        "confianca": 0.3
+      }
+    },
+    {
+      "microcase_id": "MC-HID-003",
+      "titulo": "Diferenciar pluvial de esgoto sanitário",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "pluvial_sinalizado": true,
+        "esgoto_sinalizado": true,
+        "sistemas_nao_misturados": true,
+        "campos_obrigatorios": true
+      },
+      "erros_detectados": [],
+      "resumo": "Aprovado com excelência. O especialista demonstrou clara diferenciação entre sistemas pluvial e esgoto sanitário, identificando corretamente 6 itens orçamentários candidatos (superando o mínimo de 2). Os achados evidenciam tratamento adequado dos sistemas como entidades distintas. Não houve mistura de sistemas nem omissões críticas. A classificação de calhas/descidas como pluviais e dos pontos do banheiro como esgoto sanitário está tecnicamente correta.",
+      "output": {
+        "specialist_id": "discipline_specialist_hidraulica_sanitaria",
+        "specialist_nome": "Hidraulica e Sanitaria",
+        "disciplina": "Hidraulica e Sanitaria",
+        "escopo": "Leitura hidrossanitária de trecho documental com foco na diferenciação entre sistemas pluvial e esgoto sanitário.",
+        "achados": [
+          "Identificação de um sistema de drenagem pluvial na cobertura, composto por calhas, descidas e caixa de águas pluviais.",
+          "Identificação de um sistema de esgoto sanitário no banheiro, atendendo bacia sanitária, lavatório e ralo de piso.",
+          "Os sistemas pluvial e de esgoto sanitário foram tratados como entidades distintas, conforme evidenciado no conteúdo."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [
+          {
+            "item": "Sistema de Drenagem Pluvial - Cobertura",
+            "unidade": "un",
+            "quantidade": 1,
+            "observacao": "Representa o conjunto de calhas, descidas e caixa de águas pluviais. Metragem não especificada."
+          },
+          {
+            "item": "Ponto de Esgoto - Bacia Sanitária",
+            "unidade": "un",
+            "quantidade": 1,
+            "observacao": "Localizado no banheiro."
+          },
+          {
+            "item": "Ponto de Esgoto - Lavatório",
+            "unidade": "un",
+            "quantidade": 1,
+            "observacao": "Localizado no banheiro."
+          },
+          {
+            "item": "Ralo de Piso - Banheiro",
+            "unidade": "un",
+            "quantidade": 1,
+            "observacao": "Considerado ralo sanitário para o banheiro."
+          }
+        ],
+        "itens_orcamentarios_candidatos": [
+          "Instalação de calha pluvial (m)",
+          "Instalação de descida pluvial (m)",
+          "Caixa de águas pluviais (un)",
+          "Ponto de esgoto para bacia sanitária (un) - Catálogo EVIS",
+          "Ponto de esgoto para lavatório (un) - Catálogo EVIS",
+          "Ralo de piso para área molhada (un) - Catálogo EVIS"
+        ],
+        "premissas": [
+          "A contagem de pontos e equipamentos é baseada estritamente no trecho documental fornecido, sem inferências adicionais.",
+          "A calha e descida pluvial são consideradas como parte de um sistema pluvial, sem quantificação de metragem devido à ausência de detalhamento.",
+          "O ralo mencionado no banheiro é interpretado como um ralo de piso para esgoto sanitário."
+        ],
+        "perguntas_hitl": [
+          "Qual a metragem exata das calhas e descidas pluviais na cobertura para uma quantificação precisa?",
+          "O trecho documental não especifica pontos de água fria ou quente para o banheiro. Há necessidade de considerar esses pontos para o orçamento completo do ambiente?",
+          "Há outros ambientes molhados ou sistemas hidrossanitários não descritos no trecho documental que devem ser considerados?"
+        ],
+        "evidencias_criticas": [
+          "Conteúdo do trecho documental da planta hidrossanitária: 'Cobertura com calhas e descidas pluviais até caixa de águas pluviais. Banheiro com esgoto sanitário da bacia, lavatório e ralo. O trecho disponível não traz memorial complementar.'"
+        ],
+        "confianca": 0.9
+      }
+    },
+    {
+      "microcase_id": "MC-HID-004",
+      "titulo": "Reservação e aquecimento como dependência de fechamento",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "dependencia_sinalizada": true,
+        "pergunta_hitl_presente": true,
+        "nao_inventou_equipamento": true,
+        "fatos_minimos_identificados": true,
+        "conflitos_adequados": true,
+        "quantitativos_zerados": true,
+        "confianca_baixa": true
+      },
+      "erros_detectados": [],
+      "resumo": "Especialista executou corretamente o protocolo HITL. Identificou sistemas especiais sem detalhamento suficiente, sinalizou dependência crítica através de conflito de alta severidade, zerou quantitativos por impossibilidade de especificação, formulou 4 perguntas HITL específicas e manteve confiança baixa (0.3). Não inventou especificações e seguiu critérios conservadores.",
+      "output": {
+        "specialist_id": "discipline_specialist_hidraulica_sanitaria",
+        "specialist_nome": "Hidraulica e Sanitaria",
+        "disciplina": "Hidraulica e Sanitaria",
+        "escopo": "Análise de sistemas de reservação, aquecimento de água e pressurização com base em memorial parcial.",
+        "achados": [
+          "O memorial menciona a necessidade de um reservatório superior.",
+          "O memorial indica a presença de um sistema de aquecimento de água.",
+          "O memorial sugere a possibilidade de um sistema de pressurização."
+        ],
+        "conflitos": [
+          {
+            "titulo": "Detalhamento insuficiente para sistemas especiais",
+            "descricao": "O memorial cita a existência de reservatório superior, aquecimento de água e possível pressurização, mas omite informações cruciais para orçamentação e dimensionamento, como volume do reservatório, potência/tipo do aquecedor, tipo de sistema de pressurização e posicionamento de todos os equipamentos.",
+            "severidade": "alta",
+            "evidencias": [
+              "O memorial menciona reservatório superior, aquecimento de água e possível pressurização, mas não informa volume do reservatório, potência do aquecedor, tipo de sistema nem posicionamento."
+            ]
+          }
+        ],
+        "quantitativos_chave": [
+          {
+            "item": "Reservatório superior",
+            "unidade": "un",
+            "quantidade": 0,
+            "observacao": "Mencionado no memorial, mas sem volume ou posicionamento definidos. Não é possível quantificar."
+          },
+          {
+            "item": "Sistema de aquecimento de água",
+            "unidade": "un",
+            "quantidade": 0,
+            "observacao": "Mencionado no memorial, mas sem potência, tipo ou posicionamento definidos. Não é possível quantificar."
+          },
+          {
+            "item": "Sistema de pressurização",
+            "unidade": "un",
+            "quantidade": 0,
+            "observacao": "Mencionado como 'possível' no memorial, sem tipo, especificações ou posicionamento definidos. Não é possível quantificar."
+          }
+        ],
+        "itens_orcamentarios_candidatos": [],
+        "premissas": [
+          "A existência dos sistemas de reservação, aquecimento e pressurização é uma premissa do projeto, conforme indicação no memorial.",
+          "A ausência de detalhamento impede a orçamentação e dimensionamento preciso desses sistemas."
+        ],
+        "perguntas_hitl": [
+          "Qual o volume do reservatório superior e seu posicionamento exato na edificação?",
+          "Qual o tipo de sistema de aquecimento de água (ex: a gás, elétrico, solar), sua potência/capacidade e posicionamento?",
+          "O sistema de pressurização será implementado? Se sim, qual o tipo (ex: bomba, pressurizador) e suas especificações (vazão, pressão, potência) e posicionamento?",
+          "Há alguma planta, memorial descritivo complementar ou detalhamento que especifique esses sistemas?"
+        ],
+        "evidencias_criticas": [
+          "O memorial menciona reservatório superior, aquecimento de água e possível pressurização, mas não informa volume do reservatório, potência do aquecedor, tipo de sistema nem posicionamento."
+        ],
+        "confianca": 0.3
+      }
+    },
+    {
+      "microcase_id": "MC-HID-005",
+      "titulo": "Evitar dupla contagem entre ambiente e detalhe ampliado",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "duplicidade_evitada": true,
+        "detalhe_tratado_como_repeticao": true,
+        "fatos_minimos_presentes": true,
+        "campos_obrigatorios_atendidos": true,
+        "erros_proibidos_ausentes": true
+      },
+      "erros_detectados": [],
+      "resumo": "Especialista demonstrou excelente compreensão do microcaso, evitando corretamente a dupla contagem entre planta e detalhe ampliado. Identificou que o detalhe serve apenas para posicionamento, não representando peças adicionais. Quantificou adequadamente 1 chuveiro e 1 ralo linear, com justificativas claras nas evidências críticas. Schema válido e todos os critérios de aprovação atendidos.",
+      "output": {
+        "specialist_id": "discipline_specialist_hidraulica_sanitaria",
+        "specialist_nome": "Hidraulica e Sanitaria",
+        "disciplina": "Hidraulica e Sanitaria",
+        "escopo": "Leitura hidrossanitária de banheiro com detalhe ampliado para orçamentação, focando na prevenção de dupla contagem.",
+        "achados": [
+          "No box do banheiro, foi identificado um chuveiro e um ralo linear.",
+          "O detalhe ampliado do banheiro reitera a presença do mesmo chuveiro e ralo linear, servindo para posicionamento e não para adicionar novas peças.",
+          "A contagem foi realizada considerando a unicidade de cada item, evitando duplicidade entre a planta geral e o detalhe ampliado."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [
+          {
+            "item": "Ponto de Chuveiro (água fria e quente)",
+            "unidade": "un",
+            "quantidade": 1,
+            "observacao": "Considerado um ponto completo de chuveiro, incluindo infraestrutura de água fria e quente, e esgoto associado ao ralo."
+          },
+          {
+            "item": "Ralo Linear (esgoto/drenagem do box)",
+            "unidade": "un",
+            "quantidade": 1,
+            "observacao": "Ralo linear para drenagem da área do box, associado ao ponto de chuveiro."
+          }
+        ],
+        "itens_orcamentarios_candidatos": [
+          "Ponto de Chuveiro (água fria e quente) - Composição EVIS/SINAPI",
+          "Ralo Linear para Box - Composição EVIS/SINAPI",
+          "Tubulação de água fria para chuveiro (extensão a ser detalhada em projeto)",
+          "Tubulação de água quente para chuveiro (extensão a ser detalhada em projeto)",
+          "Tubulação de esgoto para ralo (extensão a ser detalhada em projeto)"
+        ],
+        "premissas": [
+          "O detalhe ampliado é uma representação gráfica para posicionamento e não indica peças adicionais ou quantidades extras.",
+          "O chuveiro implica pontos de água fria e quente, e o ralo linear atende à drenagem do box."
+        ],
+        "perguntas_hitl": [],
+        "evidencias_criticas": [
+          "A descrição do microcaso explicitamente afirma que o detalhe ampliado 'repete o mesmo ralo linear e o mesmo chuveiro', e 'Não há nova peça no detalhe, apenas ampliação gráfica'."
+        ],
+        "confianca": 1
+      }
+    },
+    {
+      "microcase_id": "MC-HID-006",
+      "titulo": "Priorizar composição por ponto residencial",
+      "passed": true,
+      "score": 100,
+      "checks": {
+        "schema_valido": true,
+        "modelo_por_ponto_sinalizado": true,
+        "tipos_separados": true,
+        "itens_candidatos_adequados": true
+      },
+      "erros_detectados": [],
+      "resumo": "Aprovado. O especialista corretamente identificou o modelo comercial por ponto residencial, separou os 3 tipos de pontos (água fria, água quente, esgoto) em itens orçamentários candidatos distintos e aderentes ao catálogo EVIS, atendendo todos os critérios obrigatórios do microcaso.",
+      "output": {
+        "specialist_id": "discipline_specialist_hidraulica_sanitaria",
+        "specialist_nome": "Hidraulica e Sanitaria",
+        "disciplina": "Hidraulica e Sanitaria",
+        "escopo": "Leitura hidrossanitária preliminar para orçamento residencial, priorizando composições por ponto.",
+        "achados": [
+          "Identificados 5 pontos de água fria para a residência unifamiliar.",
+          "Identificados 2 pontos de água quente para a residência unifamiliar.",
+          "Identificados 4 pontos de esgoto para a residência unifamiliar.",
+          "O modelo comercial da empresa para instalações hidrossanitárias é por ponto residencial, conforme instrução."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [
+          {
+            "item": "Ponto de Água Fria",
+            "unidade": "un",
+            "quantidade": 5,
+            "observacao": "Contagem preliminar para orçamento residencial por ponto."
+          },
+          {
+            "item": "Ponto de Água Quente",
+            "unidade": "un",
+            "quantidade": 2,
+            "observacao": "Contagem preliminar para orçamento residencial por ponto."
+          },
+          {
+            "item": "Ponto de Esgoto",
+            "unidade": "un",
+            "quantidade": 4,
+            "observacao": "Contagem preliminar para orçamento residencial por ponto."
+          }
+        ],
+        "itens_orcamentarios_candidatos": [
+          "Instalação de Ponto de Água Fria (Composição EVIS Residencial)",
+          "Instalação de Ponto de Água Quente (Composição EVIS Residencial)",
+          "Instalação de Ponto de Esgoto (Composição EVIS Residencial)"
+        ],
+        "premissas": [
+          "A contagem de pontos é preliminar e baseada exclusivamente na leitura fornecida.",
+          "O modelo de precificação por ponto residencial é o padrão comercial adotado para esta obra.",
+          "As composições por ponto residencial do catálogo EVIS são as mais adequadas para este orçamento, conforme diretriz."
+        ],
+        "perguntas_hitl": [],
+        "evidencias_criticas": [],
+        "confianca": 1
+      }
+    }
+  ]
+}

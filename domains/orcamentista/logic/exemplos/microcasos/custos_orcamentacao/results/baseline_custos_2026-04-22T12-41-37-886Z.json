@@ -1,0 +1,312 @@
+{
+  "generated_at": "2026-04-22T12:41:37.887Z",
+  "model": "gemini-2.5-flash",
+  "judge_model": "claude-sonnet-4-20250514",
+  "summary": {
+    "total": 6,
+    "passed": 6,
+    "failed": 0,
+    "averageScore": 95.83333333333333
+  },
+  "results": [
+    {
+      "microcase_id": "MC-CUS-001",
+      "titulo": "Estrutural com referência SINAPI direta",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "sinapi_priorizado": true,
+        "origem_sinalizada": true,
+        "competencia_sinalizada": true,
+        "campos_obrigatorios": true,
+        "fatos_minimos": true,
+        "nao_pode_fazer": true
+      },
+      "erros_detectados": [],
+      "resumo": "Saída aprovada. O especialista priorizou corretamente a referência SINAPI direta (código 94971), explicitou origem e competência (03/2026), e gerou exatamente 1 item orçamentário candidato conforme exigido. Todos os critérios de aprovação foram atendidos sem violações.",
+      "output": {
+        "specialist_id": "discipline_specialist_custos_orcamentacao",
+        "specialist_nome": "Custos e Orcamentacao",
+        "disciplina": "Custos e Orcamentacao",
+        "escopo": "Análise e classificação de serviço estrutural com referência SINAPI direta.",
+        "achados": [
+          "O serviço 'concreto estrutural FCK 25 MPa para vigas e lajes' foi corretamente classificado como item estrutural.",
+          "A referência SINAPI código 94971, com competência 03/2026, foi priorizada e identificada como aderente ao serviço, conforme as regras para estrutura e fundações.",
+          "A origem (SINAPI) e a competência (03/2026) da referência foram explicitadas."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [],
+        "itens_orcamentarios_candidatos": [
+          "Serviço: Concreto estrutural FCK 25 MPa para vigas e lajes; Código Referência: SINAPI 94971; Origem: SINAPI; Competência: 03/2026; Observação: Item candidato para composição de custo. Unidade, quantidade base e custos unitários (MAT/MO/total) pendentes de consulta para consolidação."
+        ],
+        "premissas": [
+          "A aderência do código SINAPI 94971 ao serviço 'concreto estrutural FCK 25 MPa para vigas e lajes' foi validada na etapa de 'estrutural_validado'.",
+          "A competência 03/2026 é a mais atual e relevante para a referência SINAPI fornecida."
+        ],
+        "perguntas_hitl": [
+          "Qual a unidade de medida padrão (ex: m³, kg) para o serviço 'Concreto estrutural FCK 25 MPa para vigas e lajes'?",
+          "Qual a quantidade base estimada para este serviço no projeto?",
+          "Qual o custo unitário detalhado (material, mão de obra, equipamentos, total) associado ao SINAPI 94971 na competência 03/2026, considerando as especificidades do projeto?"
+        ],
+        "evidencias_criticas": [
+          "Entrada: 'Serviço validado: concreto estrutural FCK 25 MPa para vigas e lajes. Snapshot de referência pré-consultado: SINAPI código 94971, competência 03/2026, aderente ao serviço.'"
+        ],
+        "confianca": 0.9
+      }
+    },
+    {
+      "microcase_id": "MC-CUS-002",
+      "titulo": "Hidráulica residencial por ponto deve priorizar EVIS",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "evis_priorizado": true,
+        "modelo_por_ponto_preservado": true,
+        "origem_sinalizada": true,
+        "fatos_minimos_presentes": true,
+        "campos_obrigatorios_atendidos": true,
+        "erros_proibidos_ausentes": true
+      },
+      "erros_detectados": [],
+      "resumo": "Aprovado com excelência. O especialista priorizou corretamente o catálogo EVIS, preservou o modelo comercial por ponto, sinalizou claramente a origem EVIS, e demonstrou aderência completa às regras de priorização para hidráulica residencial. Todos os critérios de aprovação foram atendidos.",
+      "output": {
+        "specialist_id": "discipline_specialist_custos_orcamentacao",
+        "specialist_nome": "Custos e Orcamentacao",
+        "disciplina": "Custos e Orcamentacao",
+        "escopo": "Classificação e composição de custo para ponto hidráulico residencial.",
+        "achados": [
+          "Serviço de ponto de água fria residencial validado.",
+          "O catálogo EVIS da empresa possui composição própria aderente para o serviço de ponto de água fria residencial.",
+          "A regra de priorização para hidráulica residencial por ponto é o catálogo EVIS."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [],
+        "itens_orcamentarios_candidatos": [
+          "Composição candidata: Ponto de água fria residencial. Origem: Catálogo EVIS (Composição Própria). Unidade: PONTO. Código de referência: PENDENTE_CATALOGO_EVIS. Custo unitário: PENDENTE_CONSULTA_EVIS. Observação: Priorizado conforme regra para hidráulica residencial por ponto. Necessário consultar código e valores específicos no catálogo EVIS."
+        ],
+        "premissas": [
+          "O catálogo EVIS da empresa possui uma composição própria e aderente para 'ponto de água fria residencial'.",
+          "O modelo comercial para este serviço é por ponto, o que valida a priorização do catálogo EVIS."
+        ],
+        "perguntas_hitl": [
+          "Qual o código específico da composição de 'Ponto de água fria residencial' no catálogo EVIS?",
+          "Quais os valores (MAT, MO, unitário) e competência da composição de 'Ponto de água fria residencial' no catálogo EVIS?"
+        ],
+        "evidencias_criticas": [
+          "Regra de atuação: para hidraulica e eletrica residenciais por ponto, priorizar catalogo EVIS quando esse for o modelo comercial correto.",
+          "Hierarquia de referência: hidraulica e eletrica residenciais por ponto: catalogo EVIS primeiro."
+        ],
+        "confianca": 0.9
+      }
+    },
+    {
+      "microcase_id": "MC-CUS-003",
+      "titulo": "Elétrica residencial por ponto deve priorizar EVIS",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "evis_priorizado": true,
+        "aderencia_residencial_preservada": true,
+        "origem_sinalizada": true,
+        "campos_obrigatorios": true,
+        "fatos_minimos_atendidos": true,
+        "restricoes_respeitadas": true
+      },
+      "erros_detectados": [],
+      "resumo": "Aprovado com excelência. O especialista priorizou corretamente o catálogo EVIS, preservou a aderência residencial, sinalizou claramente a origem, e atendeu todos os critérios obrigatórios. A saída demonstra compreensão adequada das regras de priorização EVIS para elétrica residencial.",
+      "output": {
+        "specialist_id": "discipline_specialist_custos_orcamentacao",
+        "specialist_nome": "Custos e Orcamentacao",
+        "disciplina": "Custos e Orcamentacao",
+        "escopo": "Classificação e composição candidata para ponto elétrico residencial, priorizando catálogo EVIS.",
+        "achados": [
+          "Serviço 'ponto tomada TUG 20A residencial' validado pela disciplina de elétrica.",
+          "O catálogo EVIS da empresa possui composição própria aderente para o serviço de ponto elétrico residencial.",
+          "A regra de atuação para elétrica residencial por ponto prioriza o catálogo EVIS, o que foi aplicado."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [
+          {
+            "item": "Ponto tomada TUG 20A residencial",
+            "unidade": "Ponto",
+            "quantidade": 1,
+            "observacao": "Quantidade base para composição unitária do serviço."
+          }
+        ],
+        "itens_orcamentarios_candidatos": [
+          {
+            "servico": "Ponto tomada TUG 20A residencial",
+            "codigo_referencia": "EVIS_PROPRIO_ELE_TUG20A_RES",
+            "origem_da_referencia": "Catálogo EVIS",
+            "unidade": "Ponto",
+            "quantidade_base": 1,
+            "custo_unitario": null,
+            "custo_total_candidato": null,
+            "observacao": "Composição própria do catálogo EVIS, aderente ao serviço residencial. Custo unitário e competência (data) pendentes de consulta no catálogo.",
+            "confianca": 0.8
+          }
+        ],
+        "premissas": [
+          "A composição do catálogo EVIS para 'ponto tomada TUG 20A residencial' é tecnicamente aderente e comercialmente aplicável, conforme indicado na entrada."
+        ],
+        "perguntas_hitl": [
+          "Qual o custo unitário e a competência (data) da composição 'EVIS_PROPRIO_ELE_TUG20A_RES' no catálogo EVIS?",
+          "Existe um código específico para esta composição no catálogo EVIS que deve ser utilizado, caso 'EVIS_PROPRIO_ELE_TUG20A_RES' não seja o oficial?"
+        ],
+        "evidencias_criticas": [],
+        "confianca": 0.8
+      }
+    },
+    {
+      "microcase_id": "MC-CUS-004",
+      "titulo": "Sem referência aderente o item deve permanecer pendente",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "item_permanece_pendente": true,
+        "pergunta_hitl_presente": true,
+        "nao_inventou_preco": true,
+        "ausencia_inferencia_sem_lastro": true,
+        "ausencia_preco_sem_referencia": true,
+        "hitl_acionado": true
+      },
+      "erros_detectados": [],
+      "resumo": "Especialista atendeu corretamente ao microcaso. Item permaneceu pendente com código 'PENDENTE_SEM_REFERENCIA', não inventou preços definitivos, acionou HITL com 3 perguntas pertinentes sobre especificação técnica e referências. Demonstrou postura conservadora adequada ao manter custos como 'PENDENTE' e confiança baixa (0.2). Evidências críticas bem documentadas.",
+      "output": {
+        "specialist_id": "discipline_specialist_custos_orcamentacao",
+        "specialist_nome": "Custos e Orcamentacao",
+        "disciplina": "Custos e Orcamentacao",
+        "escopo": "Análise e classificação de serviço especial de obra sem referência de custo aderente.",
+        "achados": [
+          "Identificação de um 'elemento especial de obra' sem equivalente claro no catálogo EVIS.",
+          "Ausência de referência SINAPI aderente disponível para o 'elemento especial de obra' na consulta atual.",
+          "O serviço não possui lastro documental para composição de custo definitiva."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [],
+        "itens_orcamentarios_candidatos": [
+          "Serviço: Elemento especial de obra | Código: PENDENTE_SEM_REFERENCIA | Origem: N/A - Sem referência aderente | Unidade: UN (a definir) | Quantidade base: 1 (a definir) | Custo Unitário: PENDENTE | Custo Total Candidato: PENDENTE | Observação: Serviço sem lastro para composição de custo. Requer especificação técnica detalhada ou cotação de fornecedor. | Confiança: Baixa"
+        ],
+        "premissas": [
+          "O 'elemento especial de obra' é um item único e específico para esta obra, não sendo um item recorrente da base EVIS.",
+          "A unidade e quantidade base para este elemento ainda não foram definidas devido à falta de detalhamento técnico."
+        ],
+        "perguntas_hitl": [
+          "Qual a especificação técnica detalhada do 'elemento especial de obra' (desenhos, materiais, dimensões, processo construtivo) para que possamos buscar uma composição mais aderente ou solicitar cotação a fornecedores?",
+          "Existe alguma referência histórica de custo para elementos similares ou um fornecedor preferencial para este 'elemento especial de obra'?",
+          "Devemos criar uma composição própria para este item? Se sim, quais insumos (MAT) e mão de obra (MO) devem ser considerados e qual a produtividade esperada?"
+        ],
+        "evidencias_criticas": [
+          "Ausência de código SINAPI aderente para o serviço 'elemento especial de obra'.",
+          "Ausência de equivalente claro no catálogo EVIS para o serviço 'elemento especial de obra'."
+        ],
+        "confianca": 0.2
+      }
+    },
+    {
+      "microcase_id": "MC-CUS-005",
+      "titulo": "Duplicidade entre disciplinas deve ser sinalizada",
+      "passed": true,
+      "score": 100,
+      "checks": {
+        "schema_valido": true,
+        "duplicidade_sinalizada": true,
+        "pergunta_hitl_presente": true,
+        "nao_consolidou_silenciosamente": true,
+        "fatos_minimos_presentes": true,
+        "campos_obrigatorios_atendidos": true,
+        "erros_proibidos_evitados": true,
+        "gatilhos_hitl_acionados": true
+      },
+      "erros_detectados": [],
+      "resumo": "Aprovado com excelência. O especialista detectou corretamente o risco de duplicidade entre as disciplinas estrutural e civil, sinalizou o conflito com severidade alta, gerou perguntas HITL apropriadas para validação humana e não consolidou silenciosamente os itens duplicados. Todos os critérios de aprovação foram atendidos de forma completa e precisa.",
+      "output": {
+        "specialist_id": "discipline_specialist_custos_orcamentacao",
+        "specialist_nome": "Custos e Orcamentacao",
+        "disciplina": "Custos e Orcamentacao",
+        "escopo": "Análise de risco de duplicidade em consolidação parcial de serviços de forma.",
+        "achados": [
+          "Identificada possível duplicidade de serviço 'forma' entre as saídas das disciplinas estrutural e civil.",
+          "A saída estrutural já incluiu 'forma de viga'.",
+          "A saída civil trouxe novamente 'forma genérica em etapa de obra civil' sem justificativa adicional para sua distinção ou coexistência."
+        ],
+        "conflitos": [
+          {
+            "titulo": "Risco de Duplicidade de Serviço 'Forma' entre Disciplinas",
+            "descricao": "Há um conflito potencial de escopo e classificação, onde a 'forma de viga' da disciplina estrutural pode estar sobreposta ou ser a mesma 'forma genérica em etapa de obra civil' da disciplina civil. A ausência de justificativa para a forma genérica na saída civil eleva o risco de duplicidade na consolidação do orçamento, levando a uma superestimativa de custos.",
+            "severidade": "alta",
+            "evidencias": [
+              "Saída estrutural: 'forma de viga'",
+              "Saída civil: 'forma genérica em etapa de obra civil' sem detalhamento ou justificativa de distinção."
+            ]
+          }
+        ],
+        "quantitativos_chave": [],
+        "itens_orcamentarios_candidatos": [],
+        "premissas": [
+          "A consolidação parcial não deve prosseguir com itens de escopo potencialmente duplicado sem validação.",
+          "A 'forma genérica' da civil é considerada um item de alto risco de sobreposição com a 'forma de viga' da estrutural, dada a falta de detalhamento."
+        ],
+        "perguntas_hitl": [
+          "A 'forma genérica em etapa de obra civil' da disciplina civil refere-se a um escopo de serviço de forma *distinto* e *não sobreposto* à 'forma de viga' da disciplina estrutural? Se sim, qual a justificativa técnica e o detalhamento específico de cada um para evitar duplicidade?",
+          "Qual dos itens ('forma de viga' ou 'forma genérica') deve ser mantido, ajustado ou excluído para garantir a unicidade do serviço de forma no orçamento consolidado?"
+        ],
+        "evidencias_criticas": [
+          "Conflito direto na classificação e escopo de 'forma' entre as disciplinas estrutural e civil.",
+          "Ausência de lastro documental para diferenciar as duas ocorrências de 'forma'."
+        ],
+        "confianca": 0.95
+      }
+    },
+    {
+      "microcase_id": "MC-CUS-006",
+      "titulo": "Item específico da obra não pode virar catálogo global automaticamente",
+      "passed": true,
+      "score": 95,
+      "checks": {
+        "schema_valido": true,
+        "item_especifico_sinalizado": true,
+        "nao_promoveu_global": true,
+        "pergunta_hitl_presente": true,
+        "fatos_minimos_presentes": true,
+        "premissas_obrigatorias": true,
+        "erros_proibidos_evitados": true
+      },
+      "erros_detectados": [],
+      "resumo": "Especialista demonstrou excelente compreensão do microcaso, identificando corretamente o item como específico da obra, evitando promoção automática ao catálogo global, estabelecendo premissas adequadas sobre não-recorrência e incluindo pergunta HITL apropriada sobre potencial catalogação futura. Todos os critérios de aprovação foram atendidos com alta qualidade técnica.",
+      "output": {
+        "specialist_id": "discipline_specialist_custos_orcamentacao",
+        "specialist_nome": "Custos e Orcamentacao",
+        "disciplina": "Custos e Orcamentacao",
+        "escopo": "Análise de classificação e potencial de catalogação de serviço personalizado da obra.",
+        "achados": [
+          "Serviço identificado como uma solução personalizada, feita sob medida para o cliente.",
+          "Não há recorrência comprovada deste serviço no acervo de catálogo EVIS.",
+          "O serviço é caracterizado como um item específico da obra, não um item global ou recorrente."
+        ],
+        "conflitos": [],
+        "quantitativos_chave": [],
+        "itens_orcamentarios_candidatos": [
+          "Serviço: Solução personalizada de obra; Origem: Composição Própria / Item Específico da Obra; Status: Pendente de detalhamento técnico, definição de unidade e precificação; Observação: Não recorrente no acervo EVIS, requer validação para qualquer promoção."
+        ],
+        "premissas": [
+          "O serviço 'solução personalizada de obra' é tratado como um item único e customizado para o projeto atual.",
+          "A ausência de recorrência comprovada impede a promoção automática deste item para o catálogo principal EVIS.",
+          "A precificação deste item dependerá de uma composição de custo detalhada ou cotação específica, a ser desenvolvida ou obtida."
+        ],
+        "perguntas_hitl": [
+          "Este serviço personalizado possui potencial de recorrência futura ou valor estratégico para ser considerado para inclusão no catálogo principal EVIS, após validação técnica e comercial detalhada?",
+          "Qual a unidade de medida mais adequada e o escopo detalhado para a composição de custo deste serviço personalizado, visando sua precificação?"
+        ],
+        "evidencias_criticas": [
+          "Descrição do serviço: 'solução personalizada de obra, feita sob medida para o cliente e sem recorrência comprovada no acervo EVIS'."
+        ],
+        "confianca": 0.9
+      }
+    }
+  ]
+}

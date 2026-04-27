@@ -1,0 +1,15 @@
+{
+  "_metadata": {
+    "etapa": "registry",
+    "timestamp": "2026-04-22T21:42:04.528Z",
+    "version": "1.1",
+    "checksum": "IucGRmIl19"
+  },
+  "data": {
+    "timestamp": "2026-04-22T21:42:04.528Z",
+    "files": [
+      "Folha 1.pdf",
+      "Folha 2.pdf"
+    ]
+  }
+}
