@@ -1,0 +1,22 @@
+name: Deploy Institucional
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'domains/institucional/web/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - run: cd domains/institucional/web && npm install && npm run build
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_TOKEN }}
+          projectId: gen-lang-client-0410046868
+          entryPoint: ./domains/institucional/web
