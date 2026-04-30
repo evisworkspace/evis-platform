@@ -1,0 +1,41 @@
+@theme {
+  --color-bg-main: #0f1115;
+  --color-bg-panel: #16191e;
+  --color-bg-workspace: #0a0c10;
+  --color-border-dim: rgba(255, 255, 255, 0.1);
+  --color-text-dim: rgba(224, 224, 224, 0.4);
+  --color-text-main: #e0e0e0;
+}
+
+.markdown-body {
+  @apply text-[11px] leading-relaxed font-mono text-text-main/70;
+}
+
+.markdown-body h1 {
+  @apply text-xs font-bold mb-2 uppercase text-blue-400;
+}
+
+.markdown-body p {
+  @apply mb-2;
+}
+
+.markdown-body code {
+  @apply bg-black/40 px-1 rounded font-mono text-[10px] border border-white/5;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}

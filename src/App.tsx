@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, useParams, useNavigate, Navigate } from 'react-router-dom';
+import { Routes, Route, useParams, useNavigate } from 'react-router-dom';
 import { AppProvider, useAppContext } from './AppContext';
 import { Servico, Pendencia, Equipe, Nota, Foto, DiarioEntry, PendingChange } from './types';
 import { 
@@ -10,6 +10,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import Diario from './components/Diario';
 import Equipes from './components/Equipes';
 import Servicos from './components/Servicos';
+import OrcamentoTab from './components/Orcamento';
 import Notas from './components/Notas';
 import Fotos from './components/Fotos';
 import Relatorios from './components/Relatorios';
@@ -17,7 +18,6 @@ import ConfigPage from './components/ConfigPage';
 import Cronograma from './components/Cronograma';
 
 import Login from './pages/Login';
-import OrcamentistaDashboard from './pages/Orcamentista/dashboard';
 import PortalCliente from './pages/PortalCliente';
 import { useAuth } from './hooks/useAuth';
 import { Loader2 } from 'lucide-react';
@@ -495,7 +495,7 @@ if (tablesToInvalidate.has('equipes_presenca')) {
           <>
             {activeTab === 'diario' && <Diario />}
             {activeTab === 'equipes' && <Equipes />}
-            {activeTab === 'orcamento' && <Servicos />}
+            {activeTab === 'orcamento' && <OrcamentoTab />}
             {activeTab === 'cronograma' && <Cronograma />}
             {activeTab === 'notas' && <Notas />}
             {activeTab === 'fotos' && <Fotos />}
@@ -512,7 +512,6 @@ export default function App() {
   return (
     <AppProvider>
       <Routes>
-        <Route path="/orcamentista/dashboard" element={<OrcamentistaDashboard />} />
         <Route path="*" element={<Main />} />
       </Routes>
     </AppProvider>
