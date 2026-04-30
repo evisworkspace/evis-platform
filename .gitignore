@@ -6,3 +6,11 @@ coverage/
 *.log
 .env*
 !.env.example
+.tmp.driveupload/
+.claude/worktrees/
+domains/institucional/web/.firebase/
+domains/institucional/web.zip
+scratch/reader-lab/
+scratch/studio-export/
+scratch/ctx7-*.json
+*.zip
