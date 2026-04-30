@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Berti. — Plataforma</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&display=swap"
+    rel="stylesheet"
+  >
+
+  <style>
+    /* ── tokens fixos Berti ── */
+    :root {
+      --berti-dark:  #141614;
+      --berti-sage:  #3D5A46;
+      --berti-gold:  #D4AE37;
+      --berti-ink:   #8D1E00;
+      --berti-light: #F9F8F6;
+      --ink-text:    #0D110D;
+
+      --font-sans:    'Outfit', system-ui, sans-serif;
+      --font-display: 'Cormorant Garamond', Georgia, serif;
+
+      /* semânticos — dark (default) */
+      --bg:           #141614;
+      --surface:      #141614;
+      --text-1:       #ffffff;
+      --text-2:       rgba(255,255,255,0.38);
+      --text-3:       rgba(255,255,255,0.2);
+      --text-label:   rgba(255,255,255,0.35);
+      --divider:      rgba(255,255,255,0.06);
+      --card-hover:   rgba(255,255,255,0.03);
+      --cta-color:    #ffffff;
+      --cta-border:   rgba(255,255,255,0.15);
+      --badge-color:  rgba(255,255,255,0.25);
+      --badge-border: rgba(255,255,255,0.1);
+      --num-color:    rgba(255,255,255,0.03);
+      --toggle-bg:    rgba(255,255,255,0.07);
+      --toggle-hover: rgba(255,255,255,0.12);
+    }
+
+    /* semânticos — light */
+    html.light {
+      --bg:           #F9F8F6;
+      --surface:      #ffffff;
+      --text-1:       #0D110D;
+      --text-2:       rgba(13,17,13,0.48);
+      --text-3:       rgba(13,17,13,0.28);
+      --text-label:   rgba(13,17,13,0.38);
+      --divider:      rgba(0,0,0,0.07);
+      --card-hover:   rgba(0,0,0,0.025);
+      --cta-color:    #0D110D;
+      --cta-border:   rgba(0,0,0,0.14);
+      --badge-color:  rgba(13,17,13,0.3);
+      --badge-border: rgba(0,0,0,0.12);
+      --num-color:    rgba(13,17,13,0.04);
+      --toggle-bg:    rgba(0,0,0,0.06);
+      --toggle-hover: rgba(0,0,0,0.1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      transition: background-color 0.35s ease, color 0.35s ease;
+    }
+
+    html, body {
+      height: 100%;
+      background-color: var(--bg);
+      color: var(--text-1);
+      font-family: var(--font-sans);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── layout ── */
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 48px;
+    }
+
+    /* ── nav ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 40px 0 0;
+    }
+
+    .logo {
+      font-family: var(--font-sans);
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: var(--text-1);
+      text-decoration: none;
+      transition: color 0.35s ease;
+    }
+    .logo span { color: var(--berti-gold); }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .nav-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--text-label);
+      transition: color 0.35s ease;
+    }
+
+    /* ── toggle ── */
+    #theme-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: var(--toggle-bg);
+      border: 1px solid var(--divider);
+      cursor: pointer;
+      transition: background 0.25s ease, border-color 0.25s ease;
+      flex-shrink: 0;
+    }
+    #theme-toggle:hover {
+      background: var(--toggle-hover);
+    }
+    #theme-toggle svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--text-1);
+      fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: stroke 0.35s ease;
+      flex-shrink: 0;
+    }
+    /* hide/show icons per theme */
+    .icon-moon { display: block; }
+    .icon-sun  { display: none;  }
+    html.light .icon-moon { display: none;  }
+    html.light .icon-sun  { display: block; }
+
+    /* ── hero ── */
+    .hero {
+      padding: 96px 0 80px;
+      border-bottom: 1px solid var(--divider);
+      transition: border-color 0.35s ease;
+    }
+
+    .eyebrow {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--berti-gold);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .eyebrow::before {
+      content: '';
+      display: block;
+      width: 40px;
+      height: 1px;
+      background: var(--berti-gold);
+      opacity: 0.5;
+    }
+
+    .hero h1 {
+      font-family: var(--font-display);
+      font-size: clamp(48px, 6vw, 80px);
+      font-weight: 400;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      color: var(--text-1);
+      max-width: 700px;
+      transition: color 0.35s ease;
+    }
+    .hero h1 em {
+      font-style: italic;
+      color: var(--text-2);
+      transition: color 0.35s ease;
+    }
+
+    .hero-sub {
+      margin-top: 28px;
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--text-2);
+      letter-spacing: 0.02em;
+      max-width: 440px;
+      line-height: 1.7;
+      transition: color 0.35s ease;
+    }
+
+    /* ── grid ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1px;
+      margin-top: 1px;
+      background: var(--divider);
+      flex: 1;
+      transition: background 0.35s ease;
+    }
+
+    /* ── card ── */
+    .card {
+      background: var(--surface);
+      padding: 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      text-decoration: none;
+      color: inherit;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.4s ease;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--berti-gold);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .card:hover { background: var(--card-hover); }
+    .card:hover::before { transform: scaleX(1); }
+
+    .card-disabled {
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .card-eyebrow {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--berti-gold);
+      opacity: 0.7;
+    }
+
+    .card-body { flex: 1; }
+
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 36px;
+      font-weight: 500;
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+      color: var(--text-1);
+      margin-bottom: 14px;
+      transition: color 0.35s ease;
+    }
+
+    .card-desc {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--text-2);
+      line-height: 1.7;
+      max-width: 340px;
+      transition: color 0.35s ease;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--cta-color);
+      background: transparent;
+      border: 1px solid var(--cta-border);
+      padding: 14px 24px;
+      text-decoration: none;
+      transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    }
+    .card:hover .card-cta {
+      background: var(--berti-gold);
+      border-color: var(--berti-gold);
+      color: var(--berti-dark);
+    }
+
+    .badge {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--badge-color);
+      border: 1px solid var(--badge-border);
+      padding: 8px 16px;
+      transition: color 0.35s ease, border-color 0.35s ease;
+    }
+
+    .card-num {
+      font-family: var(--font-display);
+      font-size: 120px;
+      font-weight: 300;
+      line-height: 1;
+      color: var(--num-color);
+      position: absolute;
+      bottom: -16px;
+      right: 24px;
+      pointer-events: none;
+      user-select: none;
+      font-style: italic;
+      transition: color 0.35s ease;
+    }
+
+    /* ── footer ── */
+    footer {
+      padding: 40px 0;
+      border-top: 1px solid var(--divider);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 1px;
+      transition: border-color 0.35s ease;
+    }
+    .footer-brand {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--text-3);
+      transition: color 0.35s ease;
+    }
+    .footer-brand span { color: var(--berti-gold); opacity: 0.6; }
+
+    .footer-info {
+      font-size: 10px;
+      color: var(--text-3);
+      letter-spacing: 0.08em;
+      transition: color 0.35s ease;
+    }
+
+    /* ── responsive ── */
+    @media (max-width: 768px) {
+      .page { padding: 0 24px; }
+      .grid { grid-template-columns: 1fr; }
+      .card { padding: 36px 28px; }
+      .hero { padding: 64px 0 56px; }
+      .hero h1 { font-size: 44px; }
+      nav { padding: 28px 0 0; }
+    }
+  </style>
+
+  <!-- aplicar tema antes do render para evitar flash -->
+  <script>
+    (function () {
+      var saved = localStorage.getItem('deka_cache_v2_hub_theme');
+      if (saved === 'light') document.documentElement.classList.add('light');
+    })();
+  </script>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- nav -->
+  <nav>
+    <a href="/" class="logo">Berti<span>.</span></a>
+    <div class="nav-right">
+      <span class="nav-label">Plataforma Interna</span>
+      <button id="theme-toggle" aria-label="Alternar tema">
+        <!-- lua — visível no dark -->
+        <svg class="icon-moon" viewBox="0 0 24 24">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <!-- sol — visível no light -->
+        <svg class="icon-sun" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- hero -->
+  <section class="hero">
+    <div class="eyebrow">Módulos da Plataforma</div>
+    <h1>Ferramentas para<br><em>cada etapa da obra.</em></h1>
+    <p class="hero-sub">Selecione o módulo. Cada ambiente foi construído para uma função específica dentro do processo construtivo Berti.</p>
+  </section>
+
+  <!-- cards grid -->
+  <div class="grid">
+
+    <!-- EVIS Obra -->
+    <a class="card" href="https://obra.curitibaconstrutora.com.br" target="_blank" rel="noopener">
+      <div class="card-eyebrow">Gestão · Produção</div>
+      <div class="card-body">
+        <div class="card-title">EVIS Obra</div>
+        <p class="card-desc">Cockpit de gestão de obras com IA — diário, cronograma, equipes, serviços e relatórios em tempo real.</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-cta">
+          Acessar
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M2 10L10 2M10 2H4M10 2V8"/>
+          </svg>
+        </span>
+      </div>
+      <span class="card-num">01</span>
+    </a>
+
+    <!-- Orçamentista -->
+    <div class="card card-disabled">
+      <div class="card-eyebrow">Estimativa · Custos</div>
+      <div class="card-body">
+        <div class="card-title">Orçamentista</div>
+        <p class="card-desc">Agente multimodal de orçamentação com base SINAPI, composição por disciplina e exportação estruturada.</p>
+      </div>
+      <div class="card-footer">
+        <span class="badge">Em breve</span>
+      </div>
+      <span class="card-num">02</span>
+    </div>
+
+    <!-- Proposta -->
+    <div class="card card-disabled">
+      <div class="card-eyebrow">Comercial · Apresentação</div>
+      <div class="card-body">
+        <div class="card-title">Proposta</div>
+        <p class="card-desc">Geração automática de propostas comerciais com layout institucional Berti, cronograma e desembolso visual.</p>
+      </div>
+      <div class="card-footer">
+        <span class="badge">Em breve</span>
+      </div>
+      <span class="card-num">03</span>
+    </div>
+
+    <!-- Financeiro -->
+    <div class="card card-disabled">
+      <div class="card-eyebrow">Controle · Fluxo</div>
+      <div class="card-body">
+        <div class="card-title">Financeiro</div>
+        <p class="card-desc">DRE por obra, fluxo de caixa, conciliação de notas fiscais e visibilidade sobre cada centavo do projeto.</p>
+      </div>
+      <div class="card-footer">
+        <span class="badge">Em breve</span>
+      </div>
+      <span class="card-num">04</span>
+    </div>
+
+  </div><!-- /grid -->
+
+  <!-- footer -->
+  <footer>
+    <span class="footer-brand">Berti<span>.</span> Plataforma</span>
+    <span class="footer-info">Uso interno · Berti Engenharia</span>
+  </footer>
+
+</div>
+
+<script>
+  var PREF_KEY = 'deka_cache_v2_hub_theme';
+  var root    = document.documentElement;
+  var toggle  = document.getElementById('theme-toggle');
+
+  toggle.addEventListener('click', function () {
+    var next = root.classList.contains('light') ? 'dark' : 'light';
+    root.classList.toggle('light', next === 'light');
+    localStorage.setItem(PREF_KEY, next);
+  });
+</script>
+
+</body>
+</html>
