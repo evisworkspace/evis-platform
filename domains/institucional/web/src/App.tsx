@@ -1558,7 +1558,7 @@ export default function App() {
       setTestimonialsLoading(false);
     });
     const unsubConcepts = onSnapshot(query(collection(db, 'concepts'), orderBy('createdAt', 'desc')), (snapshot) => {
-      setConcepts(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+      setConcepts(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Concept)));
     });
     const unsubJourney = onSnapshot(doc(db, 'config', 'journey'), (docSnap) => {
       const defaultImages = [
