@@ -23,7 +23,7 @@ CREATE POLICY "Users see own obra services"
   USING (
     obra_id IN (
       SELECT id FROM obras 
-      WHERE owner_id = auth.uid()
+      WHERE owner_id = (SELECT auth.uid())
     )
   );
 ```
@@ -31,10 +31,38 @@ CREATE POLICY "Users see own obra services"
 ### Policy Types
 | Type   | Purpose                      | Example                              |
 |--------|------------------------------|--------------------------------------|
-| SELECT | Read access                  | `USING (obra_id = auth.uid())`       |
-| INSERT | Create access                | `WITH CHECK (owner_id = auth.uid())` |
+| SELECT | Read access                  | `USING (obra_id = (SELECT auth.uid()))`       |
+| INSERT | Create access                | `WITH CHECK (owner_id = (SELECT auth.uid()))` |
 | UPDATE | Modify existing records      | `USING` + `WITH CHECK`               |
-| DELETE | Remove records               | `USING (owner_id = auth.uid())`      |
+| DELETE | Remove records               | `USING (owner_id = (SELECT auth.uid()))`      |
+
+### ⚠️ Performance Warning: Auth RLS Initialization Plan (Evitando Alertas no Linter)
+**CRITICAL:** Quando criar políticas RLS usando funções do objeto `auth` (como `auth.uid()`, `auth.role()`, ou `auth.jwt()`), você **SEMPRE** deve encapsular a chamada dentro de um `SELECT`.
+* **❌ Errado:** `USING (user_id = auth.uid())` (Faz o Postgres reavaliar a função a cada linha, ativando o alerta "Auth RLS Initialization Plan" no Security Advisor).
+* **✅ Correto:** `USING (user_id = (SELECT auth.uid()))` (Informa ao Postgres para avaliar 1 vez por consulta e usar cache).
+
+### Security Advisor Standard
+
+Use `docs/05_FIX_SUPABASE_WARNINGS.sql` como script de manutenção para warnings do Security Advisor. Depois de aplicar qualquer correção, sempre executar no painel: `Security Advisor > Reset suggestions > Rerun linter`.
+
+Padrões que devem ser mantidos:
+
+| Warning | Padrão EVIS |
+|---------|-------------|
+| Function Search Path Mutable | Toda função pública deve ter `SET search_path` explícito. Para funções que usam `unaccent`, chamar `extensions.unaccent(...)`. |
+| Extension in Public | Extensões como `pg_trgm` e `unaccent` devem ficar no schema `extensions`, não em `public`. |
+| Materialized View in API | Materialized views no schema `public` não devem ser expostas para `anon`, `authenticated` ou `PUBLIC`; usar `REVOKE ALL`. |
+| RLS Policy Always True | Não criar policies com `USING (true)` ou `WITH CHECK (true)`. Mesmo acesso amplo deve ser expresso por role, por exemplo `USING ((SELECT auth.role()) IN ('anon', 'authenticated'))`. |
+| Auth RLS Initialization Plan | Usar sempre `(SELECT auth.uid())`, `(SELECT auth.role())` e `(SELECT auth.jwt())` dentro das policies. |
+| Leaked Password Protection Disabled | No plano Free do Supabase, esse warning pode permanecer porque a proteção via HaveIBeenPwned exige plano Pro ou superior. Documentar como limitação de plano, não como erro do banco. |
+
+Checklist ao criar ou alterar DDL:
+
+- Não deixar funções `SECURITY DEFINER` sem `search_path` explícito.
+- Não criar permissões públicas diretas em views/materialized views que aparecem na Data API.
+- Não usar `USING (true)` como atalho temporário em RLS.
+- Depois de qualquer alteração SQL, reexecutar o linter no dashboard.
+- Se sobrar apenas `Leaked Password Protection Disabled` em projeto Free, considerar o Security Advisor aceito para o plano atual.
 
 ---
 
