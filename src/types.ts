@@ -1,6 +1,8 @@
 export type Servico = {
   id?: string;
-  id_servico: string;
+  id_servico?: string; // Legado
+  codigo_servico?: string;
+  codigo_referencia?: string;
   nome: string;
   categoria: string;
   avanco_atual: number;
@@ -16,6 +18,11 @@ export type Servico = {
   custo_mao_obra?: number;
   custo_material?: number;
   obra_id?: string;
+  origem_preco?: string;
+  origem_preco_detalhe?: string;
+  competencia_preco?: string;
+  fonte_preco?: string;
+  confianca_referencia?: number;
 };
 
 export type Pendencia = {
@@ -62,7 +69,7 @@ export type IAResult = {
   servicos_atualizar: {
     id_servico: string;
     avanco_novo: number;
-    status_novo: 'nao_iniciado' | 'em_andamento' | 'concluido';
+    status_novo: 'nao_iniciado' | 'em_andamento' | 'concluido' | 'pausado';
     data_prevista?: string | null;
     data_conclusao?: string | null;
   }[];
@@ -150,3 +157,32 @@ export type Config = {
   mcpServer: string;
 };
 
+export type OrcamentoStatus = 'rascunho' | 'aprovado' | 'importado';
+export type ServicoStatus = 'nao_iniciado' | 'em_andamento' | 'concluido' | 'bloqueado' | 'pausado';
+
+export type Orcamento = {
+  id: string;
+  obra_id: string;
+  nome: string;
+  cliente?: string;
+  status: OrcamentoStatus;
+  bdi: number;
+  total_bruto: number;
+  total_final: number;
+  observacoes?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type OrcamentoItem = {
+  id: string;
+  orcamento_id: string;
+  codigo?: string;
+  descricao: string;
+  unidade: string;
+  quantidade: number;
+  valor_unitario: number;
+  valor_total: number;
+  origem: 'manual' | 'sinapi' | 'ia';
+  created_at?: string;
+};
