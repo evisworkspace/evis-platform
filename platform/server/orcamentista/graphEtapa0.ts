@@ -98,6 +98,7 @@ async function extractEtapa0Node(state: OrcamentistaState): Promise<Partial<Orca
     sistemas: [],
     lacunas: ["Falta detalhamento das esquadrias no memorial."],
     conflitos: [],
+    alertas: [],
     evidencias: [],
     pendencias_hitl: ["Definir FCK final: Memorial diz 30MPa, Projeto diz 35MPa."],
   };
@@ -150,7 +151,7 @@ function validateEtapa0Node(state: OrcamentistaState): Partial<OrcamentistaState
  * NÓ 4: O Freio de Mão (Human-In-The-Loop)
  * O LangGraph suspende a execução (Durable Execution) e aguarda input da UI.
  */
-function humanReviewInterruptNode(state: OrcamentistaState) {
+function humanReviewInterruptNode(state: OrcamentistaState): Partial<OrcamentistaState> {
   console.log('[LangGraph] Node: human_review_interrupt - Pausando esteira para aprovação humana.');
   
   // Lança o interrupt oficial do LangGraph

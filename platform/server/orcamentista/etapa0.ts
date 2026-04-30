@@ -53,7 +53,29 @@ export const ETAPA0_RESPONSE_SCHEMA = {
     },
     sistemas: { type: 'ARRAY', items: { type: 'STRING' } },
     lacunas: { type: 'ARRAY', items: { type: 'STRING' } },
-    conflitos: { type: 'ARRAY', items: { type: 'STRING' } },
+    conflitos: {
+      type: 'ARRAY',
+      items: {
+        type: 'OBJECT',
+        properties: {
+          descricao: { type: 'STRING' },
+          severidade: { type: 'STRING', enum: ['baixa', 'media', 'alta'] },
+          impacto_financeiro_estimado: { type: 'BOOLEAN' },
+        },
+        required: ['descricao', 'severidade', 'impacto_financeiro_estimado'],
+      },
+    },
+    alertas: {
+      type: 'ARRAY',
+      items: {
+        type: 'OBJECT',
+        properties: {
+          mensagem: { type: 'STRING' },
+          tipo: { type: 'STRING', enum: ['tecnico', 'normativo', 'economico'] },
+        },
+        required: ['mensagem', 'tipo'],
+      },
+    },
     evidencias: {
       type: 'ARRAY',
       items: {
@@ -77,6 +99,7 @@ export const ETAPA0_RESPONSE_SCHEMA = {
     'sistemas',
     'lacunas',
     'conflitos',
+    'alertas',
     'evidencias',
     'pendencias_hitl',
   ],
@@ -151,6 +174,12 @@ export function formatEtapa0Markdown(etapa0: Etapa0Schema, validation: Etapa0Val
     .join('\n');
   const areas = etapa0.areas.map((area) => `- ${area.tipo}: ${area.valor_m2} m2`).join('\n');
   const materiais = etapa0.materiais.map((item) => `- ${item.categoria}: ${item.especificacao}`).join('\n');
+  const conflitos = etapa0.conflitos
+    .map((conflito) => `- ${conflito.descricao} | severidade: ${conflito.severidade} | impacto financeiro: ${conflito.impacto_financeiro_estimado ? 'sim' : 'nao'}`)
+    .join('\n');
+  const alertas = etapa0.alertas
+    .map((alerta) => `- ${alerta.mensagem} | tipo: ${alerta.tipo}`)
+    .join('\n');
   const evidencias = etapa0.evidencias
     .map((ev) => `- ${ev.dado_extraido} | fonte: ${ev.fonte_referencia}`)
     .join('\n');
@@ -186,7 +215,10 @@ export function formatEtapa0Markdown(etapa0: Etapa0Schema, validation: Etapa0Val
     list(etapa0.lacunas),
     '',
     '## Conflitos',
-    list(etapa0.conflitos),
+    conflitos || '- Nenhum conflito registrado.',
+    '',
+    '## Alertas',
+    alertas || '- Nenhum alerta registrado.',
     '',
     '## Pendencias HITL',
     list(etapa0.pendencias_hitl),

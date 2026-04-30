@@ -43,6 +43,55 @@ export interface Etapa0Schema {
   pendencias_hitl: string[]; // Perguntas diretas que o orçamentista humano deve responder antes de destravar a Etapa 1
 }
 
+// ─── CONTRATOS LEGADOS DO MOTOR MULTIAGENTE ──────────────────────────────────
+// Mantidos para compatibilidade com os agentes Reader/Planner/Quantitativos
+// enquanto as etapas posteriores migram para código determinístico.
+export interface ReaderOutput {
+  revisao_registry_id: string;
+  documentos: Array<{
+    nome: string;
+    tipo: 'arquitetonico' | 'estrutural' | 'sondagem' | 'outros' | string;
+    revisao?: string;
+    hash_conteudo: string;
+    achados_criticos?: string[];
+  }>;
+  contexto_geral: {
+    fck_previsto?: string;
+    n_spt_max?: number;
+    area_total?: number;
+  };
+}
+
+export interface PlannerOutput {
+  roteiro: Array<{
+    id: number;
+    etapa: string;
+    agente_responsavel: string;
+    dependencias: number[];
+    hitl_obrigatorio: boolean;
+  }>;
+  prioridade_geotecnica: boolean;
+}
+
+export interface QuantitativosOutput {
+  itens: Array<{
+    codigo_nm: string;
+    equipe_id: string;
+    descricao: string;
+    unidade: string;
+    quantidade: number;
+    formula_aplicada: string;
+    origem: 'CALCULADO' | 'EXTRAIDO' | string;
+    evidencia: {
+      documento: string;
+      pagina_ou_detalhe: string;
+      timestamp_extracao: string;
+      confianca: number;
+    };
+  }>;
+  confianca_geral: number;
+}
+
 // As etapas posteriores (Quantitativos, Composição) serão movidas 
 // gradativamente para código determinístico (TypeScript puro) 
 // e deixarão de ser "Outputs" diretos de LLMs.
