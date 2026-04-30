@@ -8,6 +8,7 @@ import {
 import { SidebarEtapas, type Etapa } from './Orcamentista/SidebarEtapas';
 import { DashboardDireita } from './Orcamentista/AuditDashboard';
 import { MarkdownRenderer } from './Orcamentista/MarkdownRenderer';
+import '../styles/orcamentista.css';
 
 // ─── Tipos ─────────────────────────────────────────────────────────────────────
 interface Anexo {
@@ -601,7 +602,7 @@ export default function OrcamentistaChat() {
   return (
     <div className="oc-root">
       <header className="oc-header">
-        <button className="oc-btn-voltar" onClick={() => window.location.href = '/hub.html'}>
+        <button className="oc-btn-voltar" onClick={() => window.location.href = '/dashboard'}>
           <ArrowLeft size={16} /><span>HUB</span>
         </button>
         <div className="oc-header-center">

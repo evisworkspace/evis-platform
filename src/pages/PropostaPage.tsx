@@ -139,7 +139,7 @@ export default function PropostaPage() {
       <div className="min-h-screen bg-[#fcfaf7] text-[#112231] font-sans flex flex-col">
         <header className="h-16 flex items-center justify-between px-8 bg-white/50 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50">
           <button 
-            onClick={() => window.location.href = '/hub.html'}
+            onClick={() => window.location.href = '/dashboard'}
             className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-[#112231] transition-colors"
           >
             <ArrowLeft size={16} /> HUB
