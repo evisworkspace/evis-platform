@@ -584,12 +584,12 @@ const InstitutionalLanding = ({ sections, projects, onProjectClick, testimonials
             transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
             className="flex w-[200%] h-full"
           >
-            {[...(concepts && concepts.length > 0 ? concepts.map(c => c.url) : [
+            {[...(concepts && concepts.length > 0 ? concepts.map((c: any) => c.url) : [
               "https://images.unsplash.com/photo-1590674251239-0f0e08f23783?q=80&w=1000",
               "https://images.unsplash.com/photo-1541888946425-d81bb19480c5?q=80&w=1000",
               "https://images.unsplash.com/photo-1503387762-592dea58ef23?q=80&w=1000",
               "https://images.unsplash.com/photo-1541976590-713941fbc1f6?q=80&w=1000"
-            ]), ...(concepts && concepts.length > 0 ? concepts.map(c => c.url) : [
+            ]), ...(concepts && concepts.length > 0 ? concepts.map((c: any) => c.url) : [
               "https://images.unsplash.com/photo-1590674251239-0f0e08f23783?q=80&w=1000",
               "https://images.unsplash.com/photo-1541888946425-d81bb19480c5?q=80&w=1000",
               "https://images.unsplash.com/photo-1503387762-592dea58ef23?q=80&w=1000",
