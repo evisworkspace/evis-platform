@@ -52,6 +52,29 @@ export default function Diario() {
 
 
 
+  /**
+   * ETAPA 4: Versão Robusta.
+   * Garante que o serviço sempre tenha um intervalo de datas válido para o Cronograma.
+   */
+  const ensureDateRange = (update: any, servico: any) => {
+    const todayStr = currentDay;
+    const d = new Date(currentDay);
+    d.setDate(d.getDate() + 30);
+    const in30Days = d.toISOString().split('T')[0];
+
+    const dataInicio = update.data_prevista || update.data_inicio || servico.data_prevista || todayStr;
+    let dataFim = update.data_conclusao || update.data_fim || servico.data_conclusao || in30Days;
+
+    // Validação lógica: data_fim não pode ser antes de data_inicio
+    if (dataFim < dataInicio) dataFim = dataInicio;
+
+    return {
+      avanco: update.avanco_novo ?? update.avanco ?? servico.avanco_atual,
+      status: update.status_novo ?? update.status ?? servico.status,
+      dataInicio,
+      dataFim
+    };
+  };
    const confirmIA = (revisado?: any) => {
      const ia = revisado || entry.iaResult;
      if (!ia) return;
@@ -64,12 +87,13 @@ export default function Diario() {
        const targetId = u.id_servico || u.id;
        const idx = newServicos.findIndex(x => x.id === targetId || x.id_servico === targetId);
        if (idx >= 0) {
+         const validated = ensureDateRange(u, newServicos[idx]);
          newServicos[idx] = { 
            ...newServicos[idx], 
-           avanco_atual: u.avanco_novo ?? u.avanco, 
-           status: u.status_novo ?? u.status,
-           data_prevista: u.data_prevista ?? u.data_inicio,
-           data_conclusao: u.data_conclusao ?? u.data_fim
+           avanco_atual: validated.avanco, 
+           status: validated.status,
+           data_prevista: validated.dataInicio,
+           data_conclusao: validated.dataFim
          };
          markPending('servicos', newServicos[idx]);
        }

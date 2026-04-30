@@ -51,10 +51,10 @@ export default function Servicos() {
     nao_iniciado: ['bg-s3 text-t3', 'não iniciado']
   };
 
-  const isPending = (id_servico: string) => {
+  const isPending = (id_servico?: string) => {
     return state.pendingChanges.some(p => {
       const d = p.data as Record<string, any>;
-      return p.table === 'servicos' && d.id_servico === id_servico;
+      return p.table === 'servicos' && d.id_servico === (id_servico || '');
     });
   };
 
@@ -181,7 +181,7 @@ export default function Servicos() {
                 <td colSpan={11} className="text-center text-t4 py-12 font-mono text-[11px] uppercase tracking-widest">Nenhum item encontrado</td>
               </tr>
             ) : list.map((s, idx) => {
-              const realIdx = state.servicos.findIndex(x => x.id_servico === s.id_servico);
+              const realIdx = state.servicos.findIndex(x => x.id_servico === (s.id_servico || ''));
               const pct = Math.min(100, Math.max(0, s.avanco_atual || 0));
               const col = pct >= 100 ? 'bg-brand-green' : pct > 0 ? 'bg-brand-blue' : 'bg-s3';
               const [bc, bl] = stMap[s.status] || ['bg-s3 text-t3', s.status || '—'];

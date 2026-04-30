@@ -87,7 +87,7 @@ export default function Cronograma() {
   const filteredServicos = state.servicos.filter(s => {
     if (hideCompleted && s.avanco_atual >= 100) return false;
     if (selectedEquipe && s.equipe !== selectedEquipe) return false;
-    if (search && !s.nome.toLowerCase().includes(search.toLowerCase()) && !s.id_servico.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search && !s.nome.toLowerCase().includes(search.toLowerCase()) && !(s.id_servico || '').toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
 
@@ -165,7 +165,7 @@ export default function Cronograma() {
             <button onClick={() => shiftDate(30)} title="Próximo mês" className="p-1 px-2 hover:bg-s2 text-t3 hover:text-t1 transition-colors text-[10px] font-bold">≫</button>
           </div>
 
-          <div className="h-4 w-[1px] bg-b2 mx-1" />
+          <div className="h-4 w-px bg-b2 mx-1" />
 
           {/* Seleção de Período */}
           <div className="flex items-center gap-2 bg-s1 border border-b2 rounded-lg px-2 py-1">
@@ -177,7 +177,7 @@ export default function Cronograma() {
             />
           </div>
 
-          <div className="h-4 w-[1px] bg-b2 mx-1" />
+          <div className="h-4 w-px bg-b2 mx-1" />
 
           {/* Seletor de Densidade */}
           <select
@@ -192,7 +192,7 @@ export default function Cronograma() {
             <option value="total">Total</option>
           </select>
           
-          <div className="h-4 w-[1px] bg-b2 mx-1" />
+          <div className="h-4 w-px bg-b2 mx-1" />
 
           {/* Organizar Por */}
           <div className="flex bg-s1 border border-b2 rounded-lg p-0.5">
@@ -219,7 +219,7 @@ export default function Cronograma() {
             </button>
           </div>
           
-          <div className="h-4 w-[1px] bg-b2 mx-1" />
+          <div className="h-4 w-px bg-b2 mx-1" />
 
           {/* Toggle Compacto */}
           <button 
@@ -230,7 +230,7 @@ export default function Cronograma() {
             {isCompact ? <Maximize2 size={14} /> : <Minimize2 size={14} />}
           </button>
 
-          <div className="h-6 w-[1px] bg-b2 mx-2" />
+          <div className="h-6 w-px bg-b2 mx-2" />
           
           <div className="flex bg-s1 border border-b2 rounded p-0.5">
             <button 
@@ -283,7 +283,7 @@ export default function Cronograma() {
           {/* Header Row (Sticky Top) */}
           <div className="absolute top-0 left-0 right-0 h-12 flex bg-s1 z-20 border-b border-b2">
             {/* Left Header */}
-            <div className="w-80 flex-shrink-0 border-r border-b2 flex items-center px-4 text-[11px] font-bold text-t3 bg-s1 sticky left-0 z-30 uppercase tracking-widest">
+            <div className="w-80 shrink-0 border-r border-b2 flex items-center px-4 text-[11px] font-bold text-t3 bg-s1 sticky left-0 z-30 uppercase tracking-widest">
               Serviço
             </div>
             {/* Right Header */}
@@ -318,7 +318,7 @@ export default function Cronograma() {
                   const isToday = d.toISOString().split('T')[0] === todayStr;
                   const isWeekend = d.getDay() === 0 || d.getDay() === 6;
                   return (
-                    <div key={i} className={`flex flex-col items-center justify-center flex-shrink-0 border-r border-b2 text-[9px] ${isToday ? 'bg-brand-green/10 text-brand-green font-bold' : isWeekend ? 'bg-s1 text-t4' : 'text-t3'}`} style={{ width: `${colWidth}px`, minWidth: `${colWidth}px` }}>
+                    <div key={i} className={`flex flex-col items-center justify-center shrink-0 border-r border-b2 text-[9px] ${isToday ? 'bg-brand-green/10 text-brand-green font-bold' : isWeekend ? 'bg-s1 text-t4' : 'text-t3'}`} style={{ width: `${colWidth}px`, minWidth: `${colWidth}px` }}>
                       <span>{DAYS[d.getDay()]}</span>
                       <span>{d.getDate()}</span>
                     </div>
@@ -354,14 +354,14 @@ export default function Cronograma() {
                          className="flex bg-s2/50 border-b border-b2/50 group w-max min-w-full sticky top-0 z-10 cursor-pointer hover:bg-s2/80 transition-colors"
                          onClick={() => toggleCat(groupName)}
                        >
-                          <div className="w-80 flex-shrink-0 border-r border-b2/50 p-2 pl-4 flex items-center bg-s2/80 sticky left-0 z-20">
+                          <div className="w-80 shrink-0 border-r border-b2/50 p-2 pl-4 flex items-center bg-s2/80 sticky left-0 z-20">
                              {isExpanded ? <ChevronDown size={14} className="mr-2 text-t3" /> : <ChevronRight size={14} className="mr-2 text-t3" />}
                              <span className="text-[11px] font-extrabold text-brand-green uppercase tracking-widest">{groupName}</span>
                              <span className="ml-2 px-1.5 py-0.5 rounded-full bg-s1 text-[9px] text-t3 border border-b2">{services.length}</span>
                           </div>
                           <div className="flex-1 flex">
                             {dates.map((d, i) => (
-                               <div key={i} className="flex-shrink-0 border-r border-b2/10 bg-s2/20" style={{ width: `${colWidth}px`, minWidth: `${colWidth}px` }} />
+                               <div key={i} className="shrink-0 border-r border-b2/10 bg-s2/20" style={{ width: `${colWidth}px`, minWidth: `${colWidth}px` }} />
                             ))}
                          </div>
                       </div>
@@ -391,7 +391,7 @@ export default function Cronograma() {
                         return (
                           <div key={s.id} className={`flex border-b border-b2/30 group hover:bg-s1/30 w-max min-w-full ${isCompact ? 'h-[38px]' : ''}`}>
                             {/* Left Cell (Sticky Left) */}
-                            <div className={`w-80 flex-shrink-0 border-r border-b2/30 ${isCompact ? 'p-2' : 'p-3'} bg-bg sticky left-0 z-10 group-hover:bg-s1/30 ${isPending ? 'bg-brand-amber/5' : ''}`}>
+                            <div className={`w-80 shrink-0 border-r border-b2/30 ${isCompact ? 'p-2' : 'p-3'} bg-bg sticky left-0 z-10 group-hover:bg-s1/30 ${isPending ? 'bg-brand-amber/5' : ''}`}>
                               <div className={`flex justify-between items-start ${isCompact ? 'mb-0' : 'mb-1'}`}>
                                 <span className="text-[10px] font-bold bg-s3 px-1.5 py-0.5 rounded text-t2">{s.id_servico}</span>
                                 {!isCompact && (
@@ -399,7 +399,7 @@ export default function Cronograma() {
                                    <input 
                                      type="number" 
                                      value={s.avanco_atual} 
-                                     onChange={e => handleUpdate(s.id || s.id_servico, 'avanco_atual', Number(e.target.value))}
+                                     onChange={e => handleUpdate(s.id || s.id_servico || '', 'avanco_atual', Number(e.target.value))}
                                      className="w-full text-right text-[11px] bg-s1 border border-b2 rounded px-1 py-0.5 text-t1 outline-none focus:border-brand-green"
                                      min="0" max="100"
                                    />
@@ -413,7 +413,7 @@ export default function Cronograma() {
                                 <>
                                   <select 
                                      value={s.equipe || ''} 
-                                     onChange={e => handleUpdate(s.id || s.id_servico, 'equipe', e.target.value)}
+                                     onChange={e => handleUpdate(s.id || s.id_servico || '', 'equipe', e.target.value)}
                                      className="w-full text-[10px] text-t3 bg-transparent border-none p-0 mb-2 focus:ring-0 cursor-pointer hover:text-t2 transition-colors"
                                    >
                                     <option value="" className="bg-s2">Sem equipe</option>
@@ -427,7 +427,7 @@ export default function Cronograma() {
                                       <input 
                                         type="date" 
                                         value={s.data_prevista ? s.data_prevista.split('T')[0] : ''} 
-                                        onChange={e => handleUpdate(s.id || s.id_servico, 'data_prevista', e.target.value)}
+                                        onChange={e => handleUpdate(s.id || s.id_servico || '', 'data_prevista', e.target.value)}
                                         className="w-full bg-s1 border border-b2 rounded px-1.5 py-1 text-t2 outline-none focus:border-brand-green"
                                       />
                                     </div>
@@ -436,7 +436,7 @@ export default function Cronograma() {
                                       <input 
                                         type="date" 
                                         value={s.data_conclusao ? s.data_conclusao.split('T')[0] : ''} 
-                                        onChange={e => handleUpdate(s.id || s.id_servico, 'data_conclusao', e.target.value)}
+                                        onChange={e => handleUpdate(s.id || s.id_servico || '', 'data_conclusao', e.target.value)}
                                         className="w-full bg-s1 border border-b2 rounded px-1.5 py-1 text-t2 outline-none focus:border-brand-green"
                                       />
                                     </div>
@@ -452,7 +452,7 @@ export default function Cronograma() {
                                 const isToday = d.toISOString().split('T')[0] === todayStr;
                                 const isWeekend = d.getDay() === 0 || d.getDay() === 6;
                                 return (
-                                  <div key={i} className={`flex-shrink-0 border-r border-b2/20 ${isToday ? 'bg-brand-green/5' : isWeekend ? 'bg-s1/50' : ''}`} style={{ width: `${colWidth}px`, minWidth: `${colWidth}px` }} />
+                                  <div key={i} className={`shrink-0 border-r border-b2/20 ${isToday ? 'bg-brand-green/5' : isWeekend ? 'bg-s1/50' : ''}`} style={{ width: `${colWidth}px`, minWidth: `${colWidth}px` }} />
                                 );
                               })}
                               
