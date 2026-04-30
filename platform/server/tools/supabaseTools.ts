@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
-import { getSemanaRelativaFormatada } from '../../skills/relative_weekly/calcular_semana';
+import { getSemanaRelativaFormatada } from '../../../skills/relative_weekly/calcular_semana';
 
 dotenv.config();
 
