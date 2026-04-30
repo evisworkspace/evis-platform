@@ -19,6 +19,10 @@ import Cronograma from './components/Cronograma';
 
 import Login from './pages/Login';
 import PortalCliente from './pages/PortalCliente';
+import DashboardPage from './pages/DashboardPage';
+import OportunidadesPage from './pages/OportunidadesPage';
+import OrcamentistaChat from './pages/OrcamentistaChat';
+import PropostaPage from './pages/PropostaPage';
 import { useAuth } from './hooks/useAuth';
 import { Loader2 } from 'lucide-react';
 import { useSupabaseQuery } from './hooks/useSupabaseQuery';
@@ -84,7 +88,7 @@ function Main() {
   };
 
   const selecionarObra = (obra: {id: string, nome: string}) => {
-    navigate(`/obra/${obra.id}`);
+    navigate(`/obras/${obra.id}`);
     setObraPickerOpen(false);
     toast(`Obra "${obra.nome}" selecionada.`, 'success');
   };
@@ -512,7 +516,13 @@ export default function App() {
   return (
     <AppProvider>
       <Routes>
-        <Route path="*" element={<Main />} />
+        <Route path="/" element={<DashboardPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/oportunidades" element={<OportunidadesPage />} />
+        <Route path="/orcamentista" element={<OrcamentistaChat />} />
+        <Route path="/propostas" element={<PropostaPage />} />
+        <Route path="/obras" element={<Main />} />
+        <Route path="/obras/:obraId" element={<Main />} />
       </Routes>
     </AppProvider>
   );
