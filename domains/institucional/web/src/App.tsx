@@ -51,6 +51,12 @@ import {
 import { db, auth } from './lib/firebase';
 import { Project, Testimonial, SiteConfig } from './types';
 
+interface Concept {
+  id: string;
+  url: string;
+  createdAt: Timestamp;
+}
+
 // --- Shared Internal Components ---
 
 const Navbar = ({ onAdminClick }: { onAdminClick: () => void }) => {
@@ -584,12 +590,12 @@ const InstitutionalLanding = ({ sections, projects, onProjectClick, testimonials
             transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
             className="flex w-[200%] h-full"
           >
-            {[...(concepts && concepts.length > 0 ? concepts.map((c: any) => c.url) : [
+            {[...(concepts && concepts.length > 0 ? concepts.map((c: Concept) => c.url) : [
               "https://images.unsplash.com/photo-1590674251239-0f0e08f23783?q=80&w=1000",
               "https://images.unsplash.com/photo-1541888946425-d81bb19480c5?q=80&w=1000",
               "https://images.unsplash.com/photo-1503387762-592dea58ef23?q=80&w=1000",
               "https://images.unsplash.com/photo-1541976590-713941fbc1f6?q=80&w=1000"
-            ]), ...(concepts && concepts.length > 0 ? concepts.map((c: any) => c.url) : [
+            ]), ...(concepts && concepts.length > 0 ? concepts.map((c: Concept) => c.url) : [
               "https://images.unsplash.com/photo-1590674251239-0f0e08f23783?q=80&w=1000",
               "https://images.unsplash.com/photo-1541888946425-d81bb19480c5?q=80&w=1000",
               "https://images.unsplash.com/photo-1503387762-592dea58ef23?q=80&w=1000",
@@ -950,7 +956,7 @@ const AdminDashboard = ({ projects, testimonials, onLogout, onViewSite, concepts
 
         {activeTab === 'concepts' && (
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 text-berti-ink">
-            {concepts.map((c: any) => (
+            {concepts.map((c: Concept) => (
               <div key={c.id} className="relative group aspect-square bg-gray-50 border border-gray-100 rounded overflow-hidden">
                 <img src={c.url} className="w-full h-full object-cover" loading="lazy" />
                 <button 
@@ -1495,7 +1501,7 @@ export default function App() {
   const { pathname } = location;
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [concepts, setConcepts] = useState<any[]>([]);
+  const [concepts, setConcepts] = useState<Concept[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [projectsLoading, setProjectsLoading] = useState(true);
   const [testimonialsLoading, setTestimonialsLoading] = useState(true);
