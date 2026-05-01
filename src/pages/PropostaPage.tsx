@@ -1,15 +1,18 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   ArrowLeft, FileText, Upload, Download, 
   ChevronRight, Calendar, Target, TrendingUp, 
   ShieldCheck, Info, CheckCircle2, ChevronDown,
-  Printer, Trash2
+  Loader2, Printer, Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, Cell, PieChart, Pie
 } from 'recharts';
+import { useAppContext } from '../AppContext';
+import { useProposta } from '../hooks/usePropostas';
 
 // --- Tipos para a Proposta ---
 interface PropostaData {
@@ -73,10 +76,26 @@ const SectionTitle = ({ title, subtitle }: { title: string, subtitle: string }) 
   </div>
 );
 
+function isPropostaData(value: unknown): value is PropostaData {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Partial<PropostaData>;
+  return !!(
+    candidate.obra &&
+    typeof candidate.obra === 'object' &&
+    Array.isArray(candidate.servicos) &&
+    Array.isArray(candidate.equipes)
+  );
+}
+
 export default function PropostaPage() {
+  const { config } = useAppContext();
+  const [searchParams] = useSearchParams();
+  const propostaId = searchParams.get('id')?.trim() || '';
+  const isPersistedProposal = !!propostaId;
   const [data, setData] = useState<PropostaData | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const propostaQuery = useProposta(propostaId, config);
 
   // Injetar fontes premium
   React.useEffect(() => {
@@ -86,6 +105,12 @@ export default function PropostaPage() {
     document.head.appendChild(link);
     return () => { document.head.removeChild(link); };
   }, []);
+
+  useEffect(() => {
+    if (!isPersistedProposal || propostaQuery.isLoading || propostaQuery.error) return;
+    const payload = propostaQuery.data?.payload;
+    setData(isPropostaData(payload) ? payload : null);
+  }, [isPersistedProposal, propostaQuery.data, propostaQuery.error, propostaQuery.isLoading]);
 
   // --- Lógica de Processamento ---
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -133,6 +158,88 @@ export default function PropostaPage() {
       .sort((a, b) => b.value - a.value)
       .slice(0, 5);
   };
+
+  if (isPersistedProposal && propostaQuery.isLoading) {
+    return (
+      <div className="min-h-screen bg-[#fcfaf7] text-[#112231] font-sans flex flex-col">
+        <header className="h-16 flex items-center justify-between px-8 bg-white/50 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50">
+          <button
+            onClick={() => window.location.href = '/dashboard'}
+            className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-[#112231] transition-colors"
+          >
+            <ArrowLeft size={16} /> HUB
+          </button>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-[#112231] text-white flex items-center justify-center font-bold text-xs rounded-lg">E</div>
+            <span className="text-sm font-bold tracking-tight">Evis Propostas</span>
+          </div>
+          <div className="w-16" />
+        </header>
+        <main className="flex-1 flex items-center justify-center p-8">
+          <div className="flex items-center gap-3 text-sm font-bold text-slate-500">
+            <Loader2 className="animate-spin text-[#b79969]" size={20} />
+            Carregando proposta persistida
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (isPersistedProposal && propostaQuery.error) {
+    return (
+      <div className="min-h-screen bg-[#fcfaf7] text-[#112231] font-sans flex flex-col">
+        <header className="h-16 flex items-center justify-between px-8 bg-white/50 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50">
+          <button
+            onClick={() => window.location.href = '/dashboard'}
+            className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-[#112231] transition-colors"
+          >
+            <ArrowLeft size={16} /> HUB
+          </button>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-[#112231] text-white flex items-center justify-center font-bold text-xs rounded-lg">E</div>
+            <span className="text-sm font-bold tracking-tight">Evis Propostas</span>
+          </div>
+          <div className="w-16" />
+        </header>
+        <main className="flex-1 flex items-center justify-center p-8">
+          <div className="max-w-lg rounded-3xl border border-red-100 bg-white p-8 text-center shadow-sm">
+            <h1 className="text-2xl font-serif mb-3">Erro ao carregar proposta</h1>
+            <p className="text-sm leading-relaxed text-red-500">
+              {propostaQuery.error instanceof Error ? propostaQuery.error.message : 'Falha ao buscar a proposta persistida.'}
+            </p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (isPersistedProposal && !data) {
+    return (
+      <div className="min-h-screen bg-[#fcfaf7] text-[#112231] font-sans flex flex-col">
+        <header className="h-16 flex items-center justify-between px-8 bg-white/50 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50">
+          <button
+            onClick={() => window.location.href = '/dashboard'}
+            className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-[#112231] transition-colors"
+          >
+            <ArrowLeft size={16} /> HUB
+          </button>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-[#112231] text-white flex items-center justify-center font-bold text-xs rounded-lg">E</div>
+            <span className="text-sm font-bold tracking-tight">Evis Propostas</span>
+          </div>
+          <div className="w-16" />
+        </header>
+        <main className="flex-1 flex items-center justify-center p-8">
+          <div className="max-w-lg rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+            <h1 className="text-2xl font-serif mb-3">Proposta persistida</h1>
+            <p className="text-sm leading-relaxed text-slate-500">
+              Proposta sem payload disponível.
+            </p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   if (!data) {
     return (
@@ -197,6 +304,11 @@ export default function PropostaPage() {
     <div className="min-h-screen bg-[#fcfaf7] text-[#112231] font-sans pb-20 print:bg-white print:p-0">
       {/* --- Topbar Action --- */}
       <div className="fixed top-6 right-8 z-[100] flex gap-3 print:hidden">
+        {isPersistedProposal && (
+          <div className="hidden md:flex items-center rounded-full border border-[#b79969]/30 bg-white px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[#b79969] shadow-2xl">
+            Proposta persistida
+          </div>
+        )}
         <button 
           onClick={() => window.print()}
           className="p-3 bg-[#112231] text-white rounded-full shadow-2xl hover:scale-105 transition-transform"
@@ -204,13 +316,15 @@ export default function PropostaPage() {
         >
           <Printer size={20} />
         </button>
-        <button 
-          onClick={() => setData(null)}
-          className="p-3 bg-white text-red-500 border border-red-100 rounded-full shadow-2xl hover:scale-105 transition-transform"
-          title="Limpar Proposta"
-        >
-          <Trash2 size={20} />
-        </button>
+        {!isPersistedProposal && (
+          <button 
+            onClick={() => setData(null)}
+            className="p-3 bg-white text-red-500 border border-red-100 rounded-full shadow-2xl hover:scale-105 transition-transform"
+            title="Limpar Proposta"
+          >
+            <Trash2 size={20} />
+          </button>
+        )}
       </div>
 
       {/* --- Hero Section --- */}
@@ -222,7 +336,9 @@ export default function PropostaPage() {
           >
             <div className="flex items-center gap-3 mb-12">
               <div className="w-10 h-10 border border-white/20 flex items-center justify-center font-bold text-sm rounded-xl">EVIS</div>
-              <span className="text-[10px] font-bold tracking-[0.3em] uppercase opacity-60">Proposta Comercial</span>
+              <span className="text-[10px] font-bold tracking-[0.3em] uppercase opacity-60">
+                {isPersistedProposal ? 'Proposta Comercial Persistida' : 'Proposta Comercial'}
+              </span>
             </div>
             
             <h1 className="text-5xl md:text-7xl font-serif leading-[0.95] mb-8 tracking-tighter">
