@@ -320,11 +320,26 @@ export default function OportunidadeDetalhePage() {
         throw new Error('Obra criada sem ID retornado pelo Supabase.');
       }
 
+      const temOrcamento = !!item.orcamento_id;
+      const previousObraId = item.orcamentista_workspace_id || `opp_${item.id}`;
+
+      if (temOrcamento) {
+        await sbFetch(
+          `orcamentos?id=eq.${item.orcamento_id}`,
+          {
+            method: 'PATCH',
+            body: JSON.stringify({ obra_id: obraId, updated_at: new Date().toISOString() }),
+          },
+          config
+        );
+      }
+
       await updateOportunidade.mutateAsync({
         id: item.id,
         patch: {
           obra_id: obraId,
           status: 'ganha',
+          ...(temOrcamento ? { orcamentista_workspace_id: obraId } : {}),
         },
       });
 
@@ -336,8 +351,23 @@ export default function OportunidadeDetalhePage() {
           obra_id: obraId,
           orcamento_id: item.orcamento_id,
           proposta_id: item.proposta_id,
+          orcamento_migrado: temOrcamento,
         },
       });
+
+      if (temOrcamento) {
+        await createEvent.mutateAsync({
+          opportunity_id: item.id,
+          tipo: 'orcamento_migrado_para_obra',
+          descricao: 'Orçamento vinculado migrado para a obra real.',
+          metadata: {
+            obra_id: obraId,
+            orcamento_id: item.orcamento_id,
+            previous_obra_id: previousObraId,
+            orcamento_migrado: true,
+          },
+        });
+      }
 
       toast(
         item.proposta_id
@@ -345,7 +375,7 @@ export default function OportunidadeDetalhePage() {
           : 'Oportunidade convertida em obra por ação manual.',
         'success'
       );
-      navigate(`/obras/${obraId}`);
+      navigate(temOrcamento ? `/obras/${obraId}?tab=orcamento` : `/obras/${obraId}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao converter oportunidade em obra.';
       toast(message, 'error');
