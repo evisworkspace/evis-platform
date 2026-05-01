@@ -31,6 +31,6 @@ flowchart TB
 | `/oportunidades` | `OportunidadesPage` | MVP funcional com listagem/criacao via Supabase                       |
 | `/oportunidades/:id` | `OportunidadeDetalhePage` | Rota funcional com dados da oportunidade, linha do tempo e evento manual |
 | `/orcamentista`  | `OrcamentistaChat`  | Funcional parcial, ainda ligado a workspace/obra                      |
-| `/propostas`     | `PropostaPage`      | Existe, transforma JSON em proposta visual; sem persistencia completa |
+| `/propostas`     | `PropostaPage`      | Funcional (persistência de proposta) - ainda aceita upload JSON |
 | `/obras`         | `Main`              | Modulo operacional preservado                                         |
 | `/obras/:obraId` | `Main`              | Modulo operacional com obra ativa pela URL                            |

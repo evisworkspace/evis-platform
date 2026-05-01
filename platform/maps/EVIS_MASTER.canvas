@@ -139,6 +139,13 @@
       "toSide": "left"
     },
     {
+      "id": "e-detail-orcamento",
+      "fromNode": "opportunity_detail",
+      "fromSide": "bottom",
+      "toNode": "orcamento",
+      "toSide": "left"
+    },
+    {
       "id": "e-detail-proposta",
       "fromNode": "opportunity_detail",
       "fromSide": "right",

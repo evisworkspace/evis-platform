@@ -35,7 +35,8 @@ erDiagram
 | `orcamentista_workspace_id` | Parcial | Referencia textual para workspace do Orçamentista |
 | `orcamentos` | Existe | Usado pelo modulo de Orcamento |
 | `orcamento_itens` | Existe | Itens do orcamento estruturado |
-| `propostas` / `projects` | Ainda nao existem | `proposta_id` fica sem FK no MVP |
+| `propostas` / `projects` | Existe | Relacionado a opportunities (opportunity_id) e orcamentos (orcamento_id) |
+
 | `obras` | Existe | Entidade operacional principal |
 | `servicos` | Existe | Servicos da obra |
 | `diario_obra` | Existe | Narrativas/transcricoes de obra |

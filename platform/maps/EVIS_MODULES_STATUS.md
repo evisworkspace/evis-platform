@@ -8,7 +8,7 @@ Classificacao viva dos modulos oficiais e adjacentes do EVIS.
 | Oportunidades | MVP Funcional | Lista, criacao rapida, detalhe em `/oportunidades/:id`, linha do tempo via `opportunity_events` e criacao manual de evento | Conectar arquivos, Orçamentista, Proposta e conversao em Obra |
 | Orçamentista IA | Parcial | Chat, workspace, upload, Reader/Planner, HITL e etapas visuais | Persistir vinculo com oportunidade e completar quantitativos/custos |
 | Orcamentos | Parcial | `orcamentos` e `orcamento_itens` usados no frontend | Reconciliar schema oficial e conectar ao fluxo comercial |
-| Propostas | Parcial/sem persistência completa | Rota e tela visual a partir de JSON | Persistencia, relacionamento com oportunidade/orcamento e geracao controlada |
+| Propostas | MVP Funcional / Parcial | Rota e tela visual com persistência; geração a partir de orçamento | Relacionamento nativo completo e geração mais avançada |
 | Obras | Parcial funcional | Modulo operacional preservado em `/obras` e `/obras/:obraId` | Separar criacao pos-fechamento e fortalecer contratos de dados |
 | Diario de Obra | Parcial | IA operacional com revisao HITL no frontend | Consolidar auditoria persistida e contratos backend |
 | Financeiro | Planejado | Conceito no blueprint; sem modulo completo dedicado | Definir entidades de custos, pagamentos, medicoes e fluxo de caixa |

@@ -8,8 +8,8 @@ flowchart LR
   Opportunities["Oportunidades<br/>MVP funcional<br/>lista + criacao rapida"]
   OpportunityDetail["Detalhe da Oportunidade<br/>dados + linha do tempo"]
   Estimator["Orcamentista IA<br/>proxima integracao"]
-  Budget["Orcamento<br/>itens + BDI"]
-  Proposal["Proposta<br/>proxima integracao"]
+  Budget["Orcamento<br/>itens + BDI<br/>funcional"]
+  Proposal["Proposta<br/>MVP funcional"]
   Closing["Fechamento<br/>ganha / perdida"]
   PreWork["Pre-Obra<br/>mobilizacao"]
   Works["Obras<br/>proxima integracao comercial"]
@@ -25,6 +25,7 @@ flowchart LR
   Dashboard --> Opportunities
   Opportunities --> OpportunityDetail
   OpportunityDetail --> Estimator
+  OpportunityDetail --> Budget
   OpportunityDetail --> Proposal
   OpportunityDetail --> Works
   Estimator --> Budget
@@ -52,8 +53,8 @@ flowchart LR
 | Oportunidades | Registro comercial antes de obra, com lista, criacao rapida e detalhe | Módulo inicial funcional do fluxo comercial |
 | Detalhe da Oportunidade | Consulta dos dados da oportunidade e linha do tempo manual | MVP funcional, usando `opportunity_events` |
 | Orçamentista IA | Leitura tecnica, planner e HITL | Parcial funcional; proxima integracao a partir da oportunidade |
-| Orcamento | Estrutura de itens e totais | Parcial implementado |
-| Proposta | Apresentacao comercial a partir de JSON | Parcial, sem persistencia completa; proxima integracao |
+| Orcamento | Estrutura de itens e totais | Funcional |
+| Proposta | Apresentação comercial a partir de JSON | MVP Funcional |
 | Fechamento | Conversao comercial | Planejado |
 | Pre-Obra | Preparacao entre venda e execucao | Planejado |
 | Obras | Execucao operacional preservada | Parcial funcional; conversao a partir de oportunidade ainda futura |
