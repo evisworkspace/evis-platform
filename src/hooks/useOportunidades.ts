@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { sbFetch } from '../lib/api';
 import {
   Config,
+  Contact,
   Opportunity,
   OpportunityEvent,
   OpportunityFile,
@@ -17,6 +18,9 @@ export type OportunidadesFilters = {
 
 export type CreateOpportunityPayload = Pick<Opportunity, 'titulo'> &
   Partial<Omit<Opportunity, 'id' | 'titulo' | 'created_at' | 'updated_at'>>;
+
+export type CreateContactPayload = Pick<Contact, 'nome'> &
+  Partial<Omit<Contact, 'id' | 'nome' | 'created_at' | 'updated_at'>>;
 
 export type CreateOpportunityEventPayload = Omit<OpportunityEvent, 'id' | 'created_at'>;
 
@@ -69,6 +73,27 @@ export function useCreateOportunidade(config: Config) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: oportunidadesKeys.all });
+    },
+  });
+}
+
+export function useCreateContact(config: Config) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: CreateContactPayload) => {
+      const data = await sbFetch(
+        'contacts',
+        {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        },
+        config
+      );
+      return (Array.isArray(data) ? data[0] : data) as Contact;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['contacts'] });
     },
   });
 }
