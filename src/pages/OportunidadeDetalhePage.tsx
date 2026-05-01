@@ -19,6 +19,9 @@ import {
   useUpdateOportunidade,
 } from '../hooks/useOportunidades';
 import { useCreateOrcamento } from '../hooks/useOrcamento';
+import { useCreateProposta } from '../hooks/usePropostas';
+import { sbFetch } from '../lib/api';
+import { Orcamento, OrcamentoItem } from '../types';
 
 const statusLabel: Record<string, string> = {
   novo: 'Novo',
@@ -87,6 +90,7 @@ export default function OportunidadeDetalhePage() {
   const createEvent = useCreateOpportunityEvent(config);
   const updateOportunidade = useUpdateOportunidade(config);
   const createOrcamento = useCreateOrcamento(config);
+  const createProposta = useCreateProposta(config);
 
   async function handleAddEvent(event: FormEvent) {
     event.preventDefault();
@@ -183,9 +187,95 @@ export default function OportunidadeDetalhePage() {
     }
   }
 
+  async function handleGerarProposta() {
+    if (!item || !item.orcamento_id) return;
+
+    try {
+      const orcRaw = await sbFetch(`orcamentos?id=eq.${item.orcamento_id}&limit=1`, {}, config);
+      const orc = (Array.isArray(orcRaw) ? orcRaw[0] : null) as Orcamento | null;
+      if (!orc) throw new Error('Orçamento não encontrado.');
+
+      const itensRaw = await sbFetch(
+        `orcamento_itens?orcamento_id=eq.${item.orcamento_id}&order=created_at.asc&limit=500`,
+        {},
+        config
+      );
+      const itens = (Array.isArray(itensRaw) ? itensRaw : []) as OrcamentoItem[];
+
+      if (!itens.length) {
+        toast('Adicione itens ao orçamento antes de gerar a proposta.', 'error');
+        return;
+      }
+
+      const hoje = new Date().toISOString().slice(0, 10);
+      const fimPrevisto = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+
+      const payload = {
+        obra: {
+          nome: item.titulo,
+          cliente: item.cliente_nome_snapshot || item.titulo,
+          endereco: item.endereco_resumo || '',
+          tipo_obra: item.tipo_obra || '',
+          area_total_m2: item.metragem_estimada ?? 0,
+          valor_custos_diretos: orc.total_bruto,
+          valor_total_com_bdi: orc.total_final,
+          bdi_percentual: orc.bdi,
+          bdi_valor: orc.total_final - orc.total_bruto,
+          prazo_dias_uteis: 0,
+          data_inicio_prevista: hoje,
+          data_fim_prevista: fimPrevisto,
+          observacoes: item.observacao || undefined,
+        },
+        servicos: itens.map((it) => ({
+          nome: it.descricao,
+          descricao: it.descricao,
+          categoria: 'Serviços',
+          codigo_servico: it.codigo || '',
+          cod: it.codigo || '',
+          quantidade: it.quantidade,
+          unidade: it.unidade,
+          valor_unitario: it.valor_unitario,
+          valor_total: it.valor_total,
+          valor_total_direto: it.valor_total,
+        })),
+        equipes: [],
+        _meta: { status_orcamento: orc.status },
+      };
+
+      const proposta = await createProposta.mutateAsync({
+        opportunity_id: item.id,
+        orcamento_id: item.orcamento_id,
+        titulo: `Proposta - ${item.titulo}`,
+        cliente_nome_snapshot: item.cliente_nome_snapshot || item.titulo,
+        status: 'rascunho',
+        validade_dias: 10,
+        valor_total: orc.total_final,
+        bdi: orc.bdi,
+        payload,
+        observacoes: item.observacao || null,
+      });
+
+      await updateOportunidade.mutateAsync({ id: item.id, patch: { proposta_id: proposta.id } });
+
+      await createEvent.mutateAsync({
+        opportunity_id: item.id,
+        tipo: 'proposta_gerada',
+        descricao: 'Proposta gerada a partir do orçamento vinculado.',
+        metadata: { proposta_id: proposta.id, orcamento_id: item.orcamento_id },
+      });
+
+      toast('Proposta gerada com sucesso.', 'success');
+      navigate(`/propostas?id=${proposta.id}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao gerar proposta.';
+      toast(message, 'error');
+    }
+  }
+
   const item = oportunidade.data;
   const isOpeningOrcamentista = updateOportunidade.isPending || createEvent.isPending;
   const isCreatingOrcamento = createOrcamento.isPending || updateOportunidade.isPending;
+  const isGeneratingProposta = createProposta.isPending || updateOportunidade.isPending;
 
   return (
     <main className="min-h-screen bg-bg text-t1">
@@ -276,15 +366,32 @@ export default function OportunidadeDetalhePage() {
                   </button>
                 )}
 
-                <button
-                  type="button"
-                  disabled
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-b1 bg-s1 px-4 py-3 text-[11px] font-extrabold uppercase tracking-widest text-t4 opacity-80"
-                >
-                  <FileText className="h-4 w-4" />
-                  Gerar Proposta
-                  <span className="font-mono text-[9px] text-brand-amber">Próxima etapa</span>
-                </button>
+                {item.proposta_id ? (
+                  <Link
+                    to={`/propostas?id=${item.proposta_id}`}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-green/30 bg-s1 px-4 py-3 text-[11px] font-extrabold uppercase tracking-widest text-brand-green transition-colors hover:bg-s2"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Ver Proposta
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={item.orcamento_id ? handleGerarProposta : undefined}
+                    disabled={!item.orcamento_id || isGeneratingProposta}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-b1 bg-s1 px-4 py-3 text-[11px] font-extrabold uppercase tracking-widest text-t2 transition-colors hover:bg-s2 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isGeneratingProposta ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <FileText className="h-4 w-4" />
+                    )}
+                    Gerar Proposta
+                    {!item.orcamento_id && (
+                      <span className="font-mono text-[9px] text-brand-amber">Crie o orçamento primeiro</span>
+                    )}
+                  </button>
+                )}
                 <button
                   type="button"
                   disabled
