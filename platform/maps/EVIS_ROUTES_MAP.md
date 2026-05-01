@@ -4,16 +4,18 @@ Rotas atuais observadas em `src/App.tsx`.
 
 ```mermaid
 flowchart TB
-  Root["/"]
-  Dashboard["/dashboard"]
-  Opportunities["/oportunidades<br/>MVP funcional"]
-  Estimator["/orcamentista<br/>funcional parcial"]
-  Proposals["/propostas<br/>sem persistencia completa"]
-  Works["/obras<br/>operacional preservado"]
-  WorkById["/obras/:obraId<br/>obra ativa"]
+    Root["/"]
+    Dashboard["/dashboard"]
+    Opportunities["/oportunidades<br/>MVP funcional"]
+    OpportunityDetail["/oportunidades/:id<br/>Detalhe da oportunidade"]
+    Estimator["/orcamentista<br/>funcional parcial"]
+    Proposals["/propostas<br/>sem persistencia completa"]
+    Works["/obras<br/>operacional preservado"]
+    WorkById["/obras/:obraId<br/>obra ativa"]
 
   Root --> Dashboard
   Dashboard --> Opportunities
+  Opportunities --> OpportunityDetail
   Dashboard --> Estimator
   Dashboard --> Proposals
   Dashboard --> Works

@@ -45,7 +45,7 @@ flowchart LR
 | Etapa | Papel no produto | Estado |
 |---|---|---|
 | Dashboard | Comando central e entrada dos modulos | Implementado como hub |
-| Oportunidades | Registro comercial antes de obra | MVP funcional |
+| Oportunidades | Registro comercial antes de obra | Módulo inicial funcional do fluxo comercial |
 | Orçamentista IA | Leitura tecnica, planner e HITL | Parcial funcional |
 | Orcamento | Estrutura de itens e totais | Parcial implementado |
 | Proposta | Apresentacao comercial a partir de JSON | Parcial, sem persistencia completa |

@@ -28,10 +28,10 @@ erDiagram
 
 | Entidade | Status | Observacao |
 |---|---|---|
-| `contacts` | Recem-criada | Base minima de contatos do MVP de Oportunidades |
-| `opportunities` | Recem-criada | Lead/oportunidade antes de obra |
-| `opportunity_events` | Recem-criada | Linha do tempo comercial/tecnica |
-| `opportunity_files` | Recem-criada | Arquivos de briefing/documentos iniciais |
+| `contacts` | Criada no Supabase | Base minima de contatos do MVP de Oportunidades |
+| `opportunities` | Criada no Supabase | Lead/oportunidade antes de obra |
+| `opportunity_events` | Criada no Supabase (já usada na tela de detalhe) |
+| `opportunity_files` | Criada no Supabase | Arquivos de briefing/documentos iniciais |
 | `orcamentista_workspace_id` | Parcial | Referencia textual para workspace do Orçamentista |
 | `orcamentos` | Existe | Usado pelo modulo de Orcamento |
 | `orcamento_itens` | Existe | Itens do orcamento estruturado |

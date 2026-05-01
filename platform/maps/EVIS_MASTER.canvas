@@ -21,7 +21,7 @@
     {
       "id": "orcamentista",
       "type": "text",
-      "text": "Orçamentista IA\nReader / Planner / HITL",
+      "text": "Orçamentista IA\nReader / Planner / HITL\n(Próxima integração)",
       "x": -180,
       "y": -120,
       "width": 280,
@@ -39,7 +39,7 @@
     {
       "id": "proposta",
       "type": "text",
-      "text": "Proposta\nDocumento comercial",
+      "text": "Proposta\nDocumento comercial\n(Próxima integração)",
       "x": 500,
       "y": -120,
       "width": 260,
@@ -57,7 +57,7 @@
     {
       "id": "obras",
       "type": "text",
-      "text": "Obras\nExecução operacional",
+      "text": "Obras\nExecução operacional\n(Próxima integração)",
       "x": 820,
       "y": 120,
       "width": 240,
@@ -190,6 +190,34 @@
       "fromNode": "ia-hitl",
       "fromSide": "left",
       "toNode": "supabase",
+      "toSide": "right"
+    },
+    {
+      "id": "e-oportunidades-detail",
+      "fromNode": "oportunidades",
+      "fromSide": "right",
+      "toNode": "opportunity_detail",
+      "toSide": "right"
+    },
+    {
+      "id": "e-detail-orcamentista",
+      "fromNode": "opportunity_detail",
+      "fromSide": "right",
+      "toNode": "orcamentista",
+      "toSide": "left"
+    },
+    {
+      "id": "e-detail-proposta",
+      "fromNode": "opportunity_detail",
+      "fromSide": "bottom",
+      "toNode": "proposta",
+      "toSide": "right"
+    },
+    {
+      "id": "e-detail-obras",
+      "fromNode": "opportunity_detail",
+      "fromSide": "bottom",
+      "toNode": "obras",
       "toSide": "right"
     }
   ]
