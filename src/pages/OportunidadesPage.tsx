@@ -155,7 +155,7 @@ export default function OportunidadesPage() {
               Oportunidades
             </div>
             <h1 className="text-3xl font-extrabold tracking-normal text-t1 sm:text-4xl">
-              Pipeline comercial
+              Oportunidades
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-t3">
               Registro inicial de leads antes da criação de orçamento, proposta ou obra.

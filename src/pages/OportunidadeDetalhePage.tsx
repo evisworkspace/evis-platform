@@ -100,7 +100,7 @@ export default function OportunidadeDetalhePage() {
     const descricao = eventDescription.trim();
 
     if (!tipo || !descricao) {
-      toast('Informe tipo e descrição do evento.', 'error');
+      toast('Informe tipo e descrição da atividade.', 'error');
       return;
     }
 
@@ -113,9 +113,9 @@ export default function OportunidadeDetalhePage() {
       });
       setEventType('');
       setEventDescription('');
-      toast('Evento adicionado.', 'success');
+      toast('Atividade registrada.', 'success');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro ao adicionar evento.';
+      const message = err instanceof Error ? err.message : 'Erro ao registrar atividade.';
       toast(message, 'error');
     }
   }
@@ -421,7 +421,7 @@ export default function OportunidadeDetalhePage() {
               <div>
                 <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-brand-green">
                   <Briefcase className="h-4 w-4" />
-                  Detalhe da oportunidade
+                  Oportunidade
                 </div>
                 <h1 className="max-w-4xl text-3xl font-extrabold tracking-normal text-t1 sm:text-4xl">
                   {item.titulo}
@@ -451,7 +451,7 @@ export default function OportunidadeDetalhePage() {
                   ) : (
                     <Hammer className="h-4 w-4" />
                   )}
-                  Abrir Orçamentista
+                  Orçamento com IA
                 </button>
 
                 {item.orcamento_id ? (
@@ -460,7 +460,7 @@ export default function OportunidadeDetalhePage() {
                     className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-green/30 bg-s1 px-4 py-3 text-[11px] font-extrabold uppercase tracking-widest text-brand-green transition-colors hover:bg-s2"
                   >
                     <ClipboardList className="h-4 w-4" />
-                    Ver Orçamento
+                    Orçamento
                   </Link>
                 ) : (
                   <button
@@ -484,7 +484,7 @@ export default function OportunidadeDetalhePage() {
                     className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-green/30 bg-s1 px-4 py-3 text-[11px] font-extrabold uppercase tracking-widest text-brand-green transition-colors hover:bg-s2"
                   >
                     <FileText className="h-4 w-4" />
-                    Ver Proposta
+                    Proposta comercial
                   </Link>
                 ) : (
                   <button
@@ -498,7 +498,7 @@ export default function OportunidadeDetalhePage() {
                     ) : (
                       <FileText className="h-4 w-4" />
                     )}
-                    Gerar Proposta
+                    Gerar proposta comercial
                     {!item.orcamento_id && (
                       <span className="font-mono text-[9px] text-brand-amber">Crie o orçamento primeiro</span>
                     )}
@@ -515,7 +515,7 @@ export default function OportunidadeDetalhePage() {
                   ) : (
                     <Briefcase className="h-4 w-4" />
                   )}
-                  {item.obra_id ? 'Abrir Obra' : 'Converter em Obra'}
+                  {item.obra_id ? 'Abrir obra' : 'Ganhar'}
                   {!item.obra_id && !item.proposta_id && (
                     <span className="font-mono text-[9px] text-brand-amber">Ação manual</span>
                   )}
@@ -530,7 +530,7 @@ export default function OportunidadeDetalhePage() {
             <section className="space-y-6">
               <div className="rounded-lg border border-b1 bg-s1 p-5">
                 <div className="mb-4 text-[10px] font-bold uppercase tracking-widest text-t3">
-                  Dados comerciais
+                  Detalhes gerais
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                   <DetailItem label="Origem" value={item.origem} />
@@ -559,9 +559,9 @@ export default function OportunidadeDetalhePage() {
               <div className="mb-5 flex items-center justify-between gap-4">
                 <div>
                   <div className="text-[10px] font-bold uppercase tracking-widest text-t3">
-                    Linha do tempo
+                    Resumo de atividades
                   </div>
-                  <div className="mt-1 text-xs text-t4">Eventos manuais da oportunidade</div>
+                  <div className="mt-1 text-xs text-t4">Histórico da oportunidade</div>
                 </div>
                 {events.isFetching && <Loader2 className="h-4 w-4 animate-spin text-brand-green" />}
               </div>
@@ -569,7 +569,7 @@ export default function OportunidadeDetalhePage() {
               <form onSubmit={handleAddEvent} className="mb-6 rounded-lg border border-b1 bg-bg/50 p-4">
                 <div className="mb-3 flex items-center gap-2 text-sm font-bold text-t1">
                   <MessageSquarePlus className="h-4 w-4 text-brand-green" />
-                  Adicionar evento
+                  Nova atividade
                 </div>
                 <label className="mb-3 block">
                   <span className="mb-1.5 block font-mono text-[9px] font-bold uppercase tracking-[0.1em] text-t3">
@@ -603,25 +603,25 @@ export default function OportunidadeDetalhePage() {
                   ) : (
                     <Send className="h-4 w-4" />
                   )}
-                  Salvar evento
+                  Salvar atividade
                 </button>
               </form>
 
               {events.error ? (
                 <div className="rounded-lg border border-brand-red/30 bg-brand-red/10 px-4 py-3 text-sm text-brand-red">
-                  {events.error instanceof Error ? events.error.message : 'Erro ao carregar eventos.'}
+                  {events.error instanceof Error ? events.error.message : 'Erro ao carregar atividades.'}
                 </div>
               ) : events.isLoading ? (
                 <div className="flex min-h-32 items-center justify-center gap-3 text-sm text-t3">
                   <Loader2 className="h-5 w-5 animate-spin text-brand-green" />
-                  Carregando eventos
+                  Carregando atividades
                 </div>
               ) : !events.data?.length ? (
                 <div className="flex min-h-32 flex-col items-center justify-center rounded-lg border border-dashed border-b2 px-4 text-center">
                   <CalendarDays className="mb-3 h-5 w-5 text-t4" />
-                  <div className="text-sm font-bold text-t2">Nenhum evento registrado</div>
+                  <div className="text-sm font-bold text-t2">Nenhuma atividade registrada</div>
                   <div className="mt-1 text-xs leading-5 text-t4">
-                    Adicione o primeiro evento manual para iniciar o histórico.
+                    Registre a primeira atividade para iniciar o histórico.
                   </div>
                 </div>
               ) : (
