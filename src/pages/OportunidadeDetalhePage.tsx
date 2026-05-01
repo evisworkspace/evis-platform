@@ -84,6 +84,7 @@ export default function OportunidadeDetalhePage() {
   const { config, toast } = useAppContext();
   const [eventType, setEventType] = useState('');
   const [eventDescription, setEventDescription] = useState('');
+  const [isConvertingObra, setIsConvertingObra] = useState(false);
 
   const oportunidade = useOportunidade(id, config);
   const events = useOpportunityEvents(id, config);
@@ -275,6 +276,84 @@ export default function OportunidadeDetalhePage() {
     }
   }
 
+  function buildObraDescricao() {
+    if (!item) return null;
+
+    const parts = [
+      item.observacao,
+      item.endereco_resumo ? `Endereço: ${item.endereco_resumo}` : null,
+      item.tipo_obra ? `Tipo de obra: ${item.tipo_obra}` : null,
+      item.metragem_estimada ? `Metragem estimada: ${item.metragem_estimada} m2` : null,
+    ].filter(Boolean);
+
+    return parts.length ? parts.join('\n') : null;
+  }
+
+  async function handleConverterEmObra() {
+    if (!item || isConvertingObra) return;
+
+    if (item.obra_id) {
+      navigate(`/obras/${item.obra_id}`);
+      return;
+    }
+
+    setIsConvertingObra(true);
+
+    try {
+      const obraRaw = await sbFetch(
+        'obras',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            nome: item.titulo,
+            cliente: item.cliente_nome_snapshot || null,
+            status: 'ATIVA',
+            descricao: buildObraDescricao(),
+          }),
+        },
+        config
+      );
+      const obra = Array.isArray(obraRaw) ? obraRaw[0] : obraRaw;
+      const obraId = obra?.id;
+
+      if (!obraId) {
+        throw new Error('Obra criada sem ID retornado pelo Supabase.');
+      }
+
+      await updateOportunidade.mutateAsync({
+        id: item.id,
+        patch: {
+          obra_id: obraId,
+          status: 'ganha',
+        },
+      });
+
+      await createEvent.mutateAsync({
+        opportunity_id: item.id,
+        tipo: 'oportunidade_convertida_em_obra',
+        descricao: 'Oportunidade convertida em obra.',
+        metadata: {
+          obra_id: obraId,
+          orcamento_id: item.orcamento_id,
+          proposta_id: item.proposta_id,
+        },
+      });
+
+      toast(
+        item.proposta_id
+          ? 'Oportunidade convertida em obra.'
+          : 'Oportunidade convertida em obra por ação manual.',
+        'success'
+      );
+      navigate(`/obras/${obraId}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao converter oportunidade em obra.';
+      toast(message, 'error');
+    } finally {
+      setIsConvertingObra(false);
+    }
+  }
+
   const item = oportunidade.data;
   const isOpeningOrcamentista = updateOportunidade.isPending || createEvent.isPending;
   const isCreatingOrcamento = createOrcamento.isPending || updateOportunidade.isPending;
@@ -397,12 +476,19 @@ export default function OportunidadeDetalhePage() {
                 )}
                 <button
                   type="button"
-                  disabled
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-b1 bg-s1 px-4 py-3 text-[11px] font-extrabold uppercase tracking-widest text-t4 opacity-80"
+                  onClick={handleConverterEmObra}
+                  disabled={isConvertingObra}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-b1 bg-s1 px-4 py-3 text-[11px] font-extrabold uppercase tracking-widest text-t2 transition-colors hover:bg-s2 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <Briefcase className="h-4 w-4" />
-                  Converter em Obra
-                  <span className="font-mono text-[9px] text-brand-amber">Em breve</span>
+                  {isConvertingObra ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Briefcase className="h-4 w-4" />
+                  )}
+                  {item.obra_id ? 'Abrir Obra' : 'Converter em Obra'}
+                  {!item.obra_id && !item.proposta_id && (
+                    <span className="font-mono text-[9px] text-brand-amber">Ação manual</span>
+                  )}
                 </button>
               </div>
             </div>
