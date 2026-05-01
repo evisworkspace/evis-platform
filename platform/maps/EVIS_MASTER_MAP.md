@@ -23,10 +23,11 @@ flowchart TB
 
   subgraph Muscles["Musculos"]
     Dashboard["Dashboard"]
-    Opportunities["Oportunidades"]
-    Estimator["Orcamentista IA"]
-    Proposals["Propostas"]
-    Works["Obras"]
+    Opportunities["Oportunidades<br/>MVP funcional"]
+    OpportunityDetail["Detalhe da Oportunidade<br/>linha do tempo"]
+    Estimator["Orcamentista IA<br/>proxima integracao"]
+    Proposals["Propostas<br/>proxima integracao"]
+    Works["Obras<br/>proxima integracao comercial"]
     Finance["Financeiro"]
   end
 
@@ -57,6 +58,7 @@ flowchart TB
 
   Routes --> Dashboard
   Routes --> Opportunities
+  Routes --> OpportunityDetail
   Routes --> Estimator
   Routes --> Proposals
   Routes --> Works
@@ -65,6 +67,11 @@ flowchart TB
   APIs --> Supabase
   Events --> Supabase
 
+  Opportunities --> OpportunityDetail
+  OpportunityDetail --> Estimator
+  OpportunityDetail --> Proposals
+  OpportunityDetail --> Works
+  OpportunityDetail --> Events
   Opportunities --> Database
   Estimator --> Docs
   Works --> History
@@ -85,4 +92,3 @@ flowchart TB
 | Musculos | Modulos de produto que executam fluxos do usuario | Dashboard, Oportunidades e Obras ativos; demais parciais |
 | Memoria | Banco, documentos, historicos e logs | Supabase e workspace local; auditoria ainda fragmentada |
 | Olhos | Dashboards, relatorios, alertas e revisoes | Parcial; relatorios e alertas ainda precisam consolidacao |
-

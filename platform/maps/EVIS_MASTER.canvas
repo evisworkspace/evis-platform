@@ -4,7 +4,7 @@
       "id": "dashboard",
       "type": "text",
       "text": "Dashboard\nHub central",
-      "x": -840,
+      "x": -900,
       "y": -120,
       "width": 240,
       "height": 120
@@ -12,90 +12,99 @@
     {
       "id": "oportunidades",
       "type": "text",
-      "text": "Oportunidades\nMVP funcional",
-      "x": -520,
+      "text": "Oportunidades\nMVP funcional\nLista + criacao rapida",
+      "x": -580,
       "y": -120,
       "width": 260,
-      "height": 120
+      "height": 140
+    },
+    {
+      "id": "opportunity_detail",
+      "type": "text",
+      "text": "Detalhe da Oportunidade\nDados + timeline\nopportunity_events",
+      "x": -240,
+      "y": -120,
+      "width": 280,
+      "height": 140
     },
     {
       "id": "orcamentista",
       "type": "text",
-      "text": "Orçamentista IA\nReader / Planner / HITL\n(Próxima integração)",
-      "x": -180,
-      "y": -120,
-      "width": 280,
+      "text": "Orçamentista IA\nProxima integracao",
+      "x": 120,
+      "y": -260,
+      "width": 260,
       "height": 120
     },
     {
       "id": "orcamento",
       "type": "text",
       "text": "Orçamento\nItens + BDI",
-      "x": 180,
-      "y": -120,
+      "x": 460,
+      "y": -260,
       "width": 240,
       "height": 120
     },
     {
       "id": "proposta",
       "type": "text",
-      "text": "Proposta\nDocumento comercial\n(Próxima integração)",
-      "x": 500,
-      "y": -120,
+      "text": "Proposta\nDocumento comercial\nProxima integracao",
+      "x": 120,
+      "y": -60,
       "width": 260,
-      "height": 120
+      "height": 130
     },
     {
       "id": "preobra",
       "type": "text",
-      "text": "Pré-Obra\nMobilização",
-      "x": 820,
-      "y": -120,
+      "text": "Pre-Obra\nMobilizacao",
+      "x": 460,
+      "y": -60,
       "width": 240,
       "height": 120
     },
     {
       "id": "obras",
       "type": "text",
-      "text": "Obras\nExecução operacional\n(Próxima integração)",
-      "x": 820,
-      "y": 120,
-      "width": 240,
-      "height": 120
+      "text": "Obras\nExecucao operacional\nProxima integracao",
+      "x": 800,
+      "y": -60,
+      "width": 260,
+      "height": 130
     },
     {
       "id": "financeiro",
       "type": "text",
-      "text": "Financeiro\nCustos / medições",
-      "x": 500,
-      "y": 260,
+      "text": "Financeiro\nCustos / medicoes",
+      "x": 800,
+      "y": 180,
       "width": 260,
       "height": 120
     },
     {
       "id": "relatorios",
       "type": "text",
-      "text": "Relatórios\nSemanal / gestão",
-      "x": 180,
-      "y": 260,
+      "text": "Relatorios\nSemanal / gestao",
+      "x": 460,
+      "y": 180,
       "width": 240,
       "height": 120
     },
     {
       "id": "supabase",
       "type": "text",
-      "text": "Supabase\nBanco / RLS / REST",
-      "x": -520,
-      "y": 220,
-      "width": 260,
-      "height": 120
+      "text": "Supabase\ncontacts\nopportunities\nopportunity_events\nopportunity_files",
+      "x": -580,
+      "y": 180,
+      "width": 280,
+      "height": 160
     },
     {
       "id": "ia-hitl",
       "type": "text",
-      "text": "IA / HITL\nIA propõe\nHumano valida\nSistema registra",
-      "x": -180,
-      "y": 220,
+      "text": "IA / HITL\nIA propoe\nHumano valida\nSistema registra",
+      "x": -200,
+      "y": 200,
       "width": 280,
       "height": 150
     }
@@ -109,8 +118,15 @@
       "toSide": "left"
     },
     {
-      "id": "e-oportunidades-orcamentista",
+      "id": "e-oportunidades-detail",
       "fromNode": "oportunidades",
+      "fromSide": "right",
+      "toNode": "opportunity_detail",
+      "toSide": "left"
+    },
+    {
+      "id": "e-detail-orcamentista",
+      "fromNode": "opportunity_detail",
       "fromSide": "right",
       "toNode": "orcamentista",
       "toSide": "left"
@@ -123,11 +139,18 @@
       "toSide": "left"
     },
     {
-      "id": "e-orcamento-proposta",
-      "fromNode": "orcamento",
+      "id": "e-detail-proposta",
+      "fromNode": "opportunity_detail",
       "fromSide": "right",
       "toNode": "proposta",
       "toSide": "left"
+    },
+    {
+      "id": "e-orcamento-proposta",
+      "fromNode": "orcamento",
+      "fromSide": "bottom",
+      "toNode": "proposta",
+      "toSide": "top"
     },
     {
       "id": "e-proposta-preobra",
@@ -139,16 +162,23 @@
     {
       "id": "e-preobra-obras",
       "fromNode": "preobra",
-      "fromSide": "bottom",
+      "fromSide": "right",
       "toNode": "obras",
-      "toSide": "top"
+      "toSide": "left"
+    },
+    {
+      "id": "e-detail-obras",
+      "fromNode": "opportunity_detail",
+      "fromSide": "right",
+      "toNode": "obras",
+      "toSide": "left"
     },
     {
       "id": "e-obras-financeiro",
       "fromNode": "obras",
-      "fromSide": "left",
+      "fromSide": "bottom",
       "toNode": "financeiro",
-      "toSide": "right"
+      "toSide": "top"
     },
     {
       "id": "e-financeiro-relatorios",
@@ -172,6 +202,13 @@
       "toSide": "top"
     },
     {
+      "id": "e-detail-supabase",
+      "fromNode": "opportunity_detail",
+      "fromSide": "bottom",
+      "toNode": "supabase",
+      "toSide": "top"
+    },
+    {
       "id": "e-obras-supabase",
       "fromNode": "obras",
       "fromSide": "bottom",
@@ -190,34 +227,6 @@
       "fromNode": "ia-hitl",
       "fromSide": "left",
       "toNode": "supabase",
-      "toSide": "right"
-    },
-    {
-      "id": "e-oportunidades-detail",
-      "fromNode": "oportunidades",
-      "fromSide": "right",
-      "toNode": "opportunity_detail",
-      "toSide": "right"
-    },
-    {
-      "id": "e-detail-orcamentista",
-      "fromNode": "opportunity_detail",
-      "fromSide": "right",
-      "toNode": "orcamentista",
-      "toSide": "left"
-    },
-    {
-      "id": "e-detail-proposta",
-      "fromNode": "opportunity_detail",
-      "fromSide": "bottom",
-      "toNode": "proposta",
-      "toSide": "right"
-    },
-    {
-      "id": "e-detail-obras",
-      "fromNode": "opportunity_detail",
-      "fromSide": "bottom",
-      "toNode": "obras",
       "toSide": "right"
     }
   ]

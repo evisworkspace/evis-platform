@@ -5,13 +5,14 @@ Fluxo principal previsto para conectar entrada comercial, engenharia, proposta, 
 ```mermaid
 flowchart LR
   Dashboard["Dashboard"]
-  Opportunities["Oportunidades<br/>lead / demanda"]
-  Estimator["Orcamentista IA<br/>documentos + HITL"]
+  Opportunities["Oportunidades<br/>MVP funcional<br/>lista + criacao rapida"]
+  OpportunityDetail["Detalhe da Oportunidade<br/>dados + linha do tempo"]
+  Estimator["Orcamentista IA<br/>proxima integracao"]
   Budget["Orcamento<br/>itens + BDI"]
-  Proposal["Proposta<br/>documento comercial"]
+  Proposal["Proposta<br/>proxima integracao"]
   Closing["Fechamento<br/>ganha / perdida"]
   PreWork["Pre-Obra<br/>mobilizacao"]
-  Works["Obras<br/>execucao"]
+  Works["Obras<br/>proxima integracao comercial"]
 
   subgraph Operations["Gestao operacional"]
     Daily["Diario"]
@@ -22,7 +23,10 @@ flowchart LR
   end
 
   Dashboard --> Opportunities
-  Opportunities --> Estimator
+  Opportunities --> OpportunityDetail
+  OpportunityDetail --> Estimator
+  OpportunityDetail --> Proposal
+  OpportunityDetail --> Works
   Estimator --> Budget
   Budget --> Proposal
   Proposal --> Closing
@@ -45,12 +49,12 @@ flowchart LR
 | Etapa | Papel no produto | Estado |
 |---|---|---|
 | Dashboard | Comando central e entrada dos modulos | Implementado como hub |
-| Oportunidades | Registro comercial antes de obra | Módulo inicial funcional do fluxo comercial |
-| Orçamentista IA | Leitura tecnica, planner e HITL | Parcial funcional |
+| Oportunidades | Registro comercial antes de obra, com lista, criacao rapida e detalhe | Módulo inicial funcional do fluxo comercial |
+| Detalhe da Oportunidade | Consulta dos dados da oportunidade e linha do tempo manual | MVP funcional, usando `opportunity_events` |
+| Orçamentista IA | Leitura tecnica, planner e HITL | Parcial funcional; proxima integracao a partir da oportunidade |
 | Orcamento | Estrutura de itens e totais | Parcial implementado |
-| Proposta | Apresentacao comercial a partir de JSON | Parcial, sem persistencia completa |
+| Proposta | Apresentacao comercial a partir de JSON | Parcial, sem persistencia completa; proxima integracao |
 | Fechamento | Conversao comercial | Planejado |
 | Pre-Obra | Preparacao entre venda e execucao | Planejado |
-| Obras | Execucao operacional preservada | Implementado/parcial |
+| Obras | Execucao operacional preservada | Parcial funcional; conversao a partir de oportunidade ainda futura |
 | Diario/Cronograma/Medicoes/Financeiro/Relatorios | Operacao e controle | Diario e cronograma parciais; financeiro/medicoes planejados |
-

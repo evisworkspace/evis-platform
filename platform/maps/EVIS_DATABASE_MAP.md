@@ -29,9 +29,9 @@ erDiagram
 | Entidade | Status | Observacao |
 |---|---|---|
 | `contacts` | Criada no Supabase | Base minima de contatos do MVP de Oportunidades |
-| `opportunities` | Criada no Supabase | Lead/oportunidade antes de obra |
-| `opportunity_events` | Criada no Supabase (já usada na tela de detalhe) |
-| `opportunity_files` | Criada no Supabase | Arquivos de briefing/documentos iniciais |
+| `opportunities` | Criada no Supabase | Lead/oportunidade antes de obra; alimenta lista e detalhe |
+| `opportunity_events` | Criada no Supabase | Ja usada na tela de detalhe para linha do tempo e criacao manual de eventos |
+| `opportunity_files` | Criada no Supabase | Arquivos de briefing/documentos iniciais; ainda nao usado no detalhe atual |
 | `orcamentista_workspace_id` | Parcial | Referencia textual para workspace do Orçamentista |
 | `orcamentos` | Existe | Usado pelo modulo de Orcamento |
 | `orcamento_itens` | Existe | Itens do orcamento estruturado |
@@ -65,4 +65,3 @@ flowchart LR
   Project --> Work
   Proposal --> Work
 ```
-
