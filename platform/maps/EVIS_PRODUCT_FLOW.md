@@ -30,7 +30,7 @@ flowchart LR
   OpportunityDetail --> Works
   Estimator --> Budget
   Budget --> Proposal
-  Proposal --> Closing
+  Proposal --> Obras // funcional - conversão cria obra e preenche opportunities.obra_id
   Closing --> PreWork
   PreWork --> Works
   Works --> Daily
@@ -57,5 +57,6 @@ flowchart LR
 | Proposta | Apresentação comercial a partir de JSON | MVP Funcional |
 | Fechamento | Conversao comercial | Planejado |
 | Pre-Obra | Preparacao entre venda e execucao | Planejado |
-| Obras | Execucao operacional preservada | Parcial funcional; conversao a partir de oportunidade ainda futura |
+| Obras | Funcional | Modulo operacional preservado em `/obras` e `/obras/:obraId` | Separar criacao pos-fechamento e fortalecer contratos de dados |
 | Diario/Cronograma/Medicoes/Financeiro/Relatorios | Operacao e controle | Diario e cronograma parciais; financeiro/medicoes planejados |
+* Conversão de oportunidade para obra cria registro em `public.obras` e popula `opportunities.obra_id`.

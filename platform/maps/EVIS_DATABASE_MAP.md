@@ -10,8 +10,9 @@ erDiagram
   opportunities }o--|| orcamentista_workspace : "orcamentista_workspace_id"
   opportunities }o--|| orcamentos : "orcamento_id"
   opportunities }o--|| propostas : "proposta_id"
-  opportunities }o--|| obras : "obra_id"
-
+   opportunities }o--|| obras : "obra_id" // relação oportunidades.obra_id -> obras.id, criação de obra a partir de oportunidade ganha
+   %% Oportunidade pode gerar obra e popula obra_id
+   %% Oportunidade pode gerar obra e popula obra_id
   obras ||--o{ servicos : "obra_id"
   obras ||--o{ diario_obra : "obra_id"
   obras ||--o{ equipes_cadastro : "obra_id"
@@ -65,4 +66,5 @@ flowchart LR
   Opportunity --> Project
   Project --> Work
   Proposal --> Work
+  Opportunity --> Work // Oportunidade pode gerar obra
 ```

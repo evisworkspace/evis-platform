@@ -34,3 +34,5 @@ flowchart TB
 | `/propostas`     | `PropostaPage`      | Funcional (persistência de proposta) - ainda aceita upload JSON |
 | `/obras`         | `Main`              | Modulo operacional preservado                                         |
 | `/obras/:obraId` | `Main`              | Modulo operacional com obra ativa pela URL                            |
+
+# /obras/:obraId é destino funcional após conversão de oportunidade, linha do tempo e evento manual

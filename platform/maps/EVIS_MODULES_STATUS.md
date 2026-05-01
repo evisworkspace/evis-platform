@@ -9,7 +9,7 @@ Classificacao viva dos modulos oficiais e adjacentes do EVIS.
 | Orçamentista IA | Parcial | Chat, workspace, upload, Reader/Planner, HITL e etapas visuais | Persistir vinculo com oportunidade e completar quantitativos/custos |
 | Orcamentos | Parcial | `orcamentos` e `orcamento_itens` usados no frontend | Reconciliar schema oficial e conectar ao fluxo comercial |
 | Propostas | MVP Funcional / Parcial | Rota e tela visual com persistência; geração a partir de orçamento | Relacionamento nativo completo e geração mais avançada |
-| Obras | Parcial funcional | Modulo operacional preservado em `/obras` e `/obras/:obraId` | Separar criacao pos-fechamento e fortalecer contratos de dados |
+| Obras | Parcial funcional, agora acessível via conversão de oportunidade | Modulo operacional preservado em `/obras` e `/obras/:obraId` | Separar criacao pos-fechamento e fortalecer contratos de dados |
 | Diario de Obra | Parcial | IA operacional com revisao HITL no frontend | Consolidar auditoria persistida e contratos backend |
 | Financeiro | Planejado | Conceito no blueprint; sem modulo completo dedicado | Definir entidades de custos, pagamentos, medicoes e fluxo de caixa |
 | Relatorios | Parcial | Aba de relatorios existe; `relatorios_semanais` ausente no schema reconciliado | Criar contrato persistido e reconciliar tabela |
