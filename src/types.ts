@@ -186,3 +186,72 @@ export type OrcamentoItem = {
   origem: 'manual' | 'sinapi' | 'ia';
   created_at?: string;
 };
+
+export type OpportunityStatus =
+  | 'novo'
+  | 'qualificando'
+  | 'aguardando_documentos'
+  | 'em_orcamento'
+  | 'proposta_enviada'
+  | 'negociacao'
+  | 'ganha'
+  | 'perdida'
+  | 'arquivada';
+
+export type OpportunityPriority = 'baixa' | 'media' | 'alta' | 'urgente';
+
+export type Contact = {
+  id: string;
+  nome: string;
+  telefone: string | null;
+  email: string | null;
+  documento: string | null;
+  tipo: string;
+  observacoes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Opportunity = {
+  id: string;
+  titulo: string;
+  status: OpportunityStatus;
+  contact_id: string | null;
+  origem: string | null;
+  prioridade: OpportunityPriority;
+  cliente_nome_snapshot: string | null;
+  telefone_snapshot: string | null;
+  email_snapshot: string | null;
+  endereco_resumo: string | null;
+  tipo_obra: string | null;
+  metragem_estimada: number | null;
+  valor_estimado: number | null;
+  observacao: string | null;
+  orcamentista_workspace_id: string | null;
+  orcamento_id: string | null;
+  proposta_id: string | null;
+  obra_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type OpportunityEvent = {
+  id: string;
+  opportunity_id: string;
+  tipo: string;
+  descricao: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+};
+
+export type OpportunityFile = {
+  id: string;
+  opportunity_id: string;
+  nome: string;
+  url: string | null;
+  storage_path: string | null;
+  categoria: string | null;
+  mime_type: string | null;
+  tamanho_bytes: number | null;
+  created_at: string;
+};
