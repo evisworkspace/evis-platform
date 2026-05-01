@@ -6,11 +6,22 @@ Mapa vivo do organismo EVIS, separando produto, inteligência, dados e interface
 flowchart TB
   EVIS["EVIS AI<br/>Plataforma comercial e operacional"]
 
-  subgraph Brain["Cerebro"]
-    Orq["Orquestrador"]
-    AI["IA"]
+  subgraph Brain["Cerebro — dois motores de IA"]
+    subgraph EngineCommercial["Motor 1: Orcamentista IA\n(antes da obra existir)"]
+      OrqC["Orquestrador comercial"]
+      Reader["Reader / Planner"]
+      HitlC["HITL comercial"]
+      BudgetItems["orcamento_itens"]
+    end
+
+    subgraph EngineOperational["Motor 2: Diario de Obra IA\n(depois da obra existir)"]
+      OrqO["Orquestrador operacional"]
+      Agents["Subagentes por dominio"]
+      HitlO["HITL operacional"]
+      WorkState["Estado da obra"]
+    end
+
     Rules["Regras de dominio"]
-    HITL["HITL<br/>Humano valida"]
   end
 
   subgraph Nervous["Sistema nervoso"]
@@ -23,17 +34,18 @@ flowchart TB
 
   subgraph Muscles["Musculos"]
     Dashboard["Dashboard"]
-    Opportunities["Oportunidades<br/>MVP funcional"]
-    OpportunityDetail["Detalhe da Oportunidade<br/>linha do tempo"]
-    Estimator["Orcamentista IA<br/>proxima integracao"]
-    Proposals["Propostas<br/>proxima integracao"]
-    Works["Obras<br/>proxima integracao comercial"]
+    Opportunities["Oportunidades\nfuncional"]
+    OpportunityDetail["Oportunidade\nhistorico de atividades"]
+    Estimator["Orcamentista IA\nmotor tecnico-comercial"]
+    Budget["Orcamento\nfuncional"]
+    Proposals["Propostas\nfuncional"]
+    Works["Obras\nfuncional"]
     Finance["Financeiro"]
   end
 
   subgraph Memory["Memoria"]
     Database["Banco"]
-    Docs["Documentos"]
+    Workspace["Workspace local\nde documentos"]
     History["Historicos"]
     Logs["Logs / auditoria"]
   end
@@ -51,10 +63,14 @@ flowchart TB
   EVIS --> Memory
   EVIS --> Eyes
 
-  Orq --> AI
-  AI --> HITL
-  Rules --> HITL
-  HITL --> Events
+  OrqC --> Reader
+  Reader --> HitlC
+  HitlC -->|"aprovado"| BudgetItems
+  OrqO --> Agents
+  Agents --> HitlO
+  HitlO -->|"aprovado"| WorkState
+  Rules --> HitlC
+  Rules --> HitlO
 
   Routes --> Dashboard
   Routes --> Opportunities
@@ -69,27 +85,31 @@ flowchart TB
 
   Opportunities --> OpportunityDetail
   OpportunityDetail --> Estimator
+  OpportunityDetail --> Budget
   OpportunityDetail --> Proposals
-  OpportunityDetail --> Works
-  OpportunityDetail --> Events
-  Opportunities --> Database
-  Estimator --> Docs
+  Estimator -->|"itens validados"| Budget
+  Budget --> Proposals
+  Proposals -->|"ganhar — cria obra"| Works
   Works --> History
-  AI --> Logs
+  Estimator --> Workspace
+  BudgetItems --> Supabase
+  WorkState --> Supabase
 
   Database --> Dashboards
   History --> Reports
   Logs --> Alerts
-  HITL --> Reviews
+  HitlC --> Reviews
+  HitlO --> Reviews
 ```
 
 ## Leitura Rapida
 
 | Camada | Funcao | Estado atual |
 |---|---|---|
-| Cerebro | Orquestracao, IA, regras e validacao humana | Parcial, com HITL real em Diario e Orçamentista |
-| Sistema nervoso | Supabase, rotas, hooks, APIs, eventos e cache | Implementado em partes, ainda com contratos em reconciliacao |
-| Musculos | Modulos de produto que executam fluxos do usuario | Dashboard, Oportunidades (agora conecta Orçamento, Proposta e Obra), Estimador, Proposta, Obras; demais modulos parciais |
-| Memoria | Banco, documentos, historicos e logs | Supabase e workspace local; auditoria ainda fragmentada |
-| Olhos | Dashboards, relatorios, alertas e revisoes | Parcial; relatorios e alertas ainda precisam consolidacao |
-# Note: Conversão de oportunidade para obra cria registro em public.obras e popula opportunities.obra_id
+| Cerebro | Dois motores de IA (Orcamentista e Diario), regras e HITL | Motor Diario parcial funcional; Motor Orcamentista com Reader/Planner/HITL reais, gravacao em orcamento_itens pendente |
+| Sistema nervoso | Supabase, rotas, hooks, APIs, eventos e cache | Implementado em partes, contratos em reconciliacao |
+| Musculos | Modulos de produto que executam fluxos do usuario | Dashboard, Oportunidades, Orcamentista, Orcamento, Proposta e Obras funcionais; demais modulos parciais |
+| Memoria | Banco, workspace de documentos, historicos e logs | Supabase e workspace local; auditoria ainda fragmentada |
+| Olhos | Dashboards, relatorios, alertas e revisoes humanas | Parcial; relatorios e alertas precisam consolidacao |
+
+Conversao de oportunidade em obra: cria registro em `public.obras` e popula `opportunities.obra_id`.

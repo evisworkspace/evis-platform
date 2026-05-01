@@ -97,18 +97,45 @@ Objetivo: o gestor nao precisa guardar informacoes na cabeca durante o dia. Tudo
 
 Essa captura deve ser simples, direta e voltada para a rotina de campo: registrar agora, organizar depois.
 
-## 6. Pipeline de IA
+## 6. Os dois motores de IA do EVIS
 
-Fluxo oficial do pipeline de IA:
+O EVIS tem dois motores de IA distintos, com papeis e momentos de atuacao diferentes.
+
+### 6.1 Orçamentista IA — motor tecnico-comercial
+
+Atua antes da obra existir. Converte arquivos de projeto, especificacoes e briefing em orcamento estruturado e base para proposta.
+
+Nao e um chat. A interface conversacional e a entrada de uma esteira tecnica com etapas, contratos e validacao humana em cada checkpoint.
 
 ```text
-Entrada bruta do dia
+Lead / Oportunidade
+-> Arquivos de projeto (PDF, planta, memoria, especificacao)
+-> Reader (leitura multimodal dos documentos)
+-> Planner (roteiro tecnico por disciplina)
+-> HITL (aprovacao do roteiro)
+-> Especialistas (quantitativos por disciplina)
+-> Composicao de custos (SINAPI + base propria)
+-> HITL (revisao dos itens)
+-> Orcamento estruturado (gravado em orcamento_itens)
+-> Base para proposta comercial
+```
+
+Fronteira: o Orcamentista IA encerra sua atuacao quando a obra e criada. O orcamento migra para a obra, mas o motor nao atua mais sobre a execucao.
+
+### 6.2 Diario de Obra IA — motor operacional
+
+Atua depois da obra existir. Converte captura diaria de campo em atualizacoes validadas na obra dentro do Supabase.
+
+Nao e um campo de texto. E o cockpit operacional onde o gestor registra o dia e a IA organiza, classifica e propoe atualizacoes.
+
+```text
+Entrada bruta do dia (texto, audio, foto, print, arquivo)
 -> Orquestrador
 -> Classificacao por dominio
 -> Subagentes especializados
 -> Propostas de atualizacao
--> Validacao humana/HITL
--> Gravacao no Supabase
+-> Validacao humana / HITL
+-> Gravacao no Supabase (servicos, pendencias, notas, presenca)
 -> Dashboard atualizado
 ```
 
@@ -123,9 +150,19 @@ Descricao do fluxo:
 7. Gravacao no Supabase: somente apos aprovacao humana, as atualizacoes confirmadas sao registradas.
 8. Dashboard atualizado: os paineis refletem as informacoes validadas e gravadas.
 
-## 7. Subagentes previstos
+### 6.3 Regra de separacao
 
-Subagentes previstos para apoiar o fluxo operacional:
+| Propriedade | Orcamentista IA | Diario de Obra IA |
+|---|---|---|
+| Momento | Antes da obra existir | Depois da obra existir |
+| Entrada principal | Arquivos de projeto e briefing | Captura diaria de campo |
+| Saida principal | Orcamento estruturado e proposta | Obra atualizada no Supabase |
+| HITL | Obrigatorio por checkpoint tecnico | Obrigatorio antes de cada gravacao |
+| Grava automaticamente | Nunca | Nunca |
+
+## 7. Subagentes previstos para o Diario de Obra
+
+Subagentes previstos para apoiar o fluxo operacional do Diario:
 
 - Diario.
 - Cronograma.

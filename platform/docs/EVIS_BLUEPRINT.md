@@ -16,21 +16,30 @@ IA propõe -> Humano valida -> Sistema registra
 
 ```text
 Dashboard
-  -> Oportunidades
-  -> Orçamentista IA
-  -> Orçamento
-  -> Proposta
-  -> Fechamento
-  -> Projeto
-  -> Pré-Obra
-  -> Obra
-  -> Diário / Cronograma / Medições / Financeiro / Relatórios
+  -> Lead / Oportunidade
+       -> Orçamentista IA          (motor técnico-comercial — antes da obra existir)
+            -> Leitura de arquivos e projetos
+            -> Quantitativos e composição de custos
+            -> HITL etapa a etapa
+            -> Orçamento estruturado
+       -> Proposta comercial
+       -> Ganhar / Fechamento
+  -> Obra                          (criada após fechamento)
+       -> Diário de Obra IA        (motor operacional — depois da obra existir)
+            -> Captura diária: texto, áudio, foto, arquivo
+            -> Classificação e subagentes
+            -> HITL antes de gravar
+            -> Atualização de serviços, pendências, notas, presença
+       -> Cronograma / Medições / Financeiro / Relatórios
   -> Pós-Obra
 ```
 
-A Gestão da Obra atual não deve ser tratada como home definitiva da plataforma. Ela é o protótipo funcional da IA operacional em obra. A home futura deve ser um Dashboard / Comando Central que conecta todos os módulos.
+Os dois motores de IA são distintos, com fronteira temporal clara:
 
-O Orçamentista também não deve ser tratado como uma home isolada. Ele é um motor comercial e técnico em construção, conectado ao ciclo de oportunidade, orçamento, proposta e fechamento.
+- O **Orçamentista IA** atua antes de a obra existir. Ele converte arquivos técnicos e briefing em orçamento estruturado, proposta e base para fechamento.
+- O **Diário de Obra IA** atua depois de a obra existir. Ele converte captura diária de campo em atualizações validadas no sistema.
+
+A home futura deve ser um Dashboard / Comando Central que conecta todos os módulos.
 
 ## 3. Conceitos Centrais
 
@@ -91,13 +100,117 @@ Cada módulo deve evoluir de forma independente, mas conectado por entidades cen
 
 ## 5. Arquitetura De IA
 
-A arquitetura atual deve ser documentada em três camadas. O status abaixo descreve o estado técnico observado no código, sem promover protótipos a produção.
+A arquitetura de IA do EVIS é composta por dois motores distintos, com fronteira temporal entre si, mais uma camada transversal de governança. O status abaixo descreve o estado técnico observado no código, sem promover protótipos a produção.
 
-### A. EVIS Obra / Diário
+### Separação dos motores
+
+| Motor | Quando atua | Entrada principal | Saída esperada |
+|---|---|---|---|
+| Orçamentista IA | Antes da obra existir | Arquivos de projeto, briefing, especificações | Orçamento estruturado com itens, quantitativos, composição de custos e base para proposta |
+| Diário de Obra IA | Depois da obra existir | Narrativa, áudio, foto, print, arquivos do dia | Atualizações validadas em serviços, pendências, notas e presença da obra |
+
+Ambos usam HITL. Nenhum grava dados críticos sem validação humana explícita.
+
+### A. Motor Comercial/Técnico — Orçamentista IA
+
+Status geral: **em construção, com Reader/Planner reais e etapas posteriores parciais**.
+
+O Orçamentista IA é o núcleo técnico-comercial do EVIS. Ele opera antes de a obra existir, a partir de uma oportunidade, e tem como objetivo converter arquivos de projeto, especificações e briefing em orçamento estruturado, composição de custos e base para proposta.
+
+O Orçamentista não é um chat. A interface de chat é apenas o ponto de entrada de uma esteira técnica com etapas definidas, contratos de saída, especialistas por disciplina, checkpoints e revisão humana obrigatória em cada transição crítica.
+
+Funções do motor:
+
+- Leitura multimodal de projetos (PDF, imagem, planilha).
+- Levantamento de quantitativos por disciplina.
+- Cruzamento com SINAPI e base própria do usuário.
+- Aprendizado com serviços de obras anteriores.
+- Composição de custos com BDI.
+- Orçamento estruturado com itens gravados em `orcamento_itens`.
+- Validação humana etapa a etapa (HITL por checkpoint).
+- Geração da base de dados para proposta comercial.
+
+Fluxo interno:
+
+```text
+Arquivos / Briefing
+  -> Reader (leitura documental multimodal)
+  -> Planner (roteiro técnico por disciplina)
+  -> HITL (aprovação do roteiro)
+  -> Especialistas (quantitativos por disciplina)
+  -> Composição de custos (SINAPI + base própria)
+  -> HITL (revisão dos itens)
+  -> Orçamento estruturado (orcamento_itens)
+  -> Base para proposta comercial
+```
+
+Implementado:
+
+- Interface conversacional com workspace, upload, stream e status de execução.
+- Bloqueio de input quando existe HITL pendente.
+- Card de validação humana para roteiro técnico.
+- Contratos de domínio para Etapa 0, Reader, Planner e Quantitativos (`contracts.ts`).
+- Reader conectado ao Gemini para leitura documental.
+- Planner conectado ao Gemini para roteiro técnico.
+- Provider documental com suporte a Vertex/Gemini.
+- Persistência e organização de workspace em backend.
+- Vínculo com oportunidade via `opportunity_id` e `orcamentista_workspace_id`.
+
+Parcial:
+
+- `multiagent.ts` atualmente pausa em `AGUARDANDO_ETAPA_0` — motor automático declarado desligado para honestidade operacional.
+- `graphEtapa0.ts` descreve a linha de montagem, mas ainda usa mocks para cache e extração.
+- `QuantitativosAgent.ts` retorna dados fixos, não quantitativos reais derivados de documentos.
+- Especialistas e catálogos existem como base estrutural, mas execução completa por disciplina ainda não é produção.
+- A gravação em `orcamento_itens` ainda não acontece automaticamente — o orçamento é criado manualmente ou via botão na oportunidade, sem leitura do resultado da IA.
+
+Conceitual:
+
+- Execução multiagente completa por disciplinas.
+- Checkpoints duráveis por etapa com retomada real após HITL.
+- Auditoria cruzada antes de composição final.
+- Exportação automática e confiável para `orcamento_itens` a partir de estado validado.
+
+Arquivos de referência:
+
+- `src/pages/OrcamentistaChat.tsx`
+- `platform/server/orcamentista/contracts.ts`
+- `platform/server/orcamentista/engine.ts`
+- `platform/server/orcamentista/multiagent.ts`
+- `platform/server/orcamentista/graphEtapa0.ts`
+- `platform/server/routes/orcamentista.ts`
+- `skills/INDICE_VALIDACAO.md`
+
+### B. Motor Operacional — Diário de Obra IA
 
 Status geral: **parcialmente implementado / funcional no frontend**.
 
-Esta camada cobre a IA aplicada à execução de obra, principalmente por meio do Diário de Obra. O usuário registra narrativa, a IA interpreta o conteúdo, o humano revisa e o sistema aplica atualizações a serviços, pendências, notas e presença.
+O Diário de Obra IA é o motor operacional do EVIS. Ele opera depois de a obra existir e tem como objetivo converter captura diária de campo em atualizações validadas no sistema.
+
+O Diário de Obra não é um campo de texto. É o cockpit operacional da obra, onde o gestor registra acontecimentos do dia e a IA organiza, classifica e propõe atualizações estruturadas.
+
+Funções do motor:
+
+- Captura diária por texto, áudio, foto, print e arquivos.
+- Normalização e organização do acumulado do dia.
+- Classificação por domínio (cronograma, equipes, financeiro, pendências, cliente).
+- Acionamento de subagentes especializados por domínio.
+- Proposta de atualizações (serviços, pendências, notas, presença).
+- Validação humana / HITL antes de qualquer gravação.
+- População da obra no Supabase com dados confirmados.
+
+Fluxo interno:
+
+```text
+Entrada bruta do dia (texto, áudio, foto, arquivo)
+  -> Orquestrador
+  -> Classificação por domínio
+  -> Subagentes (Diário, Cronograma, Equipes, Pendências, Fotos, Financeiro, Cliente)
+  -> Propostas de atualização
+  -> HITL (usuário confirma)
+  -> Gravação no Supabase (serviços, pendências, notas, presença)
+  -> Dashboard atualizado
+```
 
 Implementado:
 
@@ -110,7 +223,6 @@ Implementado:
 
 Parcial:
 
-- O comentário de "orquestrador de 8 camadas" existe no frontend, mas a implementação completa do backend não é formalizada neste blueprint.
 - Feedback de correção HITL aparece como log local, não como trilha persistida de melhoria.
 - O fluxo depende de contratos implícitos entre frontend e endpoint de processamento.
 
@@ -125,54 +237,6 @@ Arquivos de referência:
 - `src/components/Diario.tsx`
 - `src/components/AIAnalysis.tsx`
 - `src/components/HITLReview.tsx`
-- `skills/INDICE_VALIDACAO.md`
-- `CLAUDE.md`
-
-### B. EVIS Orçamentista
-
-Status geral: **em construção, com Reader/Planner reais e etapas posteriores parciais**.
-
-Esta camada cobre a IA comercial e técnica antes da obra: leitura documental, estruturação de escopo, roteiro de orçamentação, perguntas HITL, quantitativos, composição de custos e consolidação do orçamento.
-
-O Orçamentista não é apenas chat. O chat é uma interface para um motor que deve operar com workspace, documentos, contratos de saída, especialistas, checkpoints e revisão humana.
-
-Implementado:
-
-- Interface conversacional com workspace, upload, stream e status de execução.
-- Bloqueio de input quando existe HITL pendente.
-- Card de validação humana para roteiro técnico.
-- Contratos de domínio para Etapa 0, Reader, Planner e Quantitativos.
-- Reader conectado ao Gemini para leitura documental.
-- Planner conectado ao Gemini para roteiro técnico.
-- Provider documental com suporte a Vertex/Gemini.
-- Persistência e organização de workspace em backend.
-
-Parcial:
-
-- `multiagent.ts` atualmente pausa em `AGUARDANDO_ETAPA_0` e declara o motor automático desligado para honestidade operacional.
-- `graphEtapa0.ts` descreve a linha de montagem, mas ainda usa mocks para cache/extração.
-- `QuantitativosAgent.ts` retorna dados fixos, não quantitativos reais derivados de documentos.
-- Especialistas e catálogos existem como base estrutural, mas a execução completa por disciplina ainda não deve ser assumida como produção.
-
-Conceitual:
-
-- Execução multiagente completa por disciplinas.
-- Checkpoints duráveis por etapa.
-- Retomada real após HITL com estado persistido.
-- Auditoria cruzada completa antes de composição final.
-- Exportação final confiável de orçamento e proposta a partir de estado validado.
-
-Arquivos de referência:
-
-- `src/pages/OrcamentistaChat.tsx`
-- `platform/server/orcamentista/contracts.ts`
-- `platform/server/orcamentista/engine.ts`
-- `platform/server/orcamentista/multiagent.ts`
-- `platform/server/orcamentista/graphEtapa0.ts`
-- `platform/server/orcamentista/engine/ReaderAgent.ts`
-- `platform/server/orcamentista/engine/PlannerAgent.ts`
-- `platform/server/orcamentista/engine/QuantitativosAgent.ts`
-- `platform/server/orcamentista/providers/VertexDocumentRuntimeProvider.ts`
 - `skills/INDICE_VALIDACAO.md`
 - `CLAUDE.md`
 
@@ -237,11 +301,13 @@ Baixa confiança -> sistema bloqueia ou pede informação adicional.
 - Gestão da Obra não deve ser home definitiva.
 - Orçamentista não deve ser home isolada.
 - A home futura deve ser Dashboard / Comando Central.
-- Obras não é descartável: é o protótipo funcional da IA operacional.
-- Orçamentista não é apenas chat: é motor comercial/técnico em construção.
+- Obras não é descartável: é o laboratório funcional onde o ciclo de IA operacional já acontece.
+- **Orçamentista IA não é chat:** o chat é a interface de entrada de um motor técnico com etapas, contratos, especialistas e checkpoints.
+- **Diário de Obra IA não é campo de texto:** é o cockpit operacional onde captura diária vira dado estruturado validado.
+- **Os dois motores têm fronteira temporal:** Orçamentista atua antes da obra existir; Diário atua depois da obra existir.
+- **Ambos usam HITL:** nenhum grava dados críticos sem validação humana explícita.
 - Nenhuma rota deve prometer funcionalidade multiagente completa antes da etapa estar implementada.
 - Cada módulo deve evoluir independente, conectado por entidades centrais.
-- IA nunca deve persistir alterações críticas sem validação humana.
 - Contratos e arquivos de referência devem ser atualizados antes de expandir rotas públicas.
 - Protótipos devem ser marcados como parciais ou conceituais até terem execução real, teste e trilha de auditoria.
 

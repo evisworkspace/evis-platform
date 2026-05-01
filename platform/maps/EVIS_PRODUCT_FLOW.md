@@ -1,21 +1,29 @@
 # EVIS Product Flow
 
-Fluxo principal previsto para conectar entrada comercial, engenharia, proposta, fechamento e execucao.
+Fluxo principal que conecta entrada comercial, motor de orcamento IA, proposta, fechamento e execucao operacional.
+
+O fluxo e dividido em duas fases com fronteira clara no momento do fechamento:
+
+- **Fase comercial** (antes da obra): Oportunidade -> Orcamentista IA -> Orcamento -> Proposta -> Ganhar.
+- **Fase operacional** (depois da obra): Obra -> Diario de Obra IA -> Atualizacoes validadas.
 
 ```mermaid
 flowchart LR
-  Dashboard["Dashboard"]
-  Opportunities["Oportunidades<br/>MVP funcional<br/>lista + criacao rapida"]
-  OpportunityDetail["Detalhe da Oportunidade<br/>dados + linha do tempo"]
-  Estimator["Orcamentista IA<br/>proxima integracao"]
-  Budget["Orcamento<br/>itens + BDI<br/>funcional"]
-  Proposal["Proposta<br/>MVP funcional"]
-  Closing["Fechamento<br/>ganha / perdida"]
-  PreWork["Pre-Obra<br/>mobilizacao"]
-  Works["Obras<br/>proxima integracao comercial"]
+  Dashboard["Dashboard\nhub central"]
+  Opportunities["Oportunidades\nfuncional"]
+  OpportunityDetail["Oportunidade\ndados + historico"]
 
-  subgraph Operations["Gestao operacional"]
-    Daily["Diario"]
+  subgraph CommercialEngine["Motor comercial (antes da obra)"]
+    Estimator["Orcamentista IA\nmotor tecnico-comercial\narquivos + quantitativos + HITL"]
+    Budget["Orcamento\nitens + BDI\nfuncional"]
+    Proposal["Proposta\nfuncional"]
+  end
+
+  Closing["Ganhar\nobre criada"]
+
+  subgraph OperationalEngine["Motor operacional (depois da obra)"]
+    Works["Obra"]
+    Daily["Diario de Obra IA\ncockpit operacional\ncaptura + HITL + gravacao"]
     Schedule["Cronograma"]
     Measurements["Medicoes"]
     Finance["Financeiro"]
@@ -26,21 +34,17 @@ flowchart LR
   Opportunities --> OpportunityDetail
   OpportunityDetail --> Estimator
   OpportunityDetail --> Budget
-  OpportunityDetail --> Proposal
-  OpportunityDetail --> Works
-  Estimator --> Budget
+  Estimator -->|"itens validados"| Budget
   Budget --> Proposal
-  Proposal --> Obras // funcional - conversão cria obra e preenche opportunities.obra_id
-  Closing --> PreWork
-  PreWork --> Works
+  Proposal --> Closing
+  Closing --> Works
   Works --> Daily
   Works --> Schedule
   Works --> Measurements
   Works --> Finance
   Works --> Reports
 
-  Daily -->|"IA operacional + HITL"| Works
-  Schedule --> Works
+  Daily -->|"HITL aprovado\nservicos, pendencias, notas, presenca"| Works
   Measurements --> Finance
   Reports --> Dashboard
 ```
@@ -50,13 +54,13 @@ flowchart LR
 | Etapa | Papel no produto | Estado |
 |---|---|---|
 | Dashboard | Comando central e entrada dos modulos | Implementado como hub |
-| Oportunidades | Registro comercial antes de obra, com lista, criacao rapida e detalhe | Módulo inicial funcional do fluxo comercial |
-| Detalhe da Oportunidade | Consulta dos dados da oportunidade e linha do tempo manual | MVP funcional, usando `opportunity_events` |
-| Orçamentista IA | Leitura tecnica, planner e HITL | Parcial funcional; proxima integracao a partir da oportunidade |
-| Orcamento | Estrutura de itens e totais | Funcional |
-| Proposta | Apresentação comercial a partir de JSON | MVP Funcional |
-| Fechamento | Conversao comercial | Planejado |
+| Oportunidades | Registro comercial antes de obra, com lista, criacao rapida e detalhe | Funcional |
+| Oportunidade (detalhe) | Dados da oportunidade e historico de atividades | Funcional, usando `opportunity_events` |
+| Orcamentista IA | Motor tecnico-comercial: arquivos, quantitativos, composicao de custos, HITL | Parcial: Reader/Planner/HITL reais; gravacao automatica em `orcamento_itens` pendente |
+| Orcamento | Estrutura de itens e totais com BDI | Funcional (criacao manual e via oportunidade) |
+| Proposta | Apresentacao comercial a partir do orcamento | Funcional |
+| Ganhar / Fechamento | Conversao da oportunidade em obra | Funcional — cria registro em `public.obras` e popula `opportunities.obra_id` |
 | Pre-Obra | Preparacao entre venda e execucao | Planejado |
-| Obras | Funcional | Modulo operacional preservado em `/obras` e `/obras/:obraId` | Separar criacao pos-fechamento e fortalecer contratos de dados |
-| Diario/Cronograma/Medicoes/Financeiro/Relatorios | Operacao e controle | Diario e cronograma parciais; financeiro/medicoes planejados |
-* Conversão de oportunidade para obra cria registro em `public.obras` e popula `opportunities.obra_id`.
+| Obra | Modulo operacional com servicos, equipes, diario e financeiro | Funcional — preservado em `/obras` e `/obras/:obraId` |
+| Diario de Obra IA | Motor operacional: captura diaria, HITL, gravacao validada | Parcial funcional no frontend com HITL |
+| Cronograma / Medicoes / Financeiro / Relatorios | Operacao e controle de obra | Diario e cronograma parciais; financeiro/medicoes planejados |
