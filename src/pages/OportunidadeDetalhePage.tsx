@@ -254,7 +254,7 @@ export default function OportunidadeDetalhePage() {
 
                 {item.orcamento_id ? (
                   <Link
-                    to={`/obras`}
+                    to={`/obras/${item.orcamentista_workspace_id || `opp_${item.id}`}?tab=orcamento&orcamento_id=${item.orcamento_id}`}
                     className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-green/30 bg-s1 px-4 py-3 text-[11px] font-extrabold uppercase tracking-widest text-brand-green transition-colors hover:bg-s2"
                   >
                     <ClipboardList className="h-4 w-4" />

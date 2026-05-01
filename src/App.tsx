@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, useParams, useNavigate } from 'react-router-dom';
+import { Routes, Route, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AppProvider, useAppContext } from './AppContext';
 import { Servico, Pendencia, Equipe, Nota, Foto, DiarioEntry, PendingChange } from './types';
 import { 
@@ -32,7 +32,8 @@ import { logger } from './services/logger';
 import { useRealtimeSync } from './hooks/useRealtimeSync';
 
 function Main() {
-  const [activeTab, setActiveTab] = useState('diario');
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'diario');
   const { state, setState, config, setConfig, toast } = useAppContext();
   const [syncing, setSyncing] = useState(false);
   const queryClient = useQueryClient();
@@ -52,6 +53,14 @@ function Main() {
       queryClient.invalidateQueries();
     }
   }, [urlObraId, config.obraId, setConfig, queryClient]);
+
+  // Sincroniza a aba a partir da query param da URL
+  useEffect(() => {
+    const tabFromUrl = searchParams.get('tab');
+    if (tabFromUrl && tabFromUrl !== activeTab) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams, activeTab]);
 
   // Ativa Sincronização em Tempo Real (Supabase Realtime)
   useRealtimeSync(config.obraId);

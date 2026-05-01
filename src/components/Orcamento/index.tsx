@@ -8,6 +8,7 @@ import {
   useDeleteOrcamento,
 } from '../../hooks/useOrcamento';
 import OrcamentoEditor from './OrcamentoEditor';
+import { useSearchParams } from 'react-router-dom';
 
 // ──────────────────────────────────────────────
 // BADGE DE STATUS
@@ -176,6 +177,24 @@ export default function OrcamentoTab() {
 
   const [showNovo, setShowNovo] = useState(false);
   const [obraAberta, setObraAberta] = useState<Orcamento | null>(null);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const targetOrcamentoId = searchParams.get('orcamento_id');
+
+  // Auto-open budget if orcamento_id is in URL
+  React.useEffect(() => {
+    if (targetOrcamentoId && orcamentos.length > 0 && !obraAberta) {
+      const target = orcamentos.find(o => o.id === targetOrcamentoId);
+      if (target) {
+        setObraAberta(target);
+        
+        // Remove orcamento_id from URL so it doesn't reopen if closed
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('orcamento_id');
+        setSearchParams(newParams, { replace: true });
+      }
+    }
+  }, [targetOrcamentoId, orcamentos, obraAberta, searchParams, setSearchParams]);
 
   const handleCreate = async (nome: string, cliente: string, bdi: number) => {
     try {
