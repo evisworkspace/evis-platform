@@ -18,7 +18,7 @@ import {
   useOpportunityEvents,
   useUpdateOportunidade,
 } from '../hooks/useOportunidades';
-import { useCreateOrcamento } from '../hooks/useOrcamento';
+import { calcularTotais, useCreateOrcamento } from '../hooks/useOrcamento';
 import { useCreateProposta } from '../hooks/usePropostas';
 import { sbFetch } from '../lib/api';
 import { Orcamento, OrcamentoItem } from '../types';
@@ -207,6 +207,9 @@ export default function OportunidadeDetalhePage() {
         return;
       }
 
+      // Recalcula a partir dos itens — não confia em orc.total_final (pode estar desatualizado)
+      const { total_bruto, total_final } = calcularTotais(itens, orc.bdi);
+
       const hoje = new Date().toISOString().slice(0, 10);
       const fimPrevisto = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
 
@@ -217,10 +220,10 @@ export default function OportunidadeDetalhePage() {
           endereco: item.endereco_resumo || '',
           tipo_obra: item.tipo_obra || '',
           area_total_m2: item.metragem_estimada ?? 0,
-          valor_custos_diretos: orc.total_bruto,
-          valor_total_com_bdi: orc.total_final,
+          valor_custos_diretos: total_bruto,
+          valor_total_com_bdi: total_final,
           bdi_percentual: orc.bdi,
-          bdi_valor: orc.total_final - orc.total_bruto,
+          bdi_valor: total_final - total_bruto,
           prazo_dias_uteis: 0,
           data_inicio_prevista: hoje,
           data_fim_prevista: fimPrevisto,
@@ -249,7 +252,7 @@ export default function OportunidadeDetalhePage() {
         cliente_nome_snapshot: item.cliente_nome_snapshot || item.titulo,
         status: 'rascunho',
         validade_dias: 10,
-        valor_total: orc.total_final,
+        valor_total: total_final,
         bdi: orc.bdi,
         payload,
         observacoes: item.observacao || null,
