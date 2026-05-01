@@ -187,6 +187,24 @@ export type OrcamentoItem = {
   created_at?: string;
 };
 
+export type PropostaStatus = 'rascunho' | 'enviada' | 'aceita' | 'recusada' | 'expirada';
+
+export type Proposta = {
+  id: string;
+  opportunity_id: string | null;
+  orcamento_id: string | null;
+  titulo: string;
+  cliente_nome_snapshot: string | null;
+  status: PropostaStatus;
+  validade_dias: number | null;
+  valor_total: number | null;
+  bdi: number | null;
+  payload: Record<string, unknown> | null;
+  observacoes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type OpportunityStatus =
   | 'novo'
   | 'qualificando'
