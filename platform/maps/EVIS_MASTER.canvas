@@ -1,0 +1,196 @@
+{
+  "nodes": [
+    {
+      "id": "dashboard",
+      "type": "text",
+      "text": "Dashboard\nHub central",
+      "x": -840,
+      "y": -120,
+      "width": 240,
+      "height": 120
+    },
+    {
+      "id": "oportunidades",
+      "type": "text",
+      "text": "Oportunidades\nMVP funcional",
+      "x": -520,
+      "y": -120,
+      "width": 260,
+      "height": 120
+    },
+    {
+      "id": "orcamentista",
+      "type": "text",
+      "text": "Orçamentista IA\nReader / Planner / HITL",
+      "x": -180,
+      "y": -120,
+      "width": 280,
+      "height": 120
+    },
+    {
+      "id": "orcamento",
+      "type": "text",
+      "text": "Orçamento\nItens + BDI",
+      "x": 180,
+      "y": -120,
+      "width": 240,
+      "height": 120
+    },
+    {
+      "id": "proposta",
+      "type": "text",
+      "text": "Proposta\nDocumento comercial",
+      "x": 500,
+      "y": -120,
+      "width": 260,
+      "height": 120
+    },
+    {
+      "id": "preobra",
+      "type": "text",
+      "text": "Pré-Obra\nMobilização",
+      "x": 820,
+      "y": -120,
+      "width": 240,
+      "height": 120
+    },
+    {
+      "id": "obras",
+      "type": "text",
+      "text": "Obras\nExecução operacional",
+      "x": 820,
+      "y": 120,
+      "width": 240,
+      "height": 120
+    },
+    {
+      "id": "financeiro",
+      "type": "text",
+      "text": "Financeiro\nCustos / medições",
+      "x": 500,
+      "y": 260,
+      "width": 260,
+      "height": 120
+    },
+    {
+      "id": "relatorios",
+      "type": "text",
+      "text": "Relatórios\nSemanal / gestão",
+      "x": 180,
+      "y": 260,
+      "width": 240,
+      "height": 120
+    },
+    {
+      "id": "supabase",
+      "type": "text",
+      "text": "Supabase\nBanco / RLS / REST",
+      "x": -520,
+      "y": 220,
+      "width": 260,
+      "height": 120
+    },
+    {
+      "id": "ia-hitl",
+      "type": "text",
+      "text": "IA / HITL\nIA propõe\nHumano valida\nSistema registra",
+      "x": -180,
+      "y": 220,
+      "width": 280,
+      "height": 150
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-dashboard-oportunidades",
+      "fromNode": "dashboard",
+      "fromSide": "right",
+      "toNode": "oportunidades",
+      "toSide": "left"
+    },
+    {
+      "id": "e-oportunidades-orcamentista",
+      "fromNode": "oportunidades",
+      "fromSide": "right",
+      "toNode": "orcamentista",
+      "toSide": "left"
+    },
+    {
+      "id": "e-orcamentista-orcamento",
+      "fromNode": "orcamentista",
+      "fromSide": "right",
+      "toNode": "orcamento",
+      "toSide": "left"
+    },
+    {
+      "id": "e-orcamento-proposta",
+      "fromNode": "orcamento",
+      "fromSide": "right",
+      "toNode": "proposta",
+      "toSide": "left"
+    },
+    {
+      "id": "e-proposta-preobra",
+      "fromNode": "proposta",
+      "fromSide": "right",
+      "toNode": "preobra",
+      "toSide": "left"
+    },
+    {
+      "id": "e-preobra-obras",
+      "fromNode": "preobra",
+      "fromSide": "bottom",
+      "toNode": "obras",
+      "toSide": "top"
+    },
+    {
+      "id": "e-obras-financeiro",
+      "fromNode": "obras",
+      "fromSide": "left",
+      "toNode": "financeiro",
+      "toSide": "right"
+    },
+    {
+      "id": "e-financeiro-relatorios",
+      "fromNode": "financeiro",
+      "fromSide": "left",
+      "toNode": "relatorios",
+      "toSide": "right"
+    },
+    {
+      "id": "e-relatorios-dashboard",
+      "fromNode": "relatorios",
+      "fromSide": "left",
+      "toNode": "dashboard",
+      "toSide": "bottom"
+    },
+    {
+      "id": "e-oportunidades-supabase",
+      "fromNode": "oportunidades",
+      "fromSide": "bottom",
+      "toNode": "supabase",
+      "toSide": "top"
+    },
+    {
+      "id": "e-obras-supabase",
+      "fromNode": "obras",
+      "fromSide": "bottom",
+      "toNode": "supabase",
+      "toSide": "right"
+    },
+    {
+      "id": "e-orcamentista-ia",
+      "fromNode": "orcamentista",
+      "fromSide": "bottom",
+      "toNode": "ia-hitl",
+      "toSide": "top"
+    },
+    {
+      "id": "e-ia-supabase",
+      "fromNode": "ia-hitl",
+      "fromSide": "left",
+      "toNode": "supabase",
+      "toSide": "right"
+    }
+  ]
+}
