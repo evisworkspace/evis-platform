@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   Briefcase,
   CalendarDays,
+  ClipboardList,
   FileText,
   Hammer,
   Loader2,
@@ -17,6 +18,7 @@ import {
   useOpportunityEvents,
   useUpdateOportunidade,
 } from '../hooks/useOportunidades';
+import { useCreateOrcamento } from '../hooks/useOrcamento';
 
 const statusLabel: Record<string, string> = {
   novo: 'Novo',
@@ -84,6 +86,7 @@ export default function OportunidadeDetalhePage() {
   const events = useOpportunityEvents(id, config);
   const createEvent = useCreateOpportunityEvent(config);
   const updateOportunidade = useUpdateOportunidade(config);
+  const createOrcamento = useCreateOrcamento(config);
 
   async function handleAddEvent(event: FormEvent) {
     event.preventDefault();
@@ -142,8 +145,47 @@ export default function OportunidadeDetalhePage() {
     }
   }
 
+  async function handleCriarOrcamento() {
+    if (!item) return;
+
+    // Ponte temporária: obra_id usa convenção "opp_<uuid>" até reconciliação formal
+    // com opportunity_id no módulo de Orçamento (ver SCHEMA_GAP_REPORT.md)
+    const workspaceId = item.orcamentista_workspace_id || `opp_${item.id}`;
+    const needsWorkspace = !item.orcamentista_workspace_id;
+
+    try {
+      const orcamento = await createOrcamento.mutateAsync({
+        obra_id: workspaceId,
+        nome: item.titulo,
+        cliente: item.cliente_nome_snapshot || item.titulo,
+        status: 'rascunho',
+        bdi: 25,
+        total_bruto: 0,
+        total_final: 0,
+      });
+
+      const patch: Record<string, string> = { orcamento_id: orcamento.id };
+      if (needsWorkspace) patch.orcamentista_workspace_id = workspaceId;
+
+      await updateOportunidade.mutateAsync({ id: item.id, patch });
+
+      await createEvent.mutateAsync({
+        opportunity_id: item.id,
+        tipo: 'orcamento_criado',
+        descricao: `Orçamento "${item.titulo}" criado e vinculado.`,
+        metadata: { orcamento_id: orcamento.id, workspace_id: workspaceId },
+      });
+
+      toast('Orçamento criado e vinculado.', 'success');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao criar orçamento.';
+      toast(message, 'error');
+    }
+  }
+
   const item = oportunidade.data;
   const isOpeningOrcamentista = updateOportunidade.isPending || createEvent.isPending;
+  const isCreatingOrcamento = createOrcamento.isPending || updateOportunidade.isPending;
 
   return (
     <main className="min-h-screen bg-bg text-t1">
@@ -195,7 +237,7 @@ export default function OportunidadeDetalhePage() {
                 </div>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-4">
                 <button
                   type="button"
                   onClick={handleAbrirOrcamentista}
@@ -209,6 +251,31 @@ export default function OportunidadeDetalhePage() {
                   )}
                   Abrir Orçamentista
                 </button>
+
+                {item.orcamento_id ? (
+                  <Link
+                    to={`/obras`}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-green/30 bg-s1 px-4 py-3 text-[11px] font-extrabold uppercase tracking-widest text-brand-green transition-colors hover:bg-s2"
+                  >
+                    <ClipboardList className="h-4 w-4" />
+                    Ver Orçamento
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleCriarOrcamento}
+                    disabled={isCreatingOrcamento}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-b1 bg-s1 px-4 py-3 text-[11px] font-extrabold uppercase tracking-widest text-t2 transition-colors hover:bg-s2 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isCreatingOrcamento ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ClipboardList className="h-4 w-4" />
+                    )}
+                    Criar Orçamento
+                  </button>
+                )}
+
                 <button
                   type="button"
                   disabled
