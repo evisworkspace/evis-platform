@@ -26,6 +26,8 @@ import {
   saveChatHistoryToWorkspace,
   loadChatHistoryFromWorkspace,
 } from '../orcamentista/workspaces';
+import { OrcamentistaPreview, OrcamentistaPreviewItem } from '../orcamentista/contracts';
+
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -1284,6 +1286,104 @@ router.post('/workspaces', (req: Request, res: Response) => {
       success: false,
       erro: 'Erro ao criar nova obra do orçamentista.',
       detalhes: err instanceof Error ? err.message : String(err),
+    });
+  }
+});
+
+// ─── GET /api/orcamentista/workspaces/:id/preview ────────────────────────────────
+router.get('/workspaces/:id/preview', (req: Request, res: Response) => {
+  const workspaceId = req.params.id;
+  try {
+    const workspace = listOrcamentistaWorkspaces().find(w => w.id === workspaceId);
+    if (!workspace) {
+      return res.status(404).json({ success: false, erro: 'Workspace não encontrado.' });
+    }
+
+    const memoryPath = path.join(workspace.fullPath, '01_MEMORIA_ORCAMENTO.json');
+    let warnings: string[] = [];
+    let items: OrcamentistaPreviewItem[] = [];
+    let generatedAt = new Date().toISOString();
+
+    if (!fs.existsSync(memoryPath)) {
+      warnings.push('Arquivo 01_MEMORIA_ORCAMENTO.json não encontrado. Nenhum item gerado ainda.');
+      return res.json({
+        success: true,
+        data: {
+          workspace_id: workspaceId,
+          generated_at: generatedAt,
+          source_file: 'none',
+          items: [],
+          warnings
+        } as OrcamentistaPreview
+      });
+    }
+
+    const raw = fs.readFileSync(memoryPath, 'utf-8');
+    const parsed = JSON.parse(raw);
+    const composicoes = parsed.composicoes_candidatas || [];
+    
+    if (parsed._meta?.data_geracao_consolidado || parsed._meta?.data_geracao) {
+      generatedAt = parsed._meta.data_geracao_consolidado || parsed._meta.data_geracao;
+    }
+
+    if (!Array.isArray(composicoes) || composicoes.length === 0) {
+      warnings.push('Nenhuma composição candidata encontrada na memória do orçamento.');
+    } else {
+      items = composicoes.map((comp: any) => {
+        let qtd = Number(comp.quantidade_base);
+        let unit = Number(comp.custo_unitario);
+        let total = Number(comp.custo_total);
+
+        if (isNaN(qtd) || qtd < 0) {
+          qtd = 0;
+          warnings.push(`Quantidade inválida no item: ${comp.servico}`);
+        }
+        if (isNaN(unit) || unit < 0) {
+          unit = 0;
+          warnings.push(`Custo unitário inválido no item: ${comp.servico}`);
+        }
+        if (isNaN(total) || total < 0) {
+          total = 0;
+          warnings.push(`Custo total inválido no item: ${comp.servico}`);
+        }
+
+        return {
+          codigo: comp.codigo_referencia || null,
+          descricao: comp.servico || 'Sem descrição',
+          unidade: comp.unidade || 'un',
+          quantidade: qtd,
+          valor_unitario: unit,
+          valor_total: total,
+          categoria: null,
+          origem: 'ia_composicao',
+          confianca: null,
+          observacoes: comp.observacao || null
+        };
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        workspace_id: workspaceId,
+        generated_at: generatedAt,
+        source_file: '01_MEMORIA_ORCAMENTO.json',
+        items,
+        warnings
+      } as OrcamentistaPreview
+    });
+
+  } catch (err) {
+    console.error('[Orçamentista] Erro ao carregar preview:', err);
+    return res.json({
+      success: true, // Não falha com 500, retorna vazio com erro
+      data: {
+        workspace_id: workspaceId,
+        generated_at: new Date().toISOString(),
+        source_file: 'error',
+        items: [],
+        warnings: ['Erro interno ao ler ou processar memória do orçamento.']
+      } as OrcamentistaPreview
     });
   }
 });

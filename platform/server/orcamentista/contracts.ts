@@ -95,3 +95,25 @@ export interface QuantitativosOutput {
 // As etapas posteriores (Quantitativos, Composição) serão movidas 
 // gradativamente para código determinístico (TypeScript puro) 
 // e deixarão de ser "Outputs" diretos de LLMs.
+
+// ─── CONTRATO DE PREVISUALIZAÇÃO (PREVIEW) ──────────────────────────────────
+export interface OrcamentistaPreviewItem {
+  codigo: string | null;
+  descricao: string;
+  unidade: string;
+  quantidade: number;
+  valor_unitario: number;
+  valor_total: number;
+  categoria: string | null;
+  origem: string | null;
+  confianca: number | null;
+  observacoes: string | null;
+}
+
+export interface OrcamentistaPreview {
+  workspace_id: string;
+  generated_at: string;
+  source_file: string;
+  items: OrcamentistaPreviewItem[];
+  warnings: string[];
+}
