@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   Briefcase,
@@ -15,6 +15,7 @@ import {
   useCreateOpportunityEvent,
   useOportunidade,
   useOpportunityEvents,
+  useUpdateOportunidade,
 } from '../hooks/useOportunidades';
 
 const statusLabel: Record<string, string> = {
@@ -74,6 +75,7 @@ function DetailItem({ label, value }: { label: string; value: string | number | 
 
 export default function OportunidadeDetalhePage() {
   const { id = '' } = useParams();
+  const navigate = useNavigate();
   const { config, toast } = useAppContext();
   const [eventType, setEventType] = useState('');
   const [eventDescription, setEventDescription] = useState('');
@@ -81,6 +83,7 @@ export default function OportunidadeDetalhePage() {
   const oportunidade = useOportunidade(id, config);
   const events = useOpportunityEvents(id, config);
   const createEvent = useCreateOpportunityEvent(config);
+  const updateOportunidade = useUpdateOportunidade(config);
 
   async function handleAddEvent(event: FormEvent) {
     event.preventDefault();
@@ -109,7 +112,38 @@ export default function OportunidadeDetalhePage() {
     }
   }
 
+  async function handleAbrirOrcamentista() {
+    if (!item) return;
+
+    const workspaceId = item.orcamentista_workspace_id || `opp_${item.id}`;
+    const needsWorkspace = !item.orcamentista_workspace_id;
+
+    try {
+      if (needsWorkspace) {
+        await updateOportunidade.mutateAsync({
+          id: item.id,
+          patch: { orcamentista_workspace_id: workspaceId },
+        });
+
+        await createEvent.mutateAsync({
+          opportunity_id: item.id,
+          tipo: 'orcamentista_aberto',
+          descricao: `Orçamentista aberto no workspace ${workspaceId}.`,
+          metadata: { workspace_id: workspaceId },
+        });
+      }
+
+      navigate(
+        `/orcamentista?opportunity_id=${encodeURIComponent(item.id)}&workspace_id=${encodeURIComponent(workspaceId)}`
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro ao abrir Orçamentista.';
+      toast(message, 'error');
+    }
+  }
+
   const item = oportunidade.data;
+  const isOpeningOrcamentista = updateOportunidade.isPending || createEvent.isPending;
 
   return (
     <main className="min-h-screen bg-bg text-t1">
@@ -164,12 +198,16 @@ export default function OportunidadeDetalhePage() {
               <div className="grid gap-3 sm:grid-cols-3">
                 <button
                   type="button"
-                  disabled
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-b1 bg-s1 px-4 py-3 text-[11px] font-extrabold uppercase tracking-widest text-t4 opacity-80"
+                  onClick={handleAbrirOrcamentista}
+                  disabled={isOpeningOrcamentista}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-green/30 bg-brand-green px-4 py-3 text-[11px] font-extrabold uppercase tracking-widest text-bg transition-colors hover:bg-brand-green2 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <Hammer className="h-4 w-4" />
+                  {isOpeningOrcamentista ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Hammer className="h-4 w-4" />
+                  )}
                   Abrir Orçamentista
-                  <span className="font-mono text-[9px] text-brand-amber">Em breve</span>
                 </button>
                 <button
                   type="button"

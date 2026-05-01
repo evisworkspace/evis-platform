@@ -74,6 +74,14 @@ function criarEtapasIniciais(workspaceSelecionado: boolean): Etapa[] {
   }));
 }
 
+function getOrcamentistaQueryContext() {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    opportunityId: params.get('opportunity_id')?.trim() || '',
+    workspaceId: params.get('workspace_id')?.trim() || '',
+  };
+}
+
 function atualizarEtapas(
   etapas: Etapa[],
   chaves: string[],
@@ -243,10 +251,14 @@ function HitlCard({
 
 // ─── Componente Principal ──────────────────────────────────────────────────────
 export default function OrcamentistaChat() {
+  const queryContext = getOrcamentistaQueryContext();
+  const opportunityId = queryContext.opportunityId;
+  const linkedWorkspaceId = queryContext.workspaceId;
+  const isOpportunityLinked = Boolean(opportunityId && linkedWorkspaceId);
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
   const [input, setInput] = useState('');
   const [workspaceId, setWorkspaceId] = useState(
-    () => sessionStorage.getItem('orcamentista_workspace') || ''
+    () => linkedWorkspaceId || sessionStorage.getItem('orcamentista_workspace') || ''
   );
   const [sessionId] = useState(() => {
     const existing = sessionStorage.getItem('orcamentista_session_id');
@@ -281,17 +293,30 @@ export default function OrcamentistaChat() {
       return d.data ?? [];
     }
   });
+  const hasLinkedWorkspaceOption = Boolean(
+    linkedWorkspaceId && workspaces.some((w: any) => w.id === linkedWorkspaceId)
+  );
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [mensagens, streamingContent]);
+  useEffect(() => {
+    if (!linkedWorkspaceId) return;
+    setWorkspaceId(linkedWorkspaceId);
+    sessionStorage.setItem('orcamentista_workspace', linkedWorkspaceId);
+  }, [linkedWorkspaceId]);
+
   useEffect(() => {
     setEtapas(criarEtapasIniciais(Boolean(workspaceId)));
     setEtapaAtual(0);
     setMultiagenteStatus((prev) => ({
       ...prev,
       faseAtual: workspaceId ? 'Workspace selecionado; pronto para briefing' : 'Aguardando briefing inicial',
-      origemExecucao: workspaceId ? 'Workspace local selecionado' : 'Selecione um workspace para começar',
+      origemExecucao: isOpportunityLinked
+        ? `Oportunidade vinculada (${opportunityId})`
+        : workspaceId
+          ? 'Workspace local selecionado'
+          : 'Selecione um workspace para começar',
     }));
-  }, [workspaceId]);
+  }, [isOpportunityLinked, opportunityId, workspaceId]);
 
   const addLog = (mensagem: string, status: AuditLog['status'] = 'info') => {
     setAuditLogs(p => [...p, {
@@ -609,7 +634,11 @@ export default function OrcamentistaChat() {
           <FileText size={16} className="oc-header-icon" />
           <div>
             <h1 className="oc-header-title">Evis Orçamentista</h1>
-            <p className="oc-header-sub">Híbrido · HITL · Modular</p>
+            <p className="oc-header-sub">
+              {isOpportunityLinked
+                ? `Vinculado à oportunidade ${opportunityId} · ${workspaceId || linkedWorkspaceId}`
+                : 'Híbrido · HITL · Modular'}
+            </p>
           </div>
         </div>
         <div className="oc-header-actions">
@@ -621,14 +650,29 @@ export default function OrcamentistaChat() {
               sessionStorage.setItem('orcamentista_workspace', e.target.value);
             }}
           >
-            <option value="">Selecione a Obra...</option>
+            <option value="">
+              {isOpportunityLinked ? 'Workspace da oportunidade...' : 'Selecione a Obra...'}
+            </option>
+            {linkedWorkspaceId && !hasLinkedWorkspaceOption && (
+              <option value={linkedWorkspaceId}>
+                Oportunidade {opportunityId} · {linkedWorkspaceId}
+              </option>
+            )}
             {workspaces.map((w: any) => (
               <option key={w.id} value={w.id}>{w.nome}</option>
             ))}
           </select>
           <div className="oc-status-dot">
             <div className={`oc-dot ${hitlPendente ? 'amber' : workspaceId ? 'green' : 'gray'}`} />
-            <span>{hitlPendente ? 'Aguardando HITL' : workspaceId ? 'Conectado' : 'Offline'}</span>
+            <span>
+              {hitlPendente
+                ? 'Aguardando HITL'
+                : isOpportunityLinked && workspaceId
+                  ? 'Vinculado'
+                  : workspaceId
+                    ? 'Conectado'
+                    : 'Offline'}
+            </span>
           </div>
         </div>
       </header>
@@ -641,8 +685,12 @@ export default function OrcamentistaChat() {
             {mensagens.length === 0 ? (
               <div className="oc-empty-state">
                 <Bot size={32} />
-                <h2>Pronto para iniciar?</h2>
-                <p>Selecione uma obra e envie os arquivos de projeto.</p>
+                <h2>{isOpportunityLinked ? 'Oportunidade vinculada' : 'Pronto para iniciar?'}</h2>
+                <p>
+                  {isOpportunityLinked
+                    ? 'Envie os arquivos de projeto para iniciar o orçamento desta oportunidade.'
+                    : 'Selecione uma obra e envie os arquivos de projeto.'}
+                </p>
               </div>
             ) : mensagens.map(m => {
               if (m.role === 'hitl' && m.hitlData) {
@@ -736,7 +784,7 @@ export default function OrcamentistaChat() {
                   className="oc-textarea"
                   placeholder={
                     hitlPendente ? 'Aguardando aprovação HITL...' :
-                    !workspaceId ? 'Selecione uma obra primeiro...' :
+                    !workspaceId ? (isOpportunityLinked ? 'Workspace da oportunidade indisponível...' : 'Selecione uma obra primeiro...') :
                     'Envie os arquivos do projeto ou escreva aqui...'
                   }
                   value={input}
