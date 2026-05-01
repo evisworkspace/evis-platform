@@ -400,7 +400,7 @@ export default function OrcamentistaChat() {
       ...prev,
       ativo: false,
       faseAtual: anexos.length > 0 ? 'Preparando leitura dos anexos enviados' : 'Preparando interação textual',
-      agenteAtual: anexos.length > 0 ? 'Pré-processamento de anexos' : 'Chat orquestrador',
+      agenteAtual: anexos.length > 0 ? 'Leitura Técnica de Anexos' : 'Motor Orquestrador',
       origemExecucao: usarWorkspaceAttachments ? 'Workspace local sincronizado' : anexos.length > 0 ? 'Anexos enviados na mensagem' : 'Mensagem textual / workspace',
       leituraMultimodal: anexos.some((a) => !/^(text\/|application\/json$)/.test(a.mimeType)),
       consolidadoDisponivel: false,
@@ -500,7 +500,7 @@ export default function OrcamentistaChat() {
                 ...p,
                 ativo: false,
                 faseAtual: persistenceWarning ? 'Análise concluída com alerta de persistência' : 'Fallback para chat único',
-                agenteAtual: persistenceWarning ? 'Persistência de workspace' : 'Chat orquestrador',
+                agenteAtual: persistenceWarning ? 'Persistência de dados' : 'Motor Orquestrador',
               }));
               if (!persistenceWarning) {
                 setEtapas((prev) => atualizarEtapas(prev, ['macro'], 'erro'));
@@ -537,7 +537,7 @@ export default function OrcamentistaChat() {
                 ativo: false,
                 scoreConsistencia: score,
                 faseAtual: planner?.roteiro?.length ? 'Roteiro pronto para validação humana' : 'Resposta consolidada entregue',
-                agenteAtual: planner?.roteiro?.length ? 'Auditor / HITL' : 'Chat orquestrador',
+                agenteAtual: planner?.roteiro?.length ? 'Auditor / HITL' : 'Motor Orquestrador',
                 hitlPendente: Boolean(temContextoDocumental && planner?.roteiro),
                 consolidadoDisponivel: Boolean(ev.multiagente?.ativo),
               }));
@@ -604,7 +604,7 @@ export default function OrcamentistaChat() {
       ...prev,
       hitlPendente: false,
       faseAtual: 'HITL aprovado; pronto para avançar na consolidação',
-      agenteAtual: 'Chat orquestrador',
+      agenteAtual: 'Motor Orquestrador',
     }));
     void enviar('HITL_APROVADO', true);
   };
@@ -633,11 +633,11 @@ export default function OrcamentistaChat() {
         <div className="oc-header-center">
           <FileText size={16} className="oc-header-icon" />
           <div>
-            <h1 className="oc-header-title">Evis Orçamentista</h1>
+            <h1 className="oc-header-title">Orçamentista IA</h1>
             <p className="oc-header-sub">
               {isOpportunityLinked
-                ? `Vinculado à oportunidade ${opportunityId} · ${workspaceId || linkedWorkspaceId}`
-                : 'Híbrido · HITL · Modular'}
+                ? "Motor técnico-comercial vinculado à oportunidade"
+                : "Motor técnico-comercial para leitura de projetos, quantitativos e custos"}
             </p>
           </div>
         </div>
@@ -662,17 +662,23 @@ export default function OrcamentistaChat() {
               <option key={w.id} value={w.id}>{w.nome}</option>
             ))}
           </select>
-          <div className="oc-status-dot">
-            <div className={`oc-dot ${hitlPendente ? 'amber' : workspaceId ? 'green' : 'gray'}`} />
-            <span>
-              {hitlPendente
-                ? 'Aguardando HITL'
-                : isOpportunityLinked && workspaceId
-                  ? 'Vinculado'
-                  : workspaceId
-                    ? 'Conectado'
-                    : 'Offline'}
-            </span>
+          <div className="oc-header-actions-group">
+            <button className="oc-btn-gerar-orcamento" disabled title="Disponível após pré-visualização estruturada e validação humana.">
+              Gerar orçamento oficial
+              <span className="oc-btn-helper">Em breve</span>
+            </button>
+            <div className="oc-status-dot">
+              <div className={`oc-dot ${hitlPendente ? 'amber' : workspaceId ? 'green' : 'gray'}`} />
+              <span>
+                {hitlPendente
+                  ? 'Aguardando HITL'
+                  : isOpportunityLinked && workspaceId
+                    ? 'Vinculado'
+                    : workspaceId
+                      ? 'Conectado'
+                      : 'Offline'}
+              </span>
+            </div>
           </div>
         </div>
       </header>
@@ -685,12 +691,25 @@ export default function OrcamentistaChat() {
             {mensagens.length === 0 ? (
               <div className="oc-empty-state">
                 <Bot size={32} />
-                <h2>{isOpportunityLinked ? 'Oportunidade vinculada' : 'Pronto para iniciar?'}</h2>
+                <h2>{isOpportunityLinked ? 'Oportunidade vinculada' : 'Motor Técnico pronto'}</h2>
                 <p>
                   {isOpportunityLinked
-                    ? 'Envie os arquivos de projeto para iniciar o orçamento desta oportunidade.'
-                    : 'Selecione uma obra e envie os arquivos de projeto.'}
+                    ? 'Alimente o motor com arquivos de projeto para iniciar o orçamento desta oportunidade.'
+                    : 'Selecione uma obra e alimente o motor com os arquivos de projeto.'}
                 </p>
+
+                <div className="oc-fluxo-info">
+                  <h3>Fluxo do Orçamentista</h3>
+                  <ul>
+                    <li><CheckCircle2 size={12} /> Leitura de projetos</li>
+                    <li><CheckCircle2 size={12} /> Roteiro técnico</li>
+                    <li><CheckCircle2 size={12} /> Quantitativos</li>
+                    <li><CheckCircle2 size={12} /> Custos/SINAPI</li>
+                    <li><CheckCircle2 size={12} /> HITL</li>
+                    <li><CheckCircle2 size={12} /> Orçamento estruturado</li>
+                    <li><CheckCircle2 size={12} /> Base para proposta</li>
+                  </ul>
+                </div>
               </div>
             ) : mensagens.map(m => {
               if (m.role === 'hitl' && m.hitlData) {
@@ -734,7 +753,7 @@ export default function OrcamentistaChat() {
             {hitlPendente === null && isStreaming && (
               <div className="oc-streaming-indicator">
                 <Loader2 size={14} className="animate-spin" />
-                <span>Agentes processando...</span>
+                <span>Motor técnico em execução...</span>
               </div>
             )}
 
@@ -785,7 +804,7 @@ export default function OrcamentistaChat() {
                   placeholder={
                     hitlPendente ? 'Aguardando aprovação HITL...' :
                     !workspaceId ? (isOpportunityLinked ? 'Workspace da oportunidade indisponível...' : 'Selecione uma obra primeiro...') :
-                    'Envie os arquivos do projeto ou escreva aqui...'
+                    'Alimente o motor com arquivos de projeto ou instruções...'
                   }
                   value={input}
                   onChange={e => setInput(e.target.value)}
