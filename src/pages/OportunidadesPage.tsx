@@ -1,6 +1,6 @@
 import { FormEvent, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Briefcase, Loader2, Plus, Save, X } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Briefcase, ChevronRight, Loader2, Plus, Save, X } from 'lucide-react';
 import { useAppContext } from '../AppContext';
 import {
   useCreateContact,
@@ -74,6 +74,7 @@ function formatDate(value: string) {
 
 export default function OportunidadesPage() {
   const { config, toast } = useAppContext();
+  const navigate = useNavigate();
   const [isCreating, setIsCreating] = useState(false);
   const [form, setForm] = useState<FormState>(initialForm);
 
@@ -368,9 +369,26 @@ export default function OportunidadesPage() {
                 </thead>
                 <tbody>
                   {oportunidades.map((oportunidade) => (
-                    <tr key={oportunidade.id} className="border-b border-b1/70 transition-colors hover:bg-s2/40">
+                    <tr
+                      key={oportunidade.id}
+                      onClick={() => navigate(`/oportunidades/${oportunidade.id}`)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          navigate(`/oportunidades/${oportunidade.id}`);
+                        }
+                      }}
+                      tabIndex={0}
+                      role="button"
+                      className="cursor-pointer border-b border-b1/70 transition-colors hover:bg-s2/40 focus:bg-s2/40 focus:outline-none"
+                    >
                       <td className="max-w-[260px] px-4 py-4">
-                        <div className="truncate text-sm font-bold text-t1">{oportunidade.titulo}</div>
+                        <div className="flex items-center gap-2">
+                          <div className="min-w-0 flex-1 truncate text-sm font-bold text-t1">
+                            {oportunidade.titulo}
+                          </div>
+                          <ChevronRight className="h-4 w-4 shrink-0 text-t4" />
+                        </div>
                         {oportunidade.tipo_obra && (
                           <div className="mt-1 truncate text-[11px] text-t4">{oportunidade.tipo_obra}</div>
                         )}

@@ -27,6 +27,7 @@ export type CreateOpportunityEventPayload = Omit<OpportunityEvent, 'id' | 'creat
 export const oportunidadesKeys = {
   all: ['opportunities'] as const,
   list: (filters?: OportunidadesFilters) => ['opportunities', filters ?? {}] as const,
+  detail: (id: string) => ['opportunities', 'detail', id] as const,
   events: (opportunityId: string) => ['opportunity_events', opportunityId] as const,
   files: (opportunityId: string) => ['opportunity_files', opportunityId] as const,
 };
@@ -52,6 +53,19 @@ export function useOportunidades(config: Config, filters: OportunidadesFilters =
       return data as Opportunity[];
     },
     enabled: !!(config.url && config.key),
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+export function useOportunidade(id: string, config: Config) {
+  return useQuery<Opportunity | null>({
+    queryKey: oportunidadesKeys.detail(id),
+    queryFn: async () => {
+      const data = await sbFetch(`opportunities?id=eq.${id}&limit=1`, {}, config);
+      const rows = Array.isArray(data) ? data : [];
+      return (rows[0] ?? null) as Opportunity | null;
+    },
+    enabled: !!(config.url && config.key && id),
     staleTime: 1000 * 60 * 5,
   });
 }
@@ -157,6 +171,7 @@ export function useCreateOpportunityEvent(config: Config) {
     onSuccess: (data) => {
       if (data?.opportunity_id) {
         qc.invalidateQueries({ queryKey: oportunidadesKeys.events(data.opportunity_id) });
+        qc.invalidateQueries({ queryKey: oportunidadesKeys.detail(data.opportunity_id) });
       }
     },
   });

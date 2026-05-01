@@ -20,6 +20,7 @@ import Cronograma from './components/Cronograma';
 import Login from './pages/Login';
 import PortalCliente from './pages/PortalCliente';
 import DashboardPage from './pages/DashboardPage';
+import OportunidadeDetalhePage from './pages/OportunidadeDetalhePage';
 import OportunidadesPage from './pages/OportunidadesPage';
 import OrcamentistaChat from './pages/OrcamentistaChat';
 import PropostaPage from './pages/PropostaPage';
@@ -519,6 +520,7 @@ export default function App() {
         <Route path="/" element={<DashboardPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/oportunidades" element={<OportunidadesPage />} />
+        <Route path="/oportunidades/:id" element={<OportunidadeDetalhePage />} />
         <Route path="/orcamentista" element={<OrcamentistaChat />} />
         <Route path="/propostas" element={<PropostaPage />} />
         <Route path="/obras" element={<Main />} />
