@@ -300,6 +300,7 @@ export default function OrcamentistaChat() {
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [previewSourceFile, setPreviewSourceFile] = useState<string | null>(null);
   const [previewGeneratedAt, setPreviewGeneratedAt] = useState<string | null>(null);
+  const [previewApproved, setPreviewApproved] = useState(false);
 
   const endRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -341,6 +342,7 @@ export default function OrcamentistaChat() {
     if (!workspaceId) return;
     setPreviewLoading(true);
     setPreviewError(null);
+    setPreviewApproved(false);
     try {
       const resp = await fetch(`/api/orcamentista/workspaces/${workspaceId}/preview`);
       const payload = await resp.json();
@@ -717,9 +719,18 @@ export default function OrcamentistaChat() {
                 : <RefreshCw size={14} />}
               Atualizar prévia
             </button>
-            <button className="oc-btn-gerar-orcamento" disabled title="Disponível após validação da prévia.">
+            <button 
+              className="oc-btn-gerar-orcamento" 
+              disabled={!previewApproved} 
+              title={previewApproved ? "Gerar orçamento oficial" : "Disponível após validação da prévia."}
+              onClick={() => {
+                if (previewApproved) {
+                  alert("Gravação do orçamento oficial será implementada no próximo passo.");
+                }
+              }}
+            >
               Gerar orçamento oficial
-              <span className="oc-btn-helper">Disponível após validação da prévia.</span>
+              {!previewApproved && <span className="oc-btn-helper">Disponível após validação da prévia.</span>}
             </button>
             <div className="oc-status-dot">
               <div className={`oc-dot ${hitlPendente ? 'amber' : workspaceId ? 'green' : 'gray'}`} />
@@ -911,6 +922,31 @@ export default function OrcamentistaChat() {
                       ))}
                     </div>
                   )}
+
+                  <div style={{ margin: '16px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: previewApproved ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255,255,255,0.03)', borderRadius: '6px', border: previewApproved ? '1px solid rgba(34, 197, 94, 0.2)' : '1px solid #26313D' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {previewApproved ? (
+                        <>
+                          <CheckCircle2 size={16} style={{ color: '#22c55e' }} />
+                          <span style={{ fontSize: '13px', color: '#22c55e', fontWeight: 500 }}>Prévia aprovada para geração do orçamento oficial</span>
+                        </>
+                      ) : (
+                        <>
+                          <AlertTriangle size={16} style={{ color: '#A7B0BC' }} />
+                          <span style={{ fontSize: '13px', color: '#F4F6F8' }}>Revise os itens acima. Após validação, aprove a prévia para permitir a geração do orçamento.</span>
+                        </>
+                      )}
+                    </div>
+                    {!previewApproved && (
+                      <button 
+                        onClick={() => setPreviewApproved(true)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: '#2F6FED', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                      >
+                        <CheckCircle2 size={14} />
+                        Aprovar prévia
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
