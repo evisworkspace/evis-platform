@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft, Send, Bot, User, FileText,
-  Paperclip, Loader2, CheckCircle2, XCircle, AlertTriangle
+  Paperclip, Loader2, CheckCircle2, XCircle, AlertTriangle, RefreshCw
 } from 'lucide-react';
 
 import { SidebarEtapas, type Etapa } from './Orcamentista/SidebarEtapas';
@@ -31,6 +31,19 @@ interface AuditLog { id: string; timestamp: Date; status: 'info' | 'success' | '
 interface HitlPendente {
   roteiro: Array<{ id: number; etapa: string; agente_responsavel: string; hitl_obrigatorio: boolean }>;
   scoreConsistencia: number;
+}
+
+interface PreviewItem {
+  codigo?: string;
+  descricao: string;
+  unidade: string;
+  quantidade: number;
+  valor_unitario: number;
+  valor_total: number;
+  categoria?: string;
+  origem?: string;
+  confianca?: number;
+  observacoes?: string;
 }
 
 interface ProgressoRuntime {
@@ -281,6 +294,12 @@ export default function OrcamentistaChat() {
   const [streamingContent, setStreamingContent] = useState('');
   const [anexosPendentes, setAnexosPendentes] = useState<Anexo[]>([]);
   const [hitlPendente, setHitlPendente] = useState<HitlPendente | null>(null);
+  const [previewItems, setPreviewItems] = useState<PreviewItem[]>([]);
+  const [previewWarnings, setPreviewWarnings] = useState<string[]>([]);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [previewSourceFile, setPreviewSourceFile] = useState<string | null>(null);
+  const [previewGeneratedAt, setPreviewGeneratedAt] = useState<string | null>(null);
 
   const endRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -317,6 +336,30 @@ export default function OrcamentistaChat() {
           : 'Selecione um workspace para começar',
     }));
   }, [isOpportunityLinked, opportunityId, workspaceId]);
+
+  const loadOrcamentistaPreview = async () => {
+    if (!workspaceId) return;
+    setPreviewLoading(true);
+    setPreviewError(null);
+    try {
+      const resp = await fetch(`/api/orcamentista/workspaces/${workspaceId}/preview`);
+      const payload = await resp.json();
+      if (!resp.ok || !payload?.success) {
+        throw new Error(payload?.erro || `HTTP ${resp.status}`);
+      }
+      const d = payload.data ?? {};
+      setPreviewItems(d.items ?? []);
+      setPreviewWarnings(d.warnings ?? []);
+      setPreviewSourceFile(d.source_file ?? null);
+      setPreviewGeneratedAt(d.generated_at ?? null);
+    } catch (e) {
+      setPreviewError(e instanceof Error ? e.message : 'Erro ao carregar prévia.');
+      setPreviewItems([]);
+      setPreviewWarnings([]);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
 
   const addLog = (mensagem: string, status: AuditLog['status'] = 'info') => {
     setAuditLogs(p => [...p, {
@@ -663,9 +706,20 @@ export default function OrcamentistaChat() {
             ))}
           </select>
           <div className="oc-header-actions-group">
-            <button className="oc-btn-gerar-orcamento" disabled title="Disponível após pré-visualização estruturada e validação humana.">
+            <button
+              className="oc-btn-preview-load"
+              onClick={loadOrcamentistaPreview}
+              disabled={!workspaceId || previewLoading}
+              title="Carregar prévia estruturada do workspace"
+            >
+              {previewLoading
+                ? <Loader2 size={14} className="animate-spin" />
+                : <RefreshCw size={14} />}
+              Atualizar prévia
+            </button>
+            <button className="oc-btn-gerar-orcamento" disabled title="Disponível após validação da prévia.">
               Gerar orçamento oficial
-              <span className="oc-btn-helper">Em breve</span>
+              <span className="oc-btn-helper">Disponível após validação da prévia.</span>
             </button>
             <div className="oc-status-dot">
               <div className={`oc-dot ${hitlPendente ? 'amber' : workspaceId ? 'green' : 'gray'}`} />
@@ -759,6 +813,108 @@ export default function OrcamentistaChat() {
 
             <div ref={endRef} />
           </div>
+
+          {(previewLoading || previewError !== null || previewItems.length > 0 || previewWarnings.length > 0) && (
+            <div style={{ borderTop: '1px solid #26313D', background: '#111820', maxHeight: '38vh', overflowY: 'auto', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', borderBottom: '1px solid #26313D' }}>
+                <FileText size={13} style={{ color: '#A7B0BC' }} />
+                <span style={{ fontSize: '12px', fontWeight: 600, color: '#F4F6F8' }}>Prévia do orçamento estruturado</span>
+                {previewSourceFile && (
+                  <span style={{ fontSize: '11px', color: '#687384', marginLeft: 'auto' }}>{previewSourceFile}</span>
+                )}
+                {previewGeneratedAt && (
+                  <span style={{ fontSize: '11px', color: '#687384' }}>
+                    {new Date(previewGeneratedAt).toLocaleString('pt-BR')}
+                  </span>
+                )}
+              </div>
+
+              {previewLoading && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '16px', color: '#A7B0BC', fontSize: '13px' }}>
+                  <Loader2 size={14} className="animate-spin" />
+                  <span>Carregando prévia...</span>
+                </div>
+              )}
+
+              {previewError && !previewLoading && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 16px', color: '#E05252', fontSize: '13px', background: 'rgba(224,82,82,0.07)', margin: '10px 16px', borderRadius: '6px', borderLeft: '3px solid #E05252' }}>
+                  <XCircle size={14} />
+                  <span>{previewError}</span>
+                </div>
+              )}
+
+              {!previewLoading && !previewError && previewItems.length === 0 && (
+                <div style={{ padding: '16px' }}>
+                  <p style={{ fontSize: '13px', color: '#687384' }}>Nenhum item estruturado disponível ainda.</p>
+                  {previewWarnings.length > 0 && (
+                    <div style={{ marginTop: '10px', background: 'rgba(230,161,31,0.07)', border: '1px solid rgba(230,161,31,0.2)', borderLeft: '3px solid #E6A11F', borderRadius: '6px', padding: '10px 12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', color: '#E6A11F', fontSize: '12px', fontWeight: 600 }}>
+                        <AlertTriangle size={12} />
+                        <span>Atenções do preview</span>
+                      </div>
+                      {previewWarnings.map((w, i) => (
+                        <p key={i} style={{ fontSize: '12px', color: '#A7B0BC', margin: '2px 0' }}>{w}</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {!previewLoading && previewItems.length > 0 && (
+                <div style={{ padding: '0 0 12px 0' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                    <thead>
+                      <tr style={{ background: '#161D26' }}>
+                        {['Código', 'Descrição', 'Unidade', 'Quantidade', 'Unitário', 'Total', 'Origem'].map(col => (
+                          <th key={col} style={{ padding: '7px 12px', textAlign: 'left', color: '#687384', fontWeight: 600, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{col}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previewItems.map((item, i) => (
+                        <tr key={i} style={{ borderTop: '1px solid #26313D', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}>
+                          <td style={{ padding: '6px 12px', color: '#2F6FED', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{item.codigo || '—'}</td>
+                          <td style={{ padding: '6px 12px', color: '#F4F6F8', maxWidth: '280px' }}>{item.descricao}</td>
+                          <td style={{ padding: '6px 12px', color: '#A7B0BC', whiteSpace: 'nowrap' }}>{item.unidade}</td>
+                          <td style={{ padding: '6px 12px', color: '#A7B0BC', textAlign: 'right', whiteSpace: 'nowrap' }}>{item.quantidade.toLocaleString('pt-BR')}</td>
+                          <td style={{ padding: '6px 12px', color: '#A7B0BC', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                            {item.valor_unitario.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          </td>
+                          <td style={{ padding: '6px 12px', color: '#F4F6F8', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap' }}>
+                            {item.valor_total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          </td>
+                          <td style={{ padding: '6px 12px' }}>
+                            <span style={{
+                              fontSize: '10px', fontWeight: 600, padding: '2px 7px', borderRadius: '4px', textTransform: 'uppercase',
+                              ...(item.origem === 'ia'
+                                ? { background: 'rgba(47,111,237,0.15)', color: '#2F6FED' }
+                                : item.origem === 'sinapi'
+                                  ? { background: 'rgba(200,169,106,0.15)', color: '#C8A96A' }
+                                  : { background: 'rgba(104,115,132,0.2)', color: '#A7B0BC' })
+                            }}>
+                              {item.origem || 'manual'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {previewWarnings.length > 0 && (
+                    <div style={{ margin: '10px 16px 0', background: 'rgba(230,161,31,0.07)', border: '1px solid rgba(230,161,31,0.2)', borderLeft: '3px solid #E6A11F', borderRadius: '6px', padding: '10px 12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', color: '#E6A11F', fontSize: '12px', fontWeight: 600 }}>
+                        <AlertTriangle size={12} />
+                        <span>Atenções do preview</span>
+                      </div>
+                      {previewWarnings.map((w, i) => (
+                        <p key={i} style={{ fontSize: '12px', color: '#A7B0BC', margin: '2px 0' }}>{w}</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           <footer className="oc-footer">
             {hitlPendente && (
