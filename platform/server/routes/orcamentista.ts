@@ -27,6 +27,7 @@ import {
   loadChatHistoryFromWorkspace,
 } from '../orcamentista/workspaces';
 import { OrcamentistaPreview, OrcamentistaPreviewItem } from '../orcamentista/contracts';
+import { supabase } from '../tools/supabaseTools';
 
 
 
@@ -1386,6 +1387,164 @@ router.get('/workspaces/:id/preview', (req: Request, res: Response) => {
       } as OrcamentistaPreview
     });
   }
+});
+
+// ─── POST /api/orcamentista/workspaces/:workspaceId/generate-official-budget ───
+router.post('/workspaces/:workspaceId/generate-official-budget', async (req: Request, res: Response) => {
+  const { workspaceId } = req.params;
+  const { opportunity_id, items } = req.body as {
+    opportunity_id?: string;
+    items?: Array<{
+      codigo?: string | null;
+      descricao: string;
+      unidade: string;
+      quantidade: number;
+      valor_unitario: number;
+      valor_total: number;
+      origem?: string | null;
+    }>;
+  };
+
+  if (!workspaceId?.trim()) {
+    return res.status(400).json({ success: false, erro: 'workspaceId é obrigatório.' });
+  }
+  if (!opportunity_id?.trim()) {
+    return res.status(400).json({ success: false, erro: 'opportunity_id é obrigatório.' });
+  }
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ success: false, erro: 'items deve ser um array não vazio.' });
+  }
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (!item.descricao?.trim()) {
+      return res.status(400).json({ success: false, erro: `Item ${i + 1}: descricao é obrigatório.` });
+    }
+    if (!item.unidade?.trim()) {
+      return res.status(400).json({ success: false, erro: `Item ${i + 1}: unidade é obrigatório.` });
+    }
+    if (!Number.isFinite(item.quantidade) || item.quantidade < 0) {
+      return res.status(400).json({ success: false, erro: `Item ${i + 1}: quantidade inválida.` });
+    }
+    if (!Number.isFinite(item.valor_unitario) || item.valor_unitario < 0) {
+      return res.status(400).json({ success: false, erro: `Item ${i + 1}: valor_unitario inválido.` });
+    }
+    if (!Number.isFinite(item.valor_total) || item.valor_total < 0) {
+      return res.status(400).json({ success: false, erro: `Item ${i + 1}: valor_total inválido.` });
+    }
+  }
+
+  const { data: opportunity, error: oppError } = await supabase
+    .from('opportunities')
+    .select('id, titulo, cliente_nome_snapshot, orcamento_id, orcamentista_workspace_id')
+    .eq('id', opportunity_id)
+    .single();
+
+  if (oppError || !opportunity) {
+    return res.status(404).json({ success: false, erro: 'Oportunidade não encontrada.' });
+  }
+
+  const totalBruto = items.reduce((acc, item) => acc + item.valor_total, 0);
+  const bdi = 25;
+  const totalFinal = totalBruto * (1 + bdi / 100);
+  let orcamentoId: string;
+
+  if (opportunity.orcamento_id) {
+    orcamentoId = opportunity.orcamento_id;
+  } else {
+    const { data: novoOrcamento, error: createError } = await supabase
+      .from('orcamentos')
+      .insert({
+        obra_id: opportunity.orcamentista_workspace_id || workspaceId,
+        nome: opportunity.titulo,
+        cliente: opportunity.cliente_nome_snapshot || null,
+        status: 'rascunho',
+        bdi,
+        total_bruto: totalBruto,
+        total_final: totalFinal,
+      })
+      .select('id')
+      .single();
+
+    if (createError || !novoOrcamento) {
+      return res.status(500).json({ success: false, erro: 'Erro ao criar orçamento.', detalhes: createError?.message });
+    }
+
+    orcamentoId = novoOrcamento.id;
+
+    const oppUpdate: Record<string, string> = { orcamento_id: orcamentoId };
+    if (!opportunity.orcamentista_workspace_id) {
+      oppUpdate.orcamentista_workspace_id = workspaceId;
+    }
+    await supabase.from('opportunities').update(oppUpdate).eq('id', opportunity_id);
+  }
+
+  const { data: existingItems, error: checkError } = await supabase
+    .from('orcamento_itens')
+    .select('id')
+    .eq('orcamento_id', orcamentoId)
+    .limit(1);
+
+  if (checkError) {
+    return res.status(500).json({ success: false, erro: 'Erro ao verificar itens existentes.', detalhes: checkError.message });
+  }
+
+  if (existingItems && existingItems.length > 0) {
+    return res.status(409).json({
+      success: false,
+      erro: 'Este orçamento já possui itens. Para evitar sobrescrita, a importação automática foi bloqueada.',
+    });
+  }
+
+  const rows = items.map(item => ({
+    orcamento_id: orcamentoId,
+    codigo: item.codigo || '',
+    descricao: item.descricao,
+    unidade: item.unidade,
+    quantidade: item.quantidade,
+    valor_unitario: item.valor_unitario,
+    valor_total: item.valor_total,
+    origem: item.origem || 'ia',
+  }));
+
+  const { error: insertError } = await supabase.from('orcamento_itens').insert(rows);
+
+  if (insertError) {
+    return res.status(500).json({ success: false, erro: 'Erro ao inserir itens.', detalhes: insertError.message });
+  }
+
+  await supabase
+    .from('orcamentos')
+    .update({ total_bruto: totalBruto, total_final: totalFinal, status: 'rascunho' })
+    .eq('id', orcamentoId);
+
+  try {
+    await supabase.from('opportunity_events').insert({
+      opportunity_id,
+      tipo: 'orcamento_oficial_gerado',
+      descricao: 'Orçamento oficial gerado a partir da prévia aprovada do Orçamentista IA.',
+      metadata: {
+        workspace_id: workspaceId,
+        orcamento_id: orcamentoId,
+        total_itens: items.length,
+        total_bruto: totalBruto,
+        total_final: totalFinal,
+        origem: 'orcamentista_ia_preview',
+      },
+    });
+  } catch (eventErr) {
+    console.warn('[Orçamentista] Falha ao registrar evento; orçamento já foi gravado.', eventErr);
+  }
+
+  return res.json({
+    success: true,
+    data: {
+      orcamento_id: orcamentoId,
+      total_itens: items.length,
+      total_bruto: totalBruto,
+      total_final: totalFinal,
+    },
+  });
 });
 
 export default router;

@@ -301,6 +301,7 @@ export default function OrcamentistaChat() {
   const [previewSourceFile, setPreviewSourceFile] = useState<string | null>(null);
   const [previewGeneratedAt, setPreviewGeneratedAt] = useState<string | null>(null);
   const [previewApproved, setPreviewApproved] = useState(false);
+  const [isGeneratingBudget, setIsGeneratingBudget] = useState(false);
 
   const endRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -360,6 +361,38 @@ export default function OrcamentistaChat() {
       setPreviewWarnings([]);
     } finally {
       setPreviewLoading(false);
+    }
+  };
+
+  const gerarOrcamentoOficial = async () => {
+    if (!previewApproved || previewItems.length === 0 || !opportunityId) return;
+    setIsGeneratingBudget(true);
+    addLog('Iniciando gravação do orçamento oficial...', 'info');
+    try {
+      const resp = await fetch(`/api/orcamentista/workspaces/${workspaceId}/generate-official-budget`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ opportunity_id: opportunityId, items: previewItems }),
+      });
+      const payload = await resp.json();
+      if (resp.status === 409) {
+        addLog('Este orçamento já possui itens. Revise manualmente antes de importar a prévia da IA.', 'warning');
+        return;
+      }
+      if (!resp.ok || !payload?.success) {
+        throw new Error(payload?.erro || `HTTP ${resp.status}`);
+      }
+      addLog(
+        `Orçamento oficial gerado com sucesso. ${payload.data.total_itens} itens · Total: ${payload.data.total_final.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`,
+        'success'
+      );
+      setTimeout(() => {
+        window.location.href = `/oportunidades/${opportunityId}`;
+      }, 1500);
+    } catch (e) {
+      addLog(`Erro ao gerar orçamento oficial: ${e instanceof Error ? e.message : String(e)}`, 'error');
+    } finally {
+      setIsGeneratingBudget(false);
     }
   };
 
@@ -719,18 +752,22 @@ export default function OrcamentistaChat() {
                 : <RefreshCw size={14} />}
               Atualizar prévia
             </button>
-            <button 
-              className="oc-btn-gerar-orcamento" 
-              disabled={!previewApproved} 
-              title={previewApproved ? "Gerar orçamento oficial" : "Disponível após validação da prévia."}
-              onClick={() => {
-                if (previewApproved) {
-                  alert("Gravação do orçamento oficial será implementada no próximo passo.");
-                }
-              }}
+            <button
+              className="oc-btn-gerar-orcamento"
+              disabled={!previewApproved || !opportunityId || previewItems.length === 0 || isGeneratingBudget}
+              title={
+                !opportunityId ? 'Disponível apenas quando vinculado a uma oportunidade.' :
+                !previewApproved ? 'Disponível após validação da prévia.' :
+                'Gravar orçamento oficial no EVIS'
+              }
+              onClick={gerarOrcamentoOficial}
             >
-              Gerar orçamento oficial
-              {!previewApproved && <span className="oc-btn-helper">Disponível após validação da prévia.</span>}
+              {isGeneratingBudget
+                ? <><Loader2 size={14} className="animate-spin" /> Gravando...</>
+                : 'Gerar orçamento oficial'}
+              {!previewApproved && !isGeneratingBudget && (
+                <span className="oc-btn-helper">Disponível após validação da prévia.</span>
+              )}
             </button>
             <div className="oc-status-dot">
               <div className={`oc-dot ${hitlPendente ? 'amber' : workspaceId ? 'green' : 'gray'}`} />
