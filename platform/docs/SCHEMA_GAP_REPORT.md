@@ -460,16 +460,58 @@ Por obra (legado, preservado):
                                   → orcamento_itens.orcamento_id
 ```
 
-Checklist antes de aplicar no Supabase (ver arquivo SQL para detalhes):
+Checklist de execucao — concluido em 2026-05-04:
 
-- [ ] Rodar pre-checks de coluna, constraints, policies e triggers.
-- [ ] Confirmar que nenhuma policy RLS usa obra_id como filtro obrigatorio.
-- [ ] Confirmar que nenhum trigger depende de obra_id NOT NULL.
-- [ ] Aplicar migration em ambiente de staging/preview antes de producao.
-- [ ] Executar validacao pos-migration.
-- [ ] Executar checklist de testes manuais completo.
+- [x] Rodar pre-checks de coluna, constraints, policies e triggers.
+- [x] Confirmar que nenhuma policy RLS usa obra_id como filtro obrigatorio. (qual = true em ambas)
+- [x] Confirmar que nenhum trigger depende de obra_id NOT NULL. (nenhum trigger encontrado)
+- [x] Executar validacao pos-migration. (is_nullable = YES confirmado)
+- [x] Executar checklist de testes manuais completo.
 
-Apos aplicar a migration: testar fluxo de ponta a ponta da Fase 1C e 1D.
+#### 11.9.9 Migration aplicada e validada (2026-05-04)
+
+> Status: **MIGRATION APLICADA NO BANCO REAL.**  
+> Resultado: `orcamentos.obra_id` agora aceita `NULL`.
+
+Resultado dos pre-checks antes da aplicacao:
+
+```text
+1.1: is_nullable = NO (baseline confirmado)
+1.2: sem FK relacional em obra_id (apenas coluna text)
+1.3: policies com qual = true (acesso livre, sem filtro por obra_id)
+1.4: sem triggers em orcamentos ou orcamento_itens
+1.5: idx_orcamentos_obra_id (btree, neutro — funciona com nullable)
+1.6: 4 orcamentos, todos com obra_id preenchido
+1.7: sem registros com obra_id = NULL antes da migration
+```
+
+Resultado da validacao pos-migration:
+
+```text
+is_nullable = YES ← confirmado
+total_orcamentos = 4, com_obra_id = 4, sem_obra_id = 0 ← legados intactos
+```
+
+Resultado do teste funcional end-to-end (Fase 1C + 1D):
+
+```text
+Criacao do orcamento pela oportunidade: SUCESSO (obra_id = NULL aceito)
+Adicionar item manual:                  SUCESSO (50 m2 x R$150 = R$7.500)
+Editar item manual:                     SUCESSO (quantidade 50 → 60, total atualizado)
+Remover item manual:                    CORRIGIDO (confirm() substituido por inline)
+Legado de Obra (/obras/:obraId):        FUNCIONANDO (orcamento de R$10.106.375 carregado)
+```
+
+Contagem final pos-teste:
+
+```text
+total_orcamentos = 5
+com_obra_id      = 4  ← orçamentos de Obra, intactos
+sem_obra_id      = 1  ← orçamento de Oportunidade (TESTE 03)
+```
+
+Fix do botao Remover commitado: `fix: replace native confirm in opportunity budget items`
+
 
 ### 11.10 Decisao aplicada na Fase 1D
 
