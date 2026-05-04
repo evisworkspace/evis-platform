@@ -174,9 +174,14 @@ export default function OrcamentistaManualItemsPanel({
   return (
     <div className="space-y-5">
       {/* ── Cabeçalho do orçamento ── */}
-      <div className="flex items-center justify-between rounded-lg border border-b1 bg-s1 px-5 py-3">
+      <div className="flex items-center justify-between rounded-lg border border-brand-green/20 bg-brand-green/5 px-5 py-3">
         <div>
-          <p className="text-xs text-t3">Orçamento oficial vinculado</p>
+          <div className="mb-1 flex items-center gap-2">
+            <p className="text-xs text-t3">Orçamento vinculado</p>
+            <span className="rounded border border-brand-green/30 bg-brand-green/10 px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-brand-green">
+              OFICIAL
+            </span>
+          </div>
           <p className="font-semibold text-t1">{orcamento.nome}</p>
           <p className="mt-0.5 text-xs text-t3">
             Status: <span className="text-t2">{orcamento.status}</span>
@@ -302,7 +307,10 @@ export default function OrcamentistaManualItemsPanel({
       {/* ── Lista de itens ── */}
       <div className="rounded-lg border border-b1 bg-s1">
         <div className="border-b border-b1 px-5 py-3">
-          <h3 className="text-sm font-semibold text-t1">Itens do orçamento</h3>
+          <h3 className="text-sm font-semibold text-t1">Itens oficiais do orçamento</h3>
+          <p className="mt-0.5 text-xs text-t3">
+            Estes itens estão gravados em <code className="rounded bg-s2 px-1 text-[10px]">orcamento_itens</code> e alimentam a proposta comercial.
+          </p>
         </div>
 
         {isLoadingItens ? (
@@ -419,15 +427,15 @@ export default function OrcamentistaManualItemsPanel({
                       <td className="px-5 py-3 text-right font-medium text-t1">{formatBRL(item.valor_total)}</td>
                       <td className="px-5 py-3 text-center">
                         <span
-                          className={`rounded-full px-2 py-0.5 text-xs ${
+                          className={`rounded border px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest ${
                             item.origem === 'manual'
-                              ? 'bg-brand-blue/10 text-brand-blue'
+                              ? 'border-brand-blue/30 bg-brand-blue/10 text-brand-blue'
                               : item.origem === 'sinapi'
-                              ? 'bg-green-500/10 text-green-400'
-                              : 'bg-purple-500/10 text-purple-400'
+                              ? 'border-green-500/30 bg-green-500/10 text-green-400'
+                              : 'border-purple-500/30 bg-purple-500/10 text-purple-400'
                           }`}
                         >
-                          {item.origem}
+                          {item.origem === 'ia' ? 'PRÉVIA IA' : item.origem.toUpperCase()}
                         </span>
                       </td>
                       <td className="px-5 py-3 text-center">
@@ -491,8 +499,9 @@ export default function OrcamentistaManualItemsPanel({
       </div>
 
       <p className="text-xs text-t3">
-        * Estes itens são manuais. A geração automática via IA e pipeline está disponível no módulo
-        Orçamentista IA abaixo.
+        * Itens com origem <strong>MANUAL</strong> são criados diretamente pelo usuário e gravados no banco.
+        Itens com origem <strong>PRÉVIA IA</strong> (quando presentes) foram importados do workspace IA
+        após validação humana explícita — não são gerados automaticamente.
       </p>
     </div>
   );
