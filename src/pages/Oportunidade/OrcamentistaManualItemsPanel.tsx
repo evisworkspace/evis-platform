@@ -70,6 +70,9 @@ export default function OrcamentistaManualItemsPanel({
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<FormState>(FORM_VAZIO);
 
+  // ID do item aguardando confirmação de remoção
+  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
+
   // ── Total calculado dos itens ────────────────
   const totalBruto = itens.reduce((acc, item) => acc + item.valor_total, 0);
 
@@ -147,8 +150,14 @@ export default function OrcamentistaManualItemsPanel({
   }
 
   // ── Remover item ─────────────────────────────
-  async function handleRemover(itemId: string, descricao: string) {
-    if (!confirm(`Remover item "${descricao}"?`)) return;
+  async function handleRemover(itemId: string) {
+    // Primeiro clique: pede confirmação inline
+    if (confirmRemoveId !== itemId) {
+      setConfirmRemoveId(itemId);
+      return;
+    }
+    // Segundo clique (confirmado): executa remoção
+    setConfirmRemoveId(null);
     setIsSaving(true);
     clearFeedback();
     try {
@@ -430,14 +439,35 @@ export default function OrcamentistaManualItemsPanel({
                           >
                             Editar
                           </button>
-                          <button
-                            id={`btn-remover-item-${item.id}`}
-                            onClick={() => handleRemover(item.id, item.descricao)}
-                            disabled={isSaving}
-                            className="rounded border border-red-500/30 px-2 py-1 text-xs text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
-                          >
-                            Remover
-                          </button>
+
+                          {confirmRemoveId === item.id ? (
+                            // ── Confirmação inline ──
+                            <span className="flex items-center gap-1">
+                              <button
+                                id={`btn-confirmar-remover-item-${item.id}`}
+                                onClick={() => handleRemover(item.id)}
+                                disabled={isSaving}
+                                className="rounded bg-red-500 px-2 py-1 text-xs text-white hover:opacity-90 disabled:opacity-50"
+                              >
+                                Confirmar?
+                              </button>
+                              <button
+                                onClick={() => setConfirmRemoveId(null)}
+                                className="rounded border border-b1 px-1 py-1 text-xs text-t3 hover:bg-s2"
+                              >
+                                ✕
+                              </button>
+                            </span>
+                          ) : (
+                            <button
+                              id={`btn-remover-item-${item.id}`}
+                              onClick={() => handleRemover(item.id)}
+                              disabled={isSaving}
+                              className="rounded border border-red-500/30 px-2 py-1 text-xs text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                            >
+                              Remover
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
