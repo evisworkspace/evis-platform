@@ -23,3 +23,6 @@ scratch/exemplo_proposta.json
 scratch/fisico_financeiro_rita_bruno.json
 .obsidian/
 .vscode/
+
+# Supabase CLI local metadata
+supabase/.temp/
