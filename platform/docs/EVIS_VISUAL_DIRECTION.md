@@ -149,33 +149,17 @@ canvas       seção         card           card com fundo
 
 ## 7. Sidebar Global
 
-A sidebar é fixa, sempre visível no desktop. É o mapa de navegação permanente.
+A sidebar é fixa, sempre visível no desktop. É a navegação persistente da plataforma.
 
-**Estrutura:**
+A ordem funcional, itens e rotas da sidebar global são definidos pelo documento `EVIS_NAVIGATION_AND_ENTITY_MODEL.md`. Este documento define apenas o tratamento visual da sidebar: largura, estados, cores, ícones, hover, item ativo, dark mode e light mode.
+
+**Estrutura visual:**
 
 ```
-[Logo EVIS]              ← topo fixo, link para HUB
-
-─── PROCESSO CANÔNICO ───
-
-Oportunidades            ← ícone: Target ou Briefcase
-Orçamentista IA          ← ícone: Calculator ou Layers
-Propostas                ← ícone: FileText
-Obras                    ← ícone: Building2
-Diário de Obra           ← ícone: BookOpen
-
-─── GESTÃO ─────────────
-
-Equipes                  ← ícone: Users
-Financeiro               ← ícone: TrendingUp
-Relatórios               ← ícone: BarChart2
-
-─── SISTEMA ─────────────
-
-Configurações            ← ícone: Settings
-Perfil / Sair            ← ícone: User
-
-[Badge: Obra Ativa]      ← rodapé da sidebar
+[Logo EVIS]              ← topo fixo
+[Item de navegação]      ← ícone lucide-react + label
+[Item de navegação ativo]← azul primário + borda esquerda
+[Badge contextual]       ← rodapé da sidebar, quando aplicável
 ```
 
 **Dark mode:**
@@ -196,6 +180,7 @@ Perfil / Sair            ← ícone: User
 - Nenhum item de sidebar abre modal — todos navegam para rota
 - Submenu: evitar. Se necessário, expandir inline com `transition-all`
 - Ícones: sempre 20px, `lucide-react`, stroke-width padrão
+- Verde nunca deve ser usado como cor de navegação principal; verde é apenas status positivo
 
 ---
 
