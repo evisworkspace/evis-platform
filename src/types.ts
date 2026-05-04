@@ -194,6 +194,27 @@ export type OrcamentoItem = {
   created_at?: string;
 };
 
+// ── Tipos auxiliares para itens manuais do orçamento da oportunidade (Fase 1D) ──
+
+/** Campos necessários para criar um item manual. valor_total é calculado automaticamente. */
+export type CreateManualBudgetItemInput = {
+  descricao: string;
+  unidade: string;
+  quantidade: number;
+  valor_unitario: number;
+  codigo?: string;
+};
+
+/** Campos que podem ser atualizados em um item manual existente. */
+export type UpdateManualBudgetItemInput = Partial<CreateManualBudgetItemInput>;
+
+/** Resultado controlado de operações de criação/edição/remoção de item manual. */
+export type ManualBudgetItemActionResult =
+  | { status: 'success'; item: OrcamentoItem; message: string }
+  | { status: 'removed'; itemId: string; message: string }
+  | { status: 'blocked'; reason: string; message: string }
+  | { status: 'error'; error: string; message: string };
+
 export type Etapa = {
   id: number;
   chave: string;

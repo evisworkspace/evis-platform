@@ -1,9 +1,16 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import { sbFetch } from '../lib/api';
-import { Config, CreateOpportunityBudgetResult, Orcamento, OrcamentoItem } from '../types';
-import { useOportunidade } from './useOportunidades';
-import { oportunidadesKeys } from './useOportunidades';
+import {
+  Config,
+  CreateManualBudgetItemInput,
+  CreateOpportunityBudgetResult,
+  ManualBudgetItemActionResult,
+  Orcamento,
+  OrcamentoItem,
+  UpdateManualBudgetItemInput,
+} from '../types';
+import { oportunidadesKeys, useOportunidade } from './useOportunidades';
 import { orcamentoKeys } from './useOrcamento';
 
 // ──────────────────────────────────────────────
@@ -23,6 +30,28 @@ function normalizeError(error: unknown): Error | null {
   return error instanceof Error ? error : new Error(String(error));
 }
 
+function guardSupabase(config: Config): ManualBudgetItemActionResult | null {
+  if (!config.url || !config.key) {
+    return {
+      status: 'blocked',
+      reason: 'supabase_not_configured',
+      message: 'Supabase não configurado. Configure URL e Key nas Configurações.',
+    };
+  }
+  return null;
+}
+
+function guardOrcamentoId(orcamentoId: string | null | undefined): ManualBudgetItemActionResult | null {
+  if (!orcamentoId) {
+    return {
+      status: 'blocked',
+      reason: 'no_orcamento',
+      message: 'Não é possível operar sobre itens: nenhum orçamento vinculado à oportunidade. Crie o orçamento primeiro.',
+    };
+  }
+  return null;
+}
+
 // ──────────────────────────────────────────────
 // HOOK PRINCIPAL
 // ──────────────────────────────────────────────
@@ -33,7 +62,7 @@ export function useOportunidadeOrcamento(opportunityId: string, config: Config) 
   const orcamentoId = oportunidade.data?.orcamento_id ?? '';
   const opportunity = oportunidade.data ?? null;
 
-  // Estado local para feedback da ação de criação
+  // Estado local para feedback da ação de criação de orçamento
   const [isCreating, setIsCreating] = useState(false);
   const [createResult, setCreateResult] = useState<CreateOpportunityBudgetResult | null>(null);
 
@@ -58,23 +87,16 @@ export function useOportunidadeOrcamento(opportunityId: string, config: Config) 
         {},
         config
       );
-      return data as OrcamentoItem[];
+      return (Array.isArray(data) ? data : []) as OrcamentoItem[];
     },
     enabled: !!(config.url && config.key && orcamentoId),
     staleTime: 1000 * 60 * 5,
   });
 
-  // ── Ação explícita: criar e vincular orçamento ──
-  //
-  // Regras da Fase 1C:
-  //  a) Se já existe orcamento_id, retorna 'already_linked' — sem criar outro.
-  //  b) Se o campo obra_id for obrigatório no banco, a criação falhará com erro
-  //     controlado (sem inventar obra_id falso).
-  //  c) Se criar com sucesso, atualiza opportunities.orcamento_id via PATCH.
-  //  d) Revalida as queries relevantes.
-  //  e) Nunca cria automaticamente — só por chamada explícita.
+  // ──────────────────────────────────────────────
+  // Ação 1: criar e vincular orçamento (Fase 1C)
+  // ──────────────────────────────────────────────
   const criarOrcamentoParaOportunidade = useCallback(async (): Promise<CreateOpportunityBudgetResult> => {
-    // Verificação de pré-condições
     if (!config.url || !config.key) {
       const result: CreateOpportunityBudgetResult = {
         status: 'blocked',
@@ -95,7 +117,6 @@ export function useOportunidadeOrcamento(opportunityId: string, config: Config) 
       return result;
     }
 
-    // a) Já existe orçamento vinculado — não criar outro
     const currentOrcamentoId = oportunidade.data?.orcamento_id;
     if (currentOrcamentoId) {
       const result: CreateOpportunityBudgetResult = {
@@ -111,8 +132,6 @@ export function useOportunidadeOrcamento(opportunityId: string, config: Config) 
     setCreateResult(null);
 
     try {
-      // b/c) Criar orçamento vazio sem obra_id (campo é opcional no schema do código)
-      //      Se o banco exigir obra_id via constraint NOT NULL, o erro será capturado abaixo.
       const payload = {
         nome: `Orçamento — ${oportunidade.data?.titulo ?? opportunityId}`,
         status: 'rascunho' as const,
@@ -139,7 +158,6 @@ export function useOportunidadeOrcamento(opportunityId: string, config: Config) 
         return result;
       }
 
-      // d) Atualizar opportunities.orcamento_id com o orçamento recém-criado
       await sbFetch(
         `opportunities?id=eq.${opportunityId}`,
         {
@@ -152,12 +170,9 @@ export function useOportunidadeOrcamento(opportunityId: string, config: Config) 
         config
       );
 
-      // e) Revalidar cache
       qc.invalidateQueries({ queryKey: oportunidadesKeys.detail(opportunityId) });
       qc.invalidateQueries({ queryKey: oportunidadesKeys.all });
-      qc.invalidateQueries({
-        queryKey: oportunidadeOrcamentoKeys.orcamento(novoOrcamento.id),
-      });
+      qc.invalidateQueries({ queryKey: oportunidadeOrcamentoKeys.orcamento(novoOrcamento.id) });
 
       const result: CreateOpportunityBudgetResult = {
         status: 'created',
@@ -169,7 +184,6 @@ export function useOportunidadeOrcamento(opportunityId: string, config: Config) 
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);
 
-      // Detectar erro de constraint NOT NULL no banco (obra_id obrigatório no banco real)
       const isSchemaBlocked =
         errMsg.toLowerCase().includes('obra_id') ||
         errMsg.toLowerCase().includes('not-null') ||
@@ -201,6 +215,152 @@ export function useOportunidadeOrcamento(opportunityId: string, config: Config) 
     }
   }, [opportunityId, config, oportunidade.data, qc]);
 
+  // ──────────────────────────────────────────────
+  // Ação 2: criar item manual (Fase 1D)
+  //
+  // Regras:
+  //  - Bloqueia se não houver orcamento_id vinculado.
+  //  - Não usa obra_id.
+  //  - Calcula valor_total = quantidade * valor_unitario.
+  //  - origem: 'manual' fixo.
+  //  - Invalida a query de itens após sucesso.
+  // ──────────────────────────────────────────────
+  const criarItemManual = useCallback(
+    async (payload: CreateManualBudgetItemInput): Promise<ManualBudgetItemActionResult> => {
+      const sb = guardSupabase(config);
+      if (sb) return sb;
+
+      const currentId = orcamentoId || orcamento.data?.id || null;
+      const guard = guardOrcamentoId(currentId);
+      if (guard) return guard;
+
+      try {
+        const itemPayload = {
+          orcamento_id: currentId!,
+          descricao: payload.descricao,
+          unidade: payload.unidade,
+          quantidade: payload.quantidade,
+          valor_unitario: payload.valor_unitario,
+          valor_total: payload.quantidade * payload.valor_unitario,
+          origem: 'manual' as const,
+          ...(payload.codigo ? { codigo: payload.codigo } : {}),
+          // obra_id: intencionalmente omitido
+        };
+
+        const raw = await sbFetch(
+          'orcamento_itens',
+          { method: 'POST', body: JSON.stringify(itemPayload) },
+          config
+        );
+        const novoItem = (Array.isArray(raw) ? raw[0] : raw) as OrcamentoItem | null;
+
+        if (!novoItem?.id) {
+          return {
+            status: 'error',
+            error: 'Resposta inválida do servidor.',
+            message: 'Falha ao criar item: Supabase não retornou o item criado.',
+          };
+        }
+
+        qc.invalidateQueries({ queryKey: orcamentoKeys.itens(currentId!) });
+
+        return {
+          status: 'success',
+          item: novoItem,
+          message: `Item "${novoItem.descricao}" adicionado ao orçamento.`,
+        };
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        return { status: 'error', error: errMsg, message: `Erro ao criar item: ${errMsg}` };
+      }
+    },
+    [orcamentoId, orcamento.data, config, qc]
+  );
+
+  // ──────────────────────────────────────────────
+  // Ação 3: atualizar item manual (Fase 1D)
+  //
+  // Recalcula valor_total se quantidade ou valor_unitario mudarem.
+  // ──────────────────────────────────────────────
+  const atualizarItemManual = useCallback(
+    async (
+      itemId: string,
+      patch: UpdateManualBudgetItemInput
+    ): Promise<ManualBudgetItemActionResult> => {
+      const sb = guardSupabase(config);
+      if (sb) return sb;
+
+      const currentId = orcamentoId || orcamento.data?.id || null;
+      const guard = guardOrcamentoId(currentId);
+      if (guard) return guard;
+
+      try {
+        const patchComTotal: Record<string, unknown> = { ...patch };
+
+        // Recalcular valor_total apenas se ambos os operandos estiverem no patch
+        if (
+          patch.quantidade !== undefined &&
+          patch.valor_unitario !== undefined
+        ) {
+          patchComTotal.valor_total = patch.quantidade * patch.valor_unitario;
+        }
+
+        const raw = await sbFetch(
+          `orcamento_itens?id=eq.${itemId}`,
+          { method: 'PATCH', body: JSON.stringify(patchComTotal) },
+          config
+        );
+        const itemAtualizado = (Array.isArray(raw) ? raw[0] : raw) as OrcamentoItem | null;
+
+        qc.invalidateQueries({ queryKey: orcamentoKeys.itens(currentId!) });
+
+        return {
+          status: 'success',
+          item: itemAtualizado ?? ({ id: itemId, orcamento_id: currentId! } as OrcamentoItem),
+          message: 'Item atualizado com sucesso.',
+        };
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        return { status: 'error', error: errMsg, message: `Erro ao atualizar item: ${errMsg}` };
+      }
+    },
+    [orcamentoId, orcamento.data, config, qc]
+  );
+
+  // ──────────────────────────────────────────────
+  // Ação 4: remover item manual (Fase 1D)
+  // ──────────────────────────────────────────────
+  const removerItemManual = useCallback(
+    async (itemId: string): Promise<ManualBudgetItemActionResult> => {
+      const sb = guardSupabase(config);
+      if (sb) return sb;
+
+      const currentId = orcamentoId || orcamento.data?.id || null;
+      const guard = guardOrcamentoId(currentId);
+      if (guard) return guard;
+
+      try {
+        await sbFetch(
+          `orcamento_itens?id=eq.${itemId}`,
+          { method: 'DELETE', prefer: 'return=minimal' },
+          config
+        );
+
+        qc.invalidateQueries({ queryKey: orcamentoKeys.itens(currentId!) });
+
+        return {
+          status: 'removed',
+          itemId,
+          message: 'Item removido do orçamento.',
+        };
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        return { status: 'error', error: errMsg, message: `Erro ao remover item: ${errMsg}` };
+      }
+    },
+    [orcamentoId, orcamento.data, config, qc]
+  );
+
   return {
     opportunity,
     orcamento: orcamento.data ?? null,
@@ -216,6 +376,11 @@ export function useOportunidadeOrcamento(opportunityId: string, config: Config) 
       normalizeError(orcamento.error) ??
       normalizeError(itens.error),
     createResult,
+    // Fase 1C
     criarOrcamentoParaOportunidade,
+    // Fase 1D
+    criarItemManual,
+    atualizarItemManual,
+    removerItemManual,
   };
 }

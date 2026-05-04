@@ -430,3 +430,100 @@ Validar no banco real (Supabase) se `orcamentos.obra_id` possui constraint `NOT 
 - Se nao: a criacao de orcamento por oportunidade ja esta funcional sem migration.
 
 Apos validacao, considerar a Fase 1D: adicionar itens ao orcamento criado (quantitativos manuais, sem pipeline de IA).
+
+### 11.10 Decisao aplicada na Fase 1D
+
+> Status: implementado sem migration, sem alteracao de banco.  
+> Escopo: CRUD manual de itens no orcamento vinculado a oportunidade.
+
+#### 11.10.1 Auditoria de OrcamentoItem
+
+Campos confirmados em `src/types.ts`:
+
+```text
+id            string     obrigatorio
+orcamento_id  string     obrigatorio — chave de vinculo
+codigo        string?    opcional
+descricao     string     obrigatorio
+unidade       string     obrigatorio
+quantidade    number     obrigatorio
+valor_unitario number    obrigatorio
+valor_total   number     calculado automaticamente (qtd * v_unit)
+origem        manual|sinapi|ia   fixado como 'manual' nesta fase
+created_at    string?    opcional
+```
+
+Campos minimos para criacao manual: `orcamento_id`, `descricao`, `unidade`, `quantidade`, `valor_unitario`, `valor_total`, `origem`.
+
+#### 11.10.2 Funcoes implementadas
+
+Todas as funcoes residem em `src/hooks/useOportunidadeOrcamento.ts`:
+
+```text
+criarItemManual(payload)         — POST orcamento_itens, origem='manual'
+atualizarItemManual(itemId, patch) — PATCH orcamento_itens?id=eq.${itemId}
+removerItemManual(itemId)        — DELETE orcamento_itens?id=eq.${itemId}
+```
+
+Regras comuns aplicadas em todas as funcoes:
+
+- Guard de supabase: bloqueia se config.url ou config.key ausente.
+- Guard de orcamento_id: bloqueia se nao houver orcamento vinculado a oportunidade.
+- obra_id: intencionalmente omitido em todas as operacoes.
+- Cache invalidado via `orcamentoKeys.itens(orcamentoId)` apos cada operacao bem-sucedida.
+- Resultado tipado: `ManualBudgetItemActionResult` com status 'success' | 'removed' | 'blocked' | 'error'.
+
+#### 11.10.3 Componente criado
+
+`src/pages/Oportunidade/OrcamentistaManualItemsPanel.tsx`:
+
+- Lista itens em tabela com colunas: codigo, descricao, unidade, quantidade, v.unit, total, origem, acoes.
+- Formulario de criacao com campos minimos e previa de subtotal.
+- Edicao inline por linha.
+- Remocao com confirmacao via `confirm()`.
+- Total bruto dos itens calculado no frontend como soma de `item.valor_total`.
+- Feedback por acao (success, blocked, error) com auto-hide em 5s.
+- Sem IA, sem pipeline, sem automacao.
+
+#### 11.10.4 Integracao em OrcamentistaTab
+
+`src/pages/Oportunidade/OrcamentistaTab.tsx` agora exibe:
+
+```text
+Quando !hasOrcamento:
+  - Estado vazio + botao "Criar orcamento da oportunidade" (Fase 1C)
+
+Quando hasOrcamento:
+  - Secao 1: "Itens manuais do orcamento" -> OrcamentistaManualItemsPanel
+  - Secao 2: "Orçamentista IA — workspace de analise" -> OrcamentistaChat
+    com aviso de que dados do workspace sao staging, nao substituem itens oficiais.
+```
+
+#### 11.10.5 Tipos adicionados em types.ts
+
+```typescript
+CreateManualBudgetItemInput   — campos para criacao de item manual
+UpdateManualBudgetItemInput   — Partial<CreateManualBudgetItemInput>
+ManualBudgetItemActionResult  — resultado tipado das operacoes de item
+```
+
+Nenhum tipo legado foi alterado.
+
+#### 11.10.6 Confirmacoes de conformidade
+
+- Nenhum arquivo proibido alterado.
+- Nenhuma migration criada.
+- Banco/schema nao alterado.
+- Fluxo `/obras` e `/obras/:obraId` preservados intactos.
+- `obra_id = opp_<id>` ausente em todo codigo desta fase.
+- Criacao automatica de itens: **nao ocorre**.
+- `useOrcamento.ts` nao refatorado — legado de Obra preservado.
+
+#### 11.10.7 Proximo passo recomendado
+
+Fase 1E ou consolidacao:
+
+- Validar no banco real se a criacao de orcamento sem `obra_id` funciona (Fase 1C pendente de validacao).
+- Se funcionar: testar o fluxo completo de criacao de itens manuais na tela.
+- Se `obra_id NOT NULL` bloquear: executar migration minimal antes de avancar para Fase 1E.
+- Fase 1E potencial: vinculo de proposta ao orcamento oficial da oportunidade.
