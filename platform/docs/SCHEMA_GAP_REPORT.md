@@ -601,11 +601,57 @@ Nenhum tipo legado foi alterado.
 - Criacao automatica de itens: **nao ocorre**.
 - `useOrcamento.ts` nao refatorado — legado de Obra preservado.
 
-#### 11.10.7 Proximo passo recomendado
+#### 11.10.7 Proximo passo executado
 
-Fase 1E ou consolidacao:
+A Fase 1C e 1D foram validadas no banco real, a migration de `obra_id NOT NULL` foi aplicada e testada com sucesso.
 
-- Validar no banco real se a criacao de orcamento sem `obra_id` funciona (Fase 1C pendente de validacao).
-- Se funcionar: testar o fluxo completo de criacao de itens manuais na tela.
-- Se `obra_id NOT NULL` bloquear: executar migration minimal antes de avancar para Fase 1E.
-- Fase 1E potencial: vinculo de proposta ao orcamento oficial da oportunidade.
+### 11.11 Fase 1E: Vincular proposta ao orcamento oficial da oportunidade
+
+> Status: validado no codigo e no banco sem necessidade de nova implementacao.
+> Escopo: Auditoria e teste funcional do fluxo de geracao de proposta a partir de oportunidade.
+
+#### 11.11.1 Auditoria do fluxo de propostas
+
+A auditoria confirmou que a infraestrutura de propostas **ja estava completamente implementada** nas fases anteriores, aderente ao novo fluxo canonico:
+
+1. **Schema no banco (`propostas`):**
+   - Possui `id`, `opportunity_id`, `orcamento_id`, `titulo`, `status`, `valor_total`, `payload`, etc.
+   - RLS `propostas_open_access` com `qual = true` (acesso livre).
+   - FKs corretas, sem dependencias bloquentes de `obra_id`.
+
+2. **Tipos (`src/types.ts`):**
+   - `Proposta`, `PropostaStatus`, `CreatePropostaPayload`, `UpdatePropostaPayload` configurados.
+   - `Opportunity` contem o campo `proposta_id`.
+
+3. **Hooks (`src/hooks/usePropostas.ts`):**
+   - `useCreateProposta`, `useProposta`, `usePropostas`, `useUpdateProposta` totalmente funcionais e em uso.
+
+4. **Geracao no Frontend (`OportunidadeDetalhePage.tsx`):**
+   - `handleGerarProposta()` implementada e ligada ao botao na UI.
+   - Bloqueia criacao se a oportunidade nao tiver orcamento.
+   - Bloqueia criacao se o orcamento vinculado nao tiver itens ("Adicione itens...").
+   - Nao usa `obra_id`.
+   - Popula corretamente o `payload` e salva o novo id em `opportunities.proposta_id`.
+
+#### 11.11.2 Teste funcional end-to-end (Fase 1E)
+
+Foi executado teste na aplicacao rodando localmente, na oportunidade "TESTE 03":
+
+- **Passo 1:** Oportunidade possuia orcamento oficial criado e 1 item manual adicionado.
+- **Passo 2:** Clique no botao "Gerar proposta comercial".
+- **Passo 3:** O aplicativo validou os dados, montou o payload, inseriu na tabela `propostas`, atualizou `opportunities.proposta_id` e redirecionou para `/propostas?id=...`.
+- **Passo 4:** No banco, a criacao foi confirmada (`select id, status, orcamento_id, opportunity_id, valor_total from public.propostas`).
+  - `status`: 'rascunho'
+  - `opportunity_id` preenchido
+  - `orcamento_id` preenchido
+  - `valor_total` correspondeu a soma dos itens.
+
+#### 11.11.3 Confirmacoes de conformidade
+
+- **Criacao automatica?** Nao. Apenas por acao explicita (`onClick={handleGerarProposta}`).
+- **`obra_id = opp_<id>` usado?** Nao.
+- **Criacao de Obra ou escrita em tabelas de obra?** Nao.
+- **Fluxos legados / Diarios / Cronograma alterados?** Nao.
+- **PDF/Envio/Workflow sofisticado?** Nao. O status inicial e estritamente "rascunho".
+
+**Conclusao da Fase 1E:** A etapa de criacao de propostas a partir do orcamento da oportunidade esta concluida e 100% funcional.
