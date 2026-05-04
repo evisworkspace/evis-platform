@@ -209,7 +209,7 @@ Após importação e seleção, validar:
 ## 9. REFERÊNCIAS
 
 - Schema oficial: `docs/SCHEMA_OFICIAL_V1.sql`
-- Prompt padronização: `docs/PROMPT_PADRONIZACAO_ORCAMENTO.md`
+- Prompt padronização: `orcamentista/docs/PROMPT_PADRONIZACAO_ORCAMENTO.md`
 - Template importação: `docs/TEMPLATE_ORCAMENTO_COMPLETO_V3.json`
 - Limpeza: `LIMPAR_BANCO.sql`
 - Documentação anterior: `docs/01_MAPEAMENTO_SUPABASE.md`

@@ -37,11 +37,11 @@ orcamentista/
 │   └── orcamento-evis/
 │       └── SKILL.md (já existe)
 ├── templates/
-│   ├── TEMPLATE_ORCAMENTO_COMPLETO_V3.json (mover de docs/)
-│   ├── TEMPLATE_IMPORT_OBRA_V2.json (mover de docs/)
-│   └── TEMPLATE_IMPORTACAO_OBRA.json (mover de docs/)
+│   ├── TEMPLATE_ORCAMENTO_COMPLETO_V3.json
+│   ├── TEMPLATE_IMPORT_OBRA_V2.json
+│   └── TEMPLATE_IMPORTACAO_OBRA.json
 ├── docs/
-│   ├── PROMPT_PADRONIZACAO_ORCAMENTO.md (mover de docs/)
+│   ├── PROMPT_PADRONIZACAO_ORCAMENTO.md
 │   ├── SCHEMA_EVIS.md (criar - versão simplificada)
 │   └── REGRAS_DE_NEGOCIO.md (criar)
 └── exemplos/
@@ -61,7 +61,7 @@ orcamentista/
 - `docs/TEMPLATE_IMPORTACAO_OBRA.json`
 
 **Mover para `orcamentista/docs/`:**
-- `docs/PROMPT_PADRONIZACAO_ORCAMENTO.md`
+- `orcamentista/docs/PROMPT_PADRONIZACAO_ORCAMENTO.md`
 
 ### 2. Atualizar `orcamentista/README.md`
 

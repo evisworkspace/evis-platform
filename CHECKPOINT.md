@@ -55,7 +55,7 @@
    - Documentados problemas conhecidos (pós-seleção, estado vazio)
 
 9. ✅ **Sistema de skills de orçamentação**
-   - Criado `docs/PROMPT_PADRONIZACAO_ORCAMENTO.md` (referência)
+   - Criado `orcamentista/docs/PROMPT_PADRONIZACAO_ORCAMENTO.md` (referência)
    - Criado `PROMPT_CRIAR_SKILL_ORCAMENTO.md` ⭐ (orquestrado para GPT)
    - Objetivo: Skill autocontida para agente externo transformar orçamentos em JSON
 
@@ -332,7 +332,7 @@ cat RECOVERY.md
 **Arquivos de referência para o GPT consultar:**
 - `docs/SCHEMA_OFICIAL_V1.sql` (DDL oficial)
 - `docs/CONSOLIDACAO_FLUXO_EVIS.md` (fluxo completo)
-- `docs/PROMPT_PADRONIZACAO_ORCAMENTO.md` (regras de transformação)
+- `orcamentista/docs/PROMPT_PADRONIZACAO_ORCAMENTO.md` (regras de transformação)
 
 ---
 

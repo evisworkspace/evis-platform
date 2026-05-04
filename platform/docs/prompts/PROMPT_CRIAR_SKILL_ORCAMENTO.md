@@ -41,7 +41,7 @@ equipes_cadastro: cod, nome, funcao, telefone, email, pix, contato, status, ativ
 - Boas práticas
 
 ### 4. Prompt de Padronização (referência)
-**Arquivo:** `docs/PROMPT_PADRONIZACAO_ORCAMENTO.md`
+**Arquivo:** `orcamentista/docs/PROMPT_PADRONIZACAO_ORCAMENTO.md`
 - Regras de transformação
 - Categorias padrão
 - Códigos de equipes
@@ -325,7 +325,7 @@ Etapas:
 
 1. ✅ **Leia** `docs/SCHEMA_OFICIAL_V1.sql` completamente
 2. ✅ **Analise** `docs/CONSOLIDACAO_FLUXO_EVIS.md`
-3. ✅ **Consulte** `docs/PROMPT_PADRONIZACAO_ORCAMENTO.md`
+3. ✅ **Consulte** `orcamentista/docs/PROMPT_PADRONIZACAO_ORCAMENTO.md`
 4. ✅ **Valide** campos obrigatórios vs opcionais
 5. ✅ **Confirme** formatos de IDs e códigos
 
