@@ -422,14 +422,54 @@ Se o banco permitir `obra_id` nulo ou ausente:
 - `obra_id = opp_<id>` ausente em todo codigo desta fase.
 - Criacao automatica ao abrir aba: **nao ocorre**.
 
-#### 11.9.7 Proximo passo recomendado
+#### 11.9.7 Resultado da validacao no Supabase real (Fase 1C)
 
-Validar no banco real (Supabase) se `orcamentos.obra_id` possui constraint `NOT NULL`.
+Teste manual confirmou que `orcamentos.obra_id` possui constraint `NOT NULL` no banco real.
 
-- Se sim: criar migration minimal para tornar `obra_id` nullable em `orcamentos`.
-- Se nao: a criacao de orcamento por oportunidade ja esta funcional sem migration.
+Mensagem de UI exibida: "Criacao bloqueada: o banco de dados exige obra_id em orcamentos."
 
-Apos validacao, considerar a Fase 1D: adicionar itens ao orcamento criado (quantitativos manuais, sem pipeline de IA).
+O comportamento seguro implementado na Fase 1C funcionou corretamente: bloqueio detectado e reportado sem quebrar o app.
+
+#### 11.9.8 Proposta de migration criada (Fase 1D.3)
+
+> Status: PROPOSTA CRIADA — NAO APLICADA NO BANCO.  
+> Arquivo: `platform/docs/sql_proposals/ORCAMENTISTA_001_ORCAMENTOS_OBRA_ID_NULLABLE.sql`
+
+A migration proposta realiza **apenas** `ALTER TABLE public.orcamentos ALTER COLUMN obra_id DROP NOT NULL`.
+
+Decisoes:
+
+- Nao adicionar `orcamentos.opportunity_id` nesta migration.
+- Nao remover a coluna `obra_id`.
+- Manter FK de `obra_id` para `obras.id` (se existir).
+- Manter filtro legado: `useOrcamento.ts` continua usando `obra_id` para carregar orcamento da Obra.
+- Orçamentos de Oportunidade ficam com `obra_id = NULL`.
+- Orçamentos de Obra existentes continuam com `obra_id` preenchido.
+- `obra_id = opp_<id>` permanece proibido.
+- RLS/policies devem ser auditadas antes da execucao real (Secao 1.3 do arquivo SQL).
+
+Vinculos apos a migration:
+
+```text
+Por oportunidade (novo):
+  opportunities.orcamento_id → orcamentos.id (obra_id = NULL)
+                                → orcamento_itens.orcamento_id
+
+Por obra (legado, preservado):
+  orcamentos?obra_id=eq.{obraId} → orcamentos.obra_id (preenchido)
+                                  → orcamento_itens.orcamento_id
+```
+
+Checklist antes de aplicar no Supabase (ver arquivo SQL para detalhes):
+
+- [ ] Rodar pre-checks de coluna, constraints, policies e triggers.
+- [ ] Confirmar que nenhuma policy RLS usa obra_id como filtro obrigatorio.
+- [ ] Confirmar que nenhum trigger depende de obra_id NOT NULL.
+- [ ] Aplicar migration em ambiente de staging/preview antes de producao.
+- [ ] Executar validacao pos-migration.
+- [ ] Executar checklist de testes manuais completo.
+
+Apos aplicar a migration: testar fluxo de ponta a ponta da Fase 1C e 1D.
 
 ### 11.10 Decisao aplicada na Fase 1D
 
