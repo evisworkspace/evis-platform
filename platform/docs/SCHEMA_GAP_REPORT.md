@@ -340,3 +340,93 @@ Regras aplicadas:
 - o hook legado `useOrcamento.ts` continua responsavel pelo fluxo operacional de Obra por `obra_id`.
 
 Essa ponte e temporaria. A reconciliacao definitiva deve escolher entre adicionar `opportunity_id` em `orcamentos` ou criar uma camada canonica versionada para o Orçamentista IA.
+
+### 11.9 Decisao aplicada na Fase 1C
+
+> Status: implementado sem migration, sem alteracao de banco.  
+> Escopo: criacao explicita e vinculacao de orcamento a oportunidade via acao manual do usuario.
+
+#### 11.9.1 Auditoria de schema realizada
+
+Arquivos lidos para auditoria:
+
+- `src/types.ts`: campo `Orcamento.obra_id` e opcional (`obra_id?: string`). Nao e obrigatorio no contrato TypeScript. Campo `Opportunity.orcamento_id` existe e e `string | null`.
+- `src/hooks/useOrcamento.ts`: `useCreateOrcamento` aceita payload sem `obra_id` (campo opcional no tipo). Sem validacao de presenca de `obra_id` no codigo.
+- `src/hooks/useOportunidades.ts`: `useUpdateOportunidade` ja existe e permite PATCH em `opportunities` incluindo `orcamento_id`.
+- `platform/docs/SCHEMA_GAP_REPORT.md`: Secoes 11.6, 11.7 e 11.8 confirmam ponte via `opportunities.orcamento_id`.
+
+Conclusao da auditoria:
+
+- `orcamentos.obra_id` e **opcional no codigo** (`obra_id?: string`).
+- Nao ha validacao no hook que exija `obra_id` para criacao.
+- Se o banco real tiver constraint `NOT NULL` em `obra_id`, o erro sera capturado de forma controlada.
+- `opportunities.orcamento_id` existe e pode ser atualizado via PATCH sem migration.
+
+#### 11.9.2 Decisao de implementacao
+
+A criacao real de orcamento foi **implementada** como acao explicita do usuario, seguindo as regras:
+
+```text
+1. Nenhuma criacao automatica ao abrir a aba.
+2. Acao disparada apenas pelo botao "Criar orcamento da oportunidade".
+3. Verificacao de already_linked antes de qualquer escrita.
+4. Criacao de orcamento sem obra_id (campo omitido intencionalmente).
+5. Se banco bloquear por constraint NOT NULL em obra_id:
+   - nenhum obra_id falso e inventado;
+   - resultado retorna status 'blocked' com reason 'obra_id_required_in_db';
+   - UI exibe mensagem: "Criacao bloqueada: schema atual ainda exige ajuste".
+6. Se criacao for bem-sucedida:
+   - PATCH em opportunities.orcamento_id com o id do orcamento criado;
+   - cache invalidado (detail da oportunidade + query do orcamento).
+7. obra_id = opp_<id> proibido em todo o codigo desta fase.
+```
+
+#### 11.9.3 Tipo adicionado em types.ts
+
+```typescript
+export type CreateOpportunityBudgetResult =
+  | { status: 'already_linked'; orcamentoId: string; message: string }
+  | { status: 'created'; orcamento: Orcamento; message: string }
+  | { status: 'blocked'; reason: string; message: string }
+  | { status: 'error'; error: string; message: string };
+```
+
+#### 11.9.4 Pendencia condicional de schema
+
+Se o banco real tiver `orcamentos.obra_id NOT NULL`:
+
+- A criacao ficara bloqueada pelo guard de erro do hook.
+- A UI exibira mensagem clara de bloqueio.
+- A pendencia a ser resolvida e: tornar `orcamentos.obra_id` nullable via migration ou criar coluna alternativa `opportunity_id` em `orcamentos`.
+- Nenhuma migration foi criada nesta fase.
+
+Se o banco permitir `obra_id` nulo ou ausente:
+
+- A criacao real funcionara sem migration adicional.
+- O orcamento criado tera apenas: `nome`, `status = 'rascunho'`, `bdi = 0`, `total_bruto = 0`, `total_final = 0`.
+- Nenhum item de orcamento e criado nesta fase.
+
+#### 11.9.5 Arquivos alterados na Fase 1C
+
+- `src/hooks/useOportunidadeOrcamento.ts`: funcao `criarOrcamentoParaOportunidade` adicionada.
+- `src/pages/Oportunidade/OrcamentistaTab.tsx`: UI de estado vazio, botao explicito e feedback de bloqueio/erro/sucesso.
+- `src/types.ts`: tipo `CreateOpportunityBudgetResult` adicionado. Nenhum tipo legado quebrado.
+- `platform/docs/SCHEMA_GAP_REPORT.md`: esta secao 11.9.
+
+#### 11.9.6 Confirmacoes de conformidade
+
+- Nenhum arquivo proibido foi alterado (HITLReview, geminiService, AppContext, Diario, Servicos, Cronograma, Relatorios).
+- Nenhuma migration criada.
+- Banco/schema nao alterado.
+- Fluxo `/obras` e `/obras/:obraId` preservados intactos.
+- `obra_id = opp_<id>` ausente em todo codigo desta fase.
+- Criacao automatica ao abrir aba: **nao ocorre**.
+
+#### 11.9.7 Proximo passo recomendado
+
+Validar no banco real (Supabase) se `orcamentos.obra_id` possui constraint `NOT NULL`.
+
+- Se sim: criar migration minimal para tornar `obra_id` nullable em `orcamentos`.
+- Se nao: a criacao de orcamento por oportunidade ja esta funcional sem migration.
+
+Apos validacao, considerar a Fase 1D: adicionar itens ao orcamento criado (quantitativos manuais, sem pipeline de IA).

@@ -6,9 +6,9 @@ export type Servico = {
   nome: string;
   categoria: string;
   avanco_atual: number;
-  status: string; 
-  data_prevista?: string; 
-  data_conclusao?: string; 
+  status: string;
+  data_prevista?: string;
+  data_conclusao?: string;
   responsavel?: string;
   equipe?: string;
   unidade?: string;
@@ -103,7 +103,7 @@ export type RelatorioSemanal = {
     avanco_fisico: number;
     avanco_ponderado: number;
   };
-  cronograma: Servico[]; 
+  cronograma: Servico[];
   presenca: Record<string, string[]>;
   fotos: Foto[];
   notas_criticas: Nota[];
@@ -111,14 +111,14 @@ export type RelatorioSemanal = {
   data_fechamento: string;
 };
 
-export type PendingChangeData = 
-  | Servico 
-  | Pendencia 
-  | Equipe 
-  | Nota 
-  | Foto 
+export type PendingChangeData =
+  | Servico
+  | Pendencia
+  | Equipe
+  | Nota
+  | Foto
   | RelatorioSemanal
-  | { id: string, [key: string]: unknown };
+  | { id: string; [key: string]: unknown };
 
 export type PendingChange = {
   table: string;
@@ -173,6 +173,13 @@ export type Orcamento = {
   created_at?: string;
   updated_at?: string;
 };
+
+// Resultado controlado da criação/vinculação de orçamento por oportunidade (Fase 1C)
+export type CreateOpportunityBudgetResult =
+  | { status: 'already_linked'; orcamentoId: string; message: string }
+  | { status: 'created'; orcamento: Orcamento; message: string }
+  | { status: 'blocked'; reason: string; message: string }
+  | { status: 'error'; error: string; message: string };
 
 export type OrcamentoItem = {
   id: string;
