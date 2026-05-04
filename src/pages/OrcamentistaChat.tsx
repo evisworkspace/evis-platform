@@ -8,51 +8,14 @@ import {
 import { SidebarEtapas, type Etapa } from './Orcamentista/SidebarEtapas';
 import { DashboardDireita } from './Orcamentista/AuditDashboard';
 import { MarkdownRenderer } from './Orcamentista/MarkdownRenderer';
+import type { Anexo, AuditLog, HitlPendente, Mensagem, PreviewItem, ProgressoRuntime } from '../types';
 import '../styles/orcamentista.css';
 
-// ─── Tipos ─────────────────────────────────────────────────────────────────────
-interface Anexo {
-  id: string;
-  nome: string;
-  mimeType: string;
-  base64?: string;
-  origem: 'workspace' | 'inline';
-  relativePath?: string;
-}
-interface Mensagem {
-  id: string;
-  role: 'user' | 'assistant' | 'hitl';
-  conteudo: string;
-  timestamp: Date;
-  anexos?: { nome: string; mimeType: string }[];
-  hitlData?: HitlPendente;
-}
-interface AuditLog { id: string; timestamp: Date; status: 'info' | 'success' | 'warning' | 'error'; mensagem: string; }
-interface HitlPendente {
-  roteiro: Array<{ id: number; etapa: string; agente_responsavel: string; hitl_obrigatorio: boolean }>;
-  scoreConsistencia: number;
-}
-
-interface PreviewItem {
-  codigo?: string;
-  descricao: string;
-  unidade: string;
-  quantidade: number;
-  valor_unitario: number;
-  valor_total: number;
-  categoria?: string;
-  origem?: string;
-  confianca?: number;
-  observacoes?: string;
-}
-
-interface ProgressoRuntime {
-  faseAtual: string;
-  agenteAtual: string;
-  origemExecucao: string;
-  leituraMultimodal: boolean;
-  consolidadoDisponivel: boolean;
-}
+type OrcamentistaChatProps = {
+  opportunityId?: string;
+  workspaceId?: string;
+  backTo?: string;
+};
 
 const ETAPAS_BASE: Etapa[] = [
   { id: 0, chave: 'briefing', titulo: 'Briefing e Inventário', descricao: 'Workspace e anexos detectados', status: 'pendente' },
@@ -263,10 +226,14 @@ function HitlCard({
 }
 
 // ─── Componente Principal ──────────────────────────────────────────────────────
-export default function OrcamentistaChat() {
+export default function OrcamentistaChat({
+  opportunityId: propOpportunityId,
+  workspaceId: propWorkspaceId,
+  backTo = '/dashboard',
+}: OrcamentistaChatProps = {}) {
   const queryContext = getOrcamentistaQueryContext();
-  const opportunityId = queryContext.opportunityId;
-  const linkedWorkspaceId = queryContext.workspaceId;
+  const opportunityId = propOpportunityId || queryContext.opportunityId;
+  const linkedWorkspaceId = propWorkspaceId || queryContext.workspaceId;
   const isOpportunityLinked = Boolean(opportunityId && linkedWorkspaceId);
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
   const [input, setInput] = useState('');
@@ -705,8 +672,8 @@ export default function OrcamentistaChat() {
   return (
     <div className="oc-root">
       <header className="oc-header">
-        <button className="oc-btn-voltar" onClick={() => window.location.href = '/dashboard'}>
-          <ArrowLeft size={16} /><span>HUB</span>
+        <button className="oc-btn-voltar" onClick={() => window.location.href = backTo}>
+          <ArrowLeft size={16} /><span>{isOpportunityLinked ? 'Oportunidade' : 'HUB'}</span>
         </button>
         <div className="oc-header-center">
           <FileText size={16} className="oc-header-icon" />

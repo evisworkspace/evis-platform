@@ -21,9 +21,11 @@ import Login from './pages/Login';
 import PortalCliente from './pages/PortalCliente';
 import DashboardPage from './pages/DashboardPage';
 import OportunidadeDetalhePage from './pages/OportunidadeDetalhePage';
+import OrcamentistaTab from './pages/Oportunidade/OrcamentistaTab';
 import OportunidadesPage from './pages/OportunidadesPage';
 import OrcamentistaChat from './pages/OrcamentistaChat';
 import PropostaPage from './pages/PropostaPage';
+import GlobalLayout from './components/GlobalLayout';
 import { useAuth } from './hooks/useAuth';
 import { Loader2 } from 'lucide-react';
 import { useSupabaseQuery } from './hooks/useSupabaseQuery';
@@ -526,12 +528,18 @@ export default function App() {
   return (
     <AppProvider>
       <Routes>
-        <Route path="/" element={<DashboardPage />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/oportunidades" element={<OportunidadesPage />} />
+        {/* Rotas com sidebar global */}
+        <Route element={<GlobalLayout />}>
+          <Route path="/" element={<DashboardPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/oportunidades" element={<OportunidadesPage />} />
+          <Route path="/propostas" element={<PropostaPage />} />
+        </Route>
+
+        {/* Rotas com layout próprio (sem sidebar global) */}
         <Route path="/oportunidades/:id" element={<OportunidadeDetalhePage />} />
+        <Route path="/oportunidades/:id/orcamentista" element={<OrcamentistaTab />} />
         <Route path="/orcamentista" element={<OrcamentistaChat />} />
-        <Route path="/propostas" element={<PropostaPage />} />
         <Route path="/obras" element={<Main />} />
         <Route path="/obras/:obraId" element={<Main />} />
       </Routes>

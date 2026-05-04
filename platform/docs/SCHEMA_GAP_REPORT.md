@@ -178,3 +178,142 @@ O primeiro patch funcional, apos esta documentacao, deve ser pequeno:
 O modulo Oportunidades e o proximo passo correto para transformar o EVIS em um SaaS mais competitivo, mas ele deve entrar como origem do ciclo de vida comercial, nao como extensao improvisada de `obras`.
 
 A prioridade imediata e alinhar o contrato de dados: schema real do Supabase, schema oficial e codigo precisam apontar para as mesmas entidades antes da implementacao.
+
+---
+
+## 11. Gap Especifico - Orcamentista IA Fase 1A
+
+> Status: orientacao tecnica, sem SQL, sem migration e sem alteracao de banco.  
+> Escopo: fundacao segura para encaixar o Orçamentista IA dentro de Oportunidade.
+
+### 11.1 Modelo canonico esperado
+
+Os documentos em `orcamentista/docs/` definem que o Orçamentista IA pertence a fase de pre-obra:
+
+```text
+Oportunidade -> Orçamentista IA -> Orcamento -> Proposta -> Obra
+```
+
+O modelo canonico recomenda entidades versionadas e rastreaveis:
+
+```text
+orcamentos
+orcamento_versoes
+orcamento_arquivos
+orcamento_leituras
+orcamento_agent_runs
+orcamento_ambientes
+orcamento_servicos
+orcamento_quantitativos
+orcamento_custos
+orcamento_bdi_margens
+orcamento_equipes_previstas
+orcamento_cronograma_inicial
+orcamento_riscos
+orcamento_premissas
+orcamento_exclusoes
+orcamento_hitl_validacoes
+orcamento_hitl_auditoria
+orcamento_auditorias
+orcamento_propostas_base
+```
+
+Essas entidades ainda nao devem ser criadas nesta fase.
+
+### 11.2 O que existe hoje
+
+No codigo atual ja existem ou sao assumidos:
+
+```text
+opportunities
+opportunity_events
+opportunity_files
+propostas
+orcamentos
+orcamento_itens
+obras
+```
+
+Uso atual observado:
+
+- `opportunities.orcamento_id` referencia o orcamento ativo ou principal da oportunidade.
+- `propostas.opportunity_id` e `propostas.orcamento_id` vinculam a proposta ao contexto comercial.
+- `orcamentos` e `orcamento_itens` sao usados pelo editor legado de orcamento.
+- `orcamentos` ainda esta acoplado a `obra_id` no hook legado `useOrcamento.ts`.
+- `orcamentista_workspace_id` funciona como identificador operacional do workspace do Orçamentista, nao como entidade relacional completa.
+
+### 11.3 O que falta
+
+Faltam campos ou entidades para representar corretamente o Orçamentista IA canonico:
+
+- vinculo relacional direto `orcamentos.oportunidade_id` ou equivalente formal;
+- versionamento de orcamento;
+- arquivos de orcamento vinculados ao orcamento e versao;
+- leituras tecnicas rastreaveis;
+- execucoes de agentes;
+- ambientes previstos;
+- servicos previstos com origem, confianca e status canonico;
+- quantitativos com origem;
+- custos com fonte e confianca;
+- BDI/margem versionados;
+- riscos, premissas e exclusoes;
+- HITL do Orçamentista separado do HITL do Diario de Obra;
+- auditorias tecnicas de bloqueio;
+- base de proposta associada a versao especifica do orcamento.
+
+### 11.4 O que depende de migration futura
+
+Depende de migration futura, apos validacao explicita:
+
+- adicionar `opportunity_id`/`oportunidade_id` em `orcamentos`, se a estrategia escolhida for vinculo direto;
+- criar tabelas de versao, arquivos, leituras, agentes, HITL, riscos e proposta-base;
+- adicionar indices por `opportunity_id`, `orcamento_id` e `versao_id`;
+- criar constraints para status criticos;
+- ajustar RLS para separar contexto comercial de contexto de obra;
+- formalizar migracao de orcamento validado para planejamento da obra apos proposta aprovada.
+
+Nenhuma dessas alteracoes foi aplicada na Fase 1A.
+
+### 11.5 Risco de usar `obra_id = opp_<id>`
+
+Usar `obra_id = opp_<uuid>` como ponte para orcamento de oportunidade e arriscado porque:
+
+- mistura pre-obra com execucao;
+- cria identificador que parece obra, mas nao existe em `obras`;
+- pode quebrar foreign keys quando o schema for endurecido;
+- pode conflitar com politicas RLS baseadas em `obra_id`;
+- induz telas de Obra a abrirem contexto comercial;
+- viola a navegacao canonica do EVIS, que exige `/oportunidades/:id/orcamentista`.
+
+Esse padrao deve ser tratado apenas como legado transitorio encontrado no codigo atual, nao como arquitetura da Fase 1.
+
+### 11.6 Recomendacao provisoria sem migration
+
+A fonte provisoria mais segura para orcamento pre-obra, sem alterar banco, e:
+
+```text
+opportunities.orcamento_id
+  -> orcamentos.id
+    -> orcamento_itens.orcamento_id
+```
+
+Regras provisoriais:
+
+- o contexto de navegacao deve ser sempre a oportunidade;
+- o workspace do Orçamentista pode continuar como staging/preview operacional;
+- JSON do workspace nao deve ser fonte oficial;
+- proposta deve nascer do `orcamento_id` vinculado a oportunidade;
+- conversao para obra deve continuar explicita e posterior a proposta aprovada;
+- o hook legado `useOrcamento.ts` deve permanecer intocado na Fase 1A para nao quebrar `/obras`.
+
+### 11.7 Proxima reconciliacao recomendada
+
+Na Fase 1B, antes de qualquer migration, decidir:
+
+```text
+A) manter opportunities.orcamento_id como vinculo mestre provisoriamente; ou
+B) adicionar opportunity_id em orcamentos e migrar gradualmente o hook de orcamento; ou
+C) criar nova camada feature/orcamentista com adaptador para o schema legado.
+```
+
+A opcao mais segura para evolucao incremental e B, desde que seja feita com migration revisada e mantendo compatibilidade com o orcamento legado da Obra.

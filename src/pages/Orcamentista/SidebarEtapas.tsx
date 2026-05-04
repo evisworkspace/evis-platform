@@ -1,13 +1,8 @@
 import React from 'react';
 import { Zap, CheckCircle2, Clock, Circle, AlertTriangle, PauseCircle, XCircle } from 'lucide-react';
+import type { Etapa } from '../../types';
 
-export interface Etapa {
-  id: number;
-  chave: string;
-  titulo: string;
-  descricao: string;
-  status: 'pendente' | 'em_andamento' | 'concluida' | 'aguardando_hitl' | 'bloqueada' | 'erro';
-}
+export type { Etapa };
 
 export function SidebarEtapas({ etapas, etapaAtual }: { etapas: Etapa[]; etapaAtual: number }) {
   return (

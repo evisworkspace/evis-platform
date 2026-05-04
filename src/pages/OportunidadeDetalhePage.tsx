@@ -18,7 +18,7 @@ import {
   useOpportunityEvents,
   useUpdateOportunidade,
 } from '../hooks/useOportunidades';
-import { calcularTotais, useCreateOrcamento } from '../hooks/useOrcamento';
+import { calcularTotais } from '../hooks/useOrcamento';
 import { useCreateProposta } from '../hooks/usePropostas';
 import { sbFetch } from '../lib/api';
 import { Orcamento, OrcamentoItem } from '../types';
@@ -90,7 +90,6 @@ export default function OportunidadeDetalhePage() {
   const events = useOpportunityEvents(id, config);
   const createEvent = useCreateOpportunityEvent(config);
   const updateOportunidade = useUpdateOportunidade(config);
-  const createOrcamento = useCreateOrcamento(config);
   const createProposta = useCreateProposta(config);
 
   async function handleAddEvent(event: FormEvent) {
@@ -141,9 +140,7 @@ export default function OportunidadeDetalhePage() {
         });
       }
 
-      navigate(
-        `/orcamentista?opportunity_id=${encodeURIComponent(item.id)}&workspace_id=${encodeURIComponent(workspaceId)}`
-      );
+      navigate(`/oportunidades/${item.id}/orcamentista`);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao abrir Orçamentista.';
       toast(message, 'error');
@@ -153,37 +150,27 @@ export default function OportunidadeDetalhePage() {
   async function handleCriarOrcamento() {
     if (!item) return;
 
-    // Ponte temporária: obra_id usa convenção "opp_<uuid>" até reconciliação formal
-    // com opportunity_id no módulo de Orçamento (ver SCHEMA_GAP_REPORT.md)
     const workspaceId = item.orcamentista_workspace_id || `opp_${item.id}`;
     const needsWorkspace = !item.orcamentista_workspace_id;
 
     try {
-      const orcamento = await createOrcamento.mutateAsync({
-        obra_id: workspaceId,
-        nome: item.titulo,
-        cliente: item.cliente_nome_snapshot || item.titulo,
-        status: 'rascunho',
-        bdi: 25,
-        total_bruto: 0,
-        total_final: 0,
-      });
-
-      const patch: Record<string, string> = { orcamento_id: orcamento.id };
-      if (needsWorkspace) patch.orcamentista_workspace_id = workspaceId;
-
-      await updateOportunidade.mutateAsync({ id: item.id, patch });
+      if (needsWorkspace) {
+        await updateOportunidade.mutateAsync({
+          id: item.id,
+          patch: { orcamentista_workspace_id: workspaceId },
+        });
+      }
 
       await createEvent.mutateAsync({
         opportunity_id: item.id,
-        tipo: 'orcamento_criado',
-        descricao: `Orçamento "${item.titulo}" criado e vinculado.`,
-        metadata: { orcamento_id: orcamento.id, workspace_id: workspaceId },
+        tipo: 'orcamento_iniciado',
+        descricao: 'Orçamento iniciado no contexto do Orçamentista IA da oportunidade.',
+        metadata: { workspace_id: workspaceId },
       });
 
-      toast('Orçamento criado e vinculado.', 'success');
+      navigate(`/oportunidades/${item.id}/orcamentista`);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erro ao criar orçamento.';
+      const message = err instanceof Error ? err.message : 'Erro ao iniciar orçamento.';
       toast(message, 'error');
     }
   }
@@ -386,7 +373,7 @@ export default function OportunidadeDetalhePage() {
 
   const item = oportunidade.data;
   const isOpeningOrcamentista = updateOportunidade.isPending || createEvent.isPending;
-  const isCreatingOrcamento = createOrcamento.isPending || updateOportunidade.isPending;
+  const isCreatingOrcamento = updateOportunidade.isPending || createEvent.isPending;
   const isGeneratingProposta = createProposta.isPending || updateOportunidade.isPending;
 
   return (
@@ -456,7 +443,7 @@ export default function OportunidadeDetalhePage() {
 
                 {item.orcamento_id ? (
                   <Link
-                    to={`/obras/${item.orcamentista_workspace_id || `opp_${item.id}`}?tab=orcamento&orcamento_id=${item.orcamento_id}`}
+                    to={`/oportunidades/${item.id}/orcamentista`}
                     className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-green/30 bg-s1 px-4 py-3 text-[11px] font-extrabold uppercase tracking-widest text-brand-green transition-colors hover:bg-s2"
                   >
                     <ClipboardList className="h-4 w-4" />
