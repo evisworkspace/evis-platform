@@ -1,12 +1,12 @@
 import { useParams } from 'react-router-dom';
 import OrcamentistaChat from '../OrcamentistaChat';
 import { useAppContext } from '../../AppContext';
-import { useOportunidade } from '../../hooks/useOportunidades';
+import { useOportunidadeOrcamento } from '../../hooks/useOportunidadeOrcamento';
 
 export default function OrcamentistaTab() {
   const { id = '' } = useParams();
   const { config } = useAppContext();
-  const oportunidade = useOportunidade(id, config);
+  const oportunidadeOrcamento = useOportunidadeOrcamento(id, config);
 
   if (!id) {
     return (
@@ -18,31 +18,27 @@ export default function OrcamentistaTab() {
     );
   }
 
-  if (oportunidade.isLoading) {
+  if (oportunidadeOrcamento.isLoading) {
     return (
       <main className="min-h-screen bg-bg p-8 text-t1">
         <div className="rounded-lg border border-b1 bg-s1 p-6 text-sm text-t3">
-          Carregando oportunidade para abrir o Orçamentista IA.
+          Carregando oportunidade e orçamento para abrir o Orçamentista IA.
         </div>
       </main>
     );
   }
 
-  if (oportunidade.error) {
-    const message = oportunidade.error instanceof Error
-      ? oportunidade.error.message
-      : 'Erro ao carregar oportunidade.';
-
+  if (oportunidadeOrcamento.error) {
     return (
       <main className="min-h-screen bg-bg p-8 text-t1">
         <div className="rounded-lg border border-brand-red/30 bg-brand-red/10 p-6 text-sm text-brand-red">
-          {message}
+          {oportunidadeOrcamento.error.message}
         </div>
       </main>
     );
   }
 
-  if (!oportunidade.data) {
+  if (!oportunidadeOrcamento.opportunity) {
     return (
       <main className="min-h-screen bg-bg p-8 text-t1">
         <div className="rounded-lg border border-b1 bg-s1 p-6 text-sm text-t3">
@@ -52,13 +48,21 @@ export default function OrcamentistaTab() {
     );
   }
 
-  const workspaceId = oportunidade.data.orcamentista_workspace_id || `opp_${id}`;
+  const workspaceId = oportunidadeOrcamento.opportunity.orcamentista_workspace_id || `opp_${id}`;
+  const statusText = oportunidadeOrcamento.hasOrcamento
+    ? `Orçamento oficial vinculado: ${oportunidadeOrcamento.orcamento?.nome ?? oportunidadeOrcamento.orcamentoId}. ${oportunidadeOrcamento.itens.length} item(ns) carregado(s).`
+    : 'Nenhum orçamento oficial vinculado ainda. A criação automática permanece desabilitada nesta fase.';
 
   return (
-    <OrcamentistaChat
-      opportunityId={id}
-      workspaceId={workspaceId}
-      backTo={`/oportunidades/${id}`}
-    />
+    <div className="min-h-screen bg-bg text-t1">
+      <div className="border-b border-b1 bg-s1 px-6 py-3 text-xs text-t3">
+        {statusText}
+      </div>
+      <OrcamentistaChat
+        opportunityId={id}
+        workspaceId={workspaceId}
+        backTo={`/oportunidades/${id}`}
+      />
+    </div>
   );
 }

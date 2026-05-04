@@ -71,7 +71,9 @@ export function useCreateOrcamento(config: Config) {
       return Array.isArray(data) ? data[0] : data;
     },
     onSuccess: (_, vars) => {
-      qc.invalidateQueries({ queryKey: orcamentoKeys.all(vars.obra_id) });
+      if (vars.obra_id) {
+        qc.invalidateQueries({ queryKey: orcamentoKeys.all(vars.obra_id) });
+      }
     },
   });
 }

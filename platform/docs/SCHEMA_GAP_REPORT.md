@@ -317,3 +317,26 @@ C) criar nova camada feature/orcamentista com adaptador para o schema legado.
 ```
 
 A opcao mais segura para evolucao incremental e B, desde que seja feita com migration revisada e mantendo compatibilidade com o orcamento legado da Obra.
+
+### 11.8 Decisao provisoria aplicada na Fase 1B
+
+A Fase 1B adotou a alternativa A como ponte segura sem migration:
+
+```text
+opportunities.orcamento_id
+  -> orcamentos.id
+    -> orcamento_itens.orcamento_id
+```
+
+Essa decisao permite que a rota contextual do Orçamentista consulte o orcamento oficial da oportunidade sem criar `orcamentos.opportunity_id` ainda.
+
+Regras aplicadas:
+
+- o adaptador de oportunidade deve ler `opportunities.orcamento_id`;
+- se `orcamento_id` existir, o adaptador carrega `orcamentos.id` e seus `orcamento_itens`;
+- se `orcamento_id` nao existir, o adaptador retorna estado vazio seguro, sem criacao automatica;
+- `obra_id = opp_<id>` fica proibido como vinculo de orcamento por oportunidade;
+- `orcamentos.opportunity_id` continua sendo recomendacao futura dependente de migration revisada;
+- o hook legado `useOrcamento.ts` continua responsavel pelo fluxo operacional de Obra por `obra_id`.
+
+Essa ponte e temporaria. A reconciliacao definitiva deve escolher entre adicionar `opportunity_id` em `orcamentos` ou criar uma camada canonica versionada para o Orçamentista IA.

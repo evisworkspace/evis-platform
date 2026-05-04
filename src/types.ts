@@ -162,7 +162,7 @@ export type ServicoStatus = 'nao_iniciado' | 'em_andamento' | 'concluido' | 'blo
 
 export type Orcamento = {
   id: string;
-  obra_id: string;
+  obra_id?: string;
   nome: string;
   cliente?: string;
   status: OrcamentoStatus;
