@@ -2716,3 +2716,158 @@ mock + utils
 ```
 
 Somente depois da 3D-B considerar painel ou integracao visual em fase separada.
+
+---
+
+### 11.26 Fase 3D-B: Reading HITL Context Mock + Utils
+
+> Status: implementado somente como mock e utilitarios puros.
+> Escopo: sem painel, sem UI, sem integracao em `OrcamentistaTab.tsx`, sem banco e sem IA real.
+
+#### 11.26.1 Objetivo aplicado
+
+A Fase 3D-B criou a simulacao de uma sessao de leitura guiada com HITL por etapa para uma obra residencial do zero.
+
+Cenario simulado:
+
+- arquitetonico/implantacao recebido parcialmente;
+- fase atual em sondagem/topografia;
+- sondagem pendente;
+- prancha de fundacao recebida fora de ordem;
+- leitura permitida, mas contexto marcado como incompleto;
+- HITLs gerados por ambiguidades e documentos ausentes;
+- decisoes humanas simuladas;
+- contexto validado, pendente e bloqueado separado;
+- sistema solicita os proximos documentos corretos.
+
+#### 11.26.2 Mock criado
+
+Arquivo criado:
+
+- `src/lib/orcamentista/readingHitlContextMock.ts`
+
+Exports principais:
+
+```text
+MOCK_PROJECT_READING_SESSION
+MOCK_READING_HITL_QUESTIONS
+MOCK_READING_VALIDATION_DECISIONS
+MOCK_VALIDATED_PROJECT_CONTEXT
+MOCK_PENDING_PROJECT_CONTEXT
+MOCK_BLOCKED_PROJECT_CONTEXT
+```
+
+#### 11.26.3 HITLs simulados
+
+HITLs de leitura criados:
+
+- quantidade de estacas: 21 unidades vs possivel ambiguidade textual;
+- C25/R25 ou nomenclatura da estaca;
+- P6 indicado como `nasce`;
+- P23 aparecendo em corte, mas nao consolidado na tabela principal;
+- sondagem ausente;
+- relatorio de esforcos da fundacao ausente;
+- fck/concreto por elemento divergente entre nota geral e tabela.
+
+#### 11.26.4 Decisoes humanas simuladas
+
+Decisoes mockadas:
+
+- validar 21 estacas;
+- validar C25 como estaca Ø25 cm;
+- manter P6 como pendente ate prancha de superestrutura;
+- marcar sondagem/topografia como documento pendente obrigatorio;
+- manter fundacao bloqueada para consolidacao e solicitar relatorio de esforcos.
+
+#### 11.26.5 Contextos separados
+
+Contexto validado parcialmente:
+
+- tipo de obra residencial;
+- endereco mockado;
+- arquitetonico/implantacao parcial como base de storytelling;
+- fundacao com 21 estacas C25/Ø25 cm validada somente em quantidade/diametro;
+- profundidade real das estacas nao validada.
+
+Contexto pendente:
+
+- sondagem/topografia;
+- relatorio de esforcos;
+- profundidade real das estacas;
+- P6 como `nasce`;
+- P23 em corte fora da tabela principal;
+- confirmacao de fck por elemento.
+
+Contexto bloqueado:
+
+- consolidacao da fundacao;
+- quantitativos finais de fundacao;
+- uso da fundacao para orçamento executivo;
+- inicio de custos finais.
+
+#### 11.26.6 Utilitarios criados
+
+Arquivo criado:
+
+- `src/lib/orcamentista/readingHitlContextUtils.ts`
+
+Funcoes puras:
+
+```text
+summarizeReadingSession()
+groupHitlQuestionsByPhase()
+getOpenReadingHitls()
+getBlockingReadingHitls()
+applyReadingValidationDecision()
+buildValidatedContextFromDecisions()
+getContextPropagationStatus()
+canUseContextInNextPhase()
+getNextDocumentRequests()
+buildTechnicalStorytellingSummary()
+```
+
+Regras aplicadas:
+
+- funcoes nao chamam IA/API/banco;
+- funcoes nao usam `fetch`, Supabase ou axios;
+- `applyReadingValidationDecision()` retorna nova sessao sem mutar entrada;
+- contexto bloqueado impede quantitativos e custos;
+- contexto pendente nao alimenta quantitativos finais;
+- decisoes humanas podem mover informacao para validado, pendente ou bloqueado conforme tipo.
+
+#### 11.26.7 Ajuste pequeno em tipos
+
+Arquivo alterado:
+
+- `src/types.ts`
+
+Ajuste:
+
+```typescript
+question_id?: string
+```
+
+Foi adicionado em `OrcamentistaReadingValidationDecision` para vincular uma decisao humana a um HITL especifico sem depender de convencao textual.
+
+#### 11.26.8 Confirmacoes de conformidade
+
+- Nenhum painel criado.
+- Nenhuma UI alterada.
+- `OrcamentistaTab.tsx` nao foi alterado.
+- Nenhum arquivo de Obra/Diario foi alterado.
+- Nenhuma migration criada.
+- Banco/schema nao alterado.
+- Nenhuma IA real chamada.
+- Nenhum PDF real processado.
+- Nenhum OCR executado.
+- Nenhum Supabase, `fetch` ou axios usado.
+
+#### 11.26.9 Proximo passo recomendado
+
+Executar a subfase 3D-C:
+
+```text
+painel + integracao visual
+```
+
+Essa proxima etapa deve consumir o mock e os utilitarios da 3D-B sem gravar no banco e sem consolidar orçamento oficial.

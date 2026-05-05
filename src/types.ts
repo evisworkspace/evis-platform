@@ -1959,6 +1959,7 @@ export type OrcamentistaReadingHitlQuestion = {
 
 export type OrcamentistaReadingValidationDecision = {
   id: string;
+  question_id?: string;
   phase: OrcamentistaReadingPhase;
   decision_type:
     | 'approve_reading'
