@@ -8,6 +8,8 @@ import {
   getManualIngestionBlockingReasons,
   getManualIngestionStatusLabel,
   getManualReaderDispatchDecision,
+  getManualReaderTechnicalWarnings,
+  getManualReaderTraceabilityWarnings,
   isValidJsonString,
   summarizeManualReaderEvaluation,
 } from '../../lib/orcamentista/manualReaderIngestionUtils';
@@ -62,6 +64,8 @@ export default function OrcamentistaRealReaderSandboxPanel() {
   const manualHitls = manualResult ? extractManualReaderHitlRequests(manualResult) : [];
   const manualCriticalDimensions = manualResult ? extractManualReaderCriticalDimensions(manualResult) : [];
   const manualBlockingReasons = manualResult ? getManualIngestionBlockingReasons(manualResult) : [];
+  const manualTraceabilityWarnings = manualResult ? getManualReaderTraceabilityWarnings(manualResult) : [];
+  const manualTechnicalWarnings = manualResult ? getManualReaderTechnicalWarnings(manualResult) : [];
   const manualDispatch = manualResult ? getManualReaderDispatchDecision(manualResult) : null;
   const manualNormalized = manualResult?.normalized_output;
 
@@ -338,11 +342,23 @@ export default function OrcamentistaRealReaderSandboxPanel() {
               </article>
             </div>
 
-            <ManualList
-              title="Bloqueios e avisos"
-              empty="Nenhum bloqueio ativo."
-              items={[...manualBlockingReasons, ...manualResult.warnings]}
-            />
+            <div className="grid gap-3 lg:grid-cols-3">
+              <ManualList
+                title="Bloqueios principais"
+                empty="Nenhum bloqueio principal ativo."
+                items={manualBlockingReasons}
+              />
+              <ManualList
+                title="Avisos agrupados de rastreabilidade"
+                empty="Nenhum aviso de rastreabilidade."
+                items={manualTraceabilityWarnings}
+              />
+              <ManualList
+                title="Warnings técnicos detalhados"
+                empty="Nenhum warning técnico adicional."
+                items={manualTechnicalWarnings}
+              />
+            </div>
           </div>
         )}
 

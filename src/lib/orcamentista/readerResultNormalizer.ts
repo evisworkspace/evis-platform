@@ -63,6 +63,15 @@ function asString(value: unknown, fallback: string) {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;
 }
 
+function asStringArray(value: unknown): string[] {
+  if (typeof value === 'string' && value.trim()) return [value.trim()];
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .filter((item): item is string => typeof item === 'string' && Boolean(item.trim()))
+    .map((item) => item.trim());
+}
+
 function asNumber(value: unknown, fallback: number) {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   if (typeof value === 'string' && value.trim() && Number.isFinite(Number(value.replace(',', '.')))) {
@@ -95,6 +104,28 @@ function normalizeSourceQuality(
 
 function normalizeTags(tags: string[] | undefined) {
   return Array.isArray(tags) ? tags.filter((tag) => typeof tag === 'string' && tag.trim()) : [];
+}
+
+function readStringField(source: unknown, keys: string[]) {
+  if (!isRecord(source)) return '';
+
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+
+  return '';
+}
+
+function readStringArrayField(source: unknown, keys: string[]) {
+  if (!isRecord(source)) return [];
+
+  for (const key of keys) {
+    const values = asStringArray(source[key]);
+    if (values.length > 0) return values;
+  }
+
+  return [];
 }
 
 export function coerceReaderConfidenceScores(score: unknown, fallback = 0): number {
@@ -152,7 +183,15 @@ function normalizeInferredItem(
   index: number,
   confidenceCap: number
 ): OrcamentistaReaderInferredItem {
-  const sourceReferences = item.source_references ?? (item.source_reference ? [item.source_reference] : []);
+  const supportingEvidence = readStringArrayField(item, ['evidence_that_supports', 'evidence', 'textual_evidence']);
+  const explicitSourceReferences = normalizeTags(item.source_references);
+  const singularSourceReference = asString(item.source_reference, '');
+  const sourceReferences =
+    explicitSourceReferences.length > 0
+      ? explicitSourceReferences
+      : singularSourceReference
+        ? [singularSourceReference]
+        : supportingEvidence;
 
   return {
     id: asString(item.id, `inferred-${index + 1}`),
@@ -175,11 +214,17 @@ function normalizeMissingInfo(item: OrcamentistaReaderMissingInfo, index: number
 }
 
 function normalizeRisk(item: OrcamentistaRawReaderRisk, index: number): Required<OrcamentistaRawReaderRisk> {
+  const sourceReference = asString(item.source_reference, '');
+  const sourceReferenceStatus = sourceReference ? 'specific' : 'global_page_risk';
+
   return {
     id: asString(item.id, `risk-${index + 1}`),
     description: asString(item.description, 'Risco nao descrito.'),
     severity: normalizeSeverity(item.severity),
-    source_reference: asString(item.source_reference, ''),
+    source_reference: sourceReference,
+    source_reference_status: sourceReferenceStatus,
+  } as Required<OrcamentistaRawReaderRisk> & {
+    source_reference_status: 'specific' | 'global_page_risk';
   };
 }
 
@@ -187,12 +232,26 @@ function normalizeHitlRequest(
   item: OrcamentistaRawReaderHitlRequest,
   index: number
 ): Required<OrcamentistaRawReaderHitlRequest> {
+  const sourceReference = asString(item.source_reference, '');
+  const requiredDecision = readStringField(item, ['required_decision', 'decision_required']);
+  const hasReaderReason = Boolean(asString(item.reason, '') && requiredDecision);
+  const sourceReferenceStatus = sourceReference
+    ? 'specific'
+    : hasReaderReason
+      ? 'derived_from_reader_reason'
+      : 'missing';
+
   return {
     id: asString(item.id, `hitl-${index + 1}`),
-    question: asString(item.question, 'Confirmar informacao tecnica antes de avancar.'),
+    question: asString(item.question, requiredDecision || 'Confirmar informacao tecnica antes de avancar.'),
     reason: asString(item.reason, 'Reader sinalizou incerteza ou falta de fonte suficiente.'),
     severity: normalizeSeverity(item.severity),
-    source_reference: asString(item.source_reference, ''),
+    source_reference: sourceReference,
+    source_reference_status: sourceReferenceStatus,
+    required_decision: requiredDecision,
+  } as Required<OrcamentistaRawReaderHitlRequest> & {
+    source_reference_status: 'specific' | 'derived_from_reader_reason' | 'missing';
+    required_decision: string;
   };
 }
 
@@ -203,6 +262,8 @@ function normalizeCriticalDimension(
 ): OrcamentistaReaderCriticalDimension | null {
   const value = asNumber(dimension.value, Number.NaN);
   if (!Number.isFinite(value)) return null;
+  const sourceReference = readStringField(dimension, ['source_reference', 'evidence', 'evidence_text', 'textual_evidence']);
+  const sourceText = readStringField(dimension, ['source_text', 'evidence_text', 'textual_evidence', 'evidence']);
 
   return {
     id: asString(dimension.id, `critical-dimension-${index + 1}`),
@@ -210,8 +271,8 @@ function normalizeCriticalDimension(
     label: asString(dimension.label, `Dimensao critica ${index + 1}`),
     value,
     unit: asString(dimension.unit, 'm'),
-    source_text: asString(dimension.source_text, ''),
-    source_reference: asString(dimension.source_reference, ''),
+    source_text: sourceText,
+    source_reference: sourceReference,
     confidence_score: Math.min(coerceReaderConfidenceScores(dimension.confidence_score, 0.5), confidenceCap),
     context_tags: normalizeTags(dimension.context_tags),
     pile_diameter_cm: dimension.pile_diameter_cm,
@@ -227,6 +288,9 @@ export function flagMissingSourceReferences(output: Pick<
   'identified_items' | 'inferred_items' | 'risks' | 'hitl_requests' | 'critical_dimensions'
 >): string[] {
   const warnings: string[] = [];
+  let globalPageRiskCount = 0;
+  let hitlDerivedReasonCount = 0;
+  let hitlMissingSourceCount = 0;
 
   output.identified_items.forEach((item) => {
     if (!item.source_reference) warnings.push(`${item.id}: item identificado sem source_reference.`);
@@ -237,18 +301,46 @@ export function flagMissingSourceReferences(output: Pick<
   });
 
   output.risks.forEach((item) => {
-    if (!item.source_reference) warnings.push(`${item.id}: risco sem source_reference.`);
+    const status = (item as { source_reference_status?: string }).source_reference_status;
+    if (!item.source_reference && status === 'global_page_risk') {
+      globalPageRiskCount += 1;
+    } else if (!item.source_reference) {
+      warnings.push(`${item.id}: risco sem source_reference.`);
+    }
   });
 
   output.hitl_requests.forEach((item) => {
-    if (!item.source_reference) warnings.push(`${item.id}: HITL sem source_reference.`);
+    const status = (item as { source_reference_status?: string }).source_reference_status;
+    if (!item.source_reference && status === 'derived_from_reader_reason') {
+      hitlDerivedReasonCount += 1;
+    } else if (!item.source_reference) {
+      hitlMissingSourceCount += 1;
+    }
   });
 
   output.critical_dimensions.forEach((item) => {
-    if (!item.source_reference || !item.source_text) {
+    if (!item.source_reference && !item.source_text) {
       warnings.push(`${item.id}: dimensao critica sem fonte/texto auditavel.`);
     }
   });
+
+  if (globalPageRiskCount > 0) {
+    warnings.push(
+      `${globalPageRiskCount} riscos sem source_reference especifico; tratados como riscos globais da pagina.`
+    );
+  }
+
+  if (hitlDerivedReasonCount > 0) {
+    warnings.push(
+      `${hitlDerivedReasonCount} HITLs sem source_reference especifico; revisar rastreabilidade antes de consolidacao.`
+    );
+  }
+
+  if (hitlMissingSourceCount > 0) {
+    warnings.push(
+      `${hitlMissingSourceCount} HITLs sem source_reference especifico e sem decisao requerida suficiente.`
+    );
+  }
 
   return warnings;
 }

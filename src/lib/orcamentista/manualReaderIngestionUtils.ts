@@ -6,6 +6,10 @@ import {
   OrcamentistaReaderCriticalDimension,
 } from '../../types';
 
+function dedupeMessages(messages: string[]) {
+  return Array.from(new Set(messages.filter((message) => message.trim())));
+}
+
 export function isValidJsonString(value: string) {
   if (!value.trim()) return false;
 
@@ -32,14 +36,27 @@ export function getManualIngestionStatusLabel(status: OrcamentistaManualReaderIn
 }
 
 export function getManualIngestionBlockingReasons(result: OrcamentistaManualReaderIngestionResult) {
-  return [
+  return dedupeMessages([
     ...result.errors,
     ...(result.safety_runner_result?.dispatch_block_reasons ?? []),
     ...result.dimensional_checks
       .filter((check) => check.blocks_consolidation)
       .map((check) => check.message),
     ...(result.blocks_consolidation ? ['Safety gate bloqueia consolidacao.'] : []),
-  ];
+  ]);
+}
+
+export function getManualReaderTraceabilityWarnings(result: OrcamentistaManualReaderIngestionResult) {
+  return dedupeMessages(result.normalized_output?.source_reference_warnings ?? []);
+}
+
+export function getManualReaderTechnicalWarnings(result: OrcamentistaManualReaderIngestionResult) {
+  const traceabilityWarnings = new Set(getManualReaderTraceabilityWarnings(result));
+  const blockingReasons = new Set(getManualIngestionBlockingReasons(result));
+
+  return dedupeMessages(
+    result.warnings.filter((warning) => !traceabilityWarnings.has(warning) && !blockingReasons.has(warning))
+  );
 }
 
 export function summarizeManualReaderEvaluation(

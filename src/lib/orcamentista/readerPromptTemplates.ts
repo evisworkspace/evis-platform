@@ -27,7 +27,9 @@ export const READER_OUTPUT_JSON_SCHEMA = `{
       "label": "string",
       "description": "reasoning, not fact",
       "confidence_score": 0.0,
-      "source_references": ["string"],
+      "source_reference": "file/page/axis/table/cell/excerpt or global_page_evidence",
+      "source_references": ["file/page/axis/table/cell/excerpt"],
+      "evidence_that_supports": ["visible text, note, symbol or cross-reference that supports the inference"],
       "tags": ["inferencia"]
     }
   ],
@@ -37,6 +39,7 @@ export const READER_OUTPUT_JSON_SCHEMA = `{
       "description": "string",
       "impact": "string",
       "severity": "low | medium | high | critical",
+      "source_reference": "file/page/axis/table/cell/excerpt or global_page_gap",
       "suggested_action": "string"
     }
   ],
@@ -45,7 +48,7 @@ export const READER_OUTPUT_JSON_SCHEMA = `{
       "id": "string",
       "description": "string",
       "severity": "low | medium | high | critical",
-      "source_reference": "string"
+      "source_reference": "file/page/axis/table/cell/excerpt or global_page_risk"
     }
   ],
   "hitl_requests": [
@@ -53,8 +56,9 @@ export const READER_OUTPUT_JSON_SCHEMA = `{
       "id": "string",
       "question": "string",
       "reason": "string",
+      "required_decision": "specific human decision needed",
       "severity": "low | medium | high | critical",
-      "source_reference": "string"
+      "source_reference": "file/page/axis/table/cell/excerpt or global_page_hitl"
     }
   ],
   "critical_dimensions": [
@@ -85,6 +89,7 @@ const READER_SYSTEM_PROMPT = [
   'Nao crie itens oficiais, nao estime preco, nao consolide quantitativo e nao afirme conformidade normativa.',
   'Nao invente informacao ausente. Separe fatos identificados, inferencias, informacoes faltantes, riscos e pedidos HITL.',
   'Toda informacao deve trazer fonte/evidencia: pagina, eixo, quadro, linha, celula, nota ou trecho visivel.',
+  'Todo inferred_items, missing_information, risks e hitl_requests deve trazer source_reference. Se for um alerta global da pagina, use global_page_evidence/global_page_gap/global_page_risk/global_page_hitl e explique no campo textual.',
   'Inferencia nunca pode ser tratada como fato.',
   'Dimensao critica, fundacao, estaca, aco e volume de concreto exigem marcacao explicita para Verifier e HITL.',
   'Ambiguidade decimal ou unidade deve ser bloqueada por hitl_requests e critical_dimensions.',
@@ -114,6 +119,7 @@ export function buildPrimaryReaderPrompt(input: OrcamentistaRealReaderSandboxInp
     'Retorne exclusivamente JSON conforme READER_OUTPUT_JSON_SCHEMA.',
     'Nao gere orcamento, item oficial, proposta, obra, cronograma ou payload de banco.',
     'Quando a pagina nao trouxer fonte suficiente, mova o ponto para missing_information ou hitl_requests.',
+    'Preencha source_reference em risks, hitl_requests, inferred_items e missing_information; para risco global da pagina use global_page_risk, e para HITL global use global_page_hitl.',
     'Para estaca/fundacao/cota critica, preencha critical_dimensions e marque contains_foundation_or_pile quando aplicavel.',
     '',
     'READER_OUTPUT_JSON_SCHEMA:',
