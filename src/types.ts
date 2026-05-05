@@ -1767,6 +1767,50 @@ export type OrcamentistaRealReaderSandboxResult = {
   created_at: string;
 };
 
+// ── Fase 3E: Manual Reader Result Ingestion + Safety Evaluation ───────────
+
+export type OrcamentistaManualReaderIngestionStatus =
+  | 'empty_input'
+  | 'invalid_json'
+  | 'invalid_shape'
+  | 'evaluated_dispatch_ready'
+  | 'evaluated_requires_verifier'
+  | 'evaluated_requires_hitl'
+  | 'blocked_by_safety_gate';
+
+export type OrcamentistaManualReaderIngestionResult = {
+  id: string;
+  parse_status: OrcamentistaManualReaderIngestionStatus;
+  parsed_output?: OrcamentistaRawReaderModelOutput;
+  normalized_output?: OrcamentistaNormalizedReaderOutput;
+  safety_gate_result?: OrcamentistaSafetyGateResult;
+  dimensional_checks: OrcamentistaDimensionalSanityCheck[];
+  safety_runner_result?: OrcamentistaReaderSafetyRunnerResult;
+  requires_verifier: boolean;
+  requires_hitl: boolean;
+  blocks_consolidation: boolean;
+  allowed_to_dispatch: boolean;
+  errors: string[];
+  warnings: string[];
+  created_at: string;
+};
+
+export type OrcamentistaManualReaderEvaluationSummary = {
+  status: OrcamentistaManualReaderIngestionStatus;
+  identified_items_count: number;
+  inferred_items_count: number;
+  missing_information_count: number;
+  critical_dimensions_count: number;
+  dimensional_checks_count: number;
+  hitl_requests_count: number;
+  risks_count: number;
+  blocking_reasons_count: number;
+  allowed_to_dispatch: boolean;
+  requires_verifier: boolean;
+  requires_hitl: boolean;
+  blocks_consolidation: boolean;
+};
+
 // ── Fase 3C: Missing Project Fallback & Estimated Scope Policy ─────────────
 
 export type OrcamentistaScopeOriginType =

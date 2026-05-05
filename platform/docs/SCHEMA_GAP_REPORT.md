@@ -2996,3 +2996,167 @@ Avisos obrigatorios exibidos:
 #### 11.27.7 Proximo passo recomendado
 
 Executar fase posterior para conectar esse painel a dados reais somente quando houver backend, persistencia auditavel de HITL e decisao explicita de liberar leitura real controlada.
+
+---
+
+### 11.28 Fase 3E: Manual Reader Result Ingestion + Safety Evaluation
+
+> Status: implementado como ingestao manual local, sem API real, sem banco e sem processamento de PDF.
+> Escopo: colar JSON retornado por motor externo, normalizar e aplicar gates de seguranca.
+
+#### 11.28.1 Objetivo aplicado
+
+A Fase 3E criou a ponte segura entre o teste manual com prancha real e uma futura integracao de API.
+
+Fluxo implementado:
+
+```text
+Usuario roda Reader fora do EVIS
+  -> cola JSON no painel sandbox
+    -> EVIS valida JSON
+      -> EVIS normaliza output
+        -> EVIS aplica Safety Policy
+          -> EVIS aplica Dimensional Sanity Checks
+            -> EVIS mostra Verifier/HITL/bloqueios
+              -> nada grava no banco
+```
+
+#### 11.28.2 Documento canonico criado
+
+Arquivo criado:
+
+- `orcamentista/docs/EVIS_ORCAMENTISTA_MANUAL_READER_INGESTION_AND_SAFETY_EVALUATION.md`
+
+O documento registra:
+
+- objetivo da ingestao manual;
+- motivo para nao haver API real nesta fase;
+- formato esperado do JSON colado;
+- validacao de shape;
+- normalizacao;
+- aplicacao da Reader Safety Policy;
+- aplicacao dos Dimensional Sanity Checks;
+- Verifier/HITL/bloqueios;
+- exemplo de fundacao/estacas;
+- exemplo de bloqueio `35 m` vs `3,5 m`;
+- garantia de que nada grava no orçamento oficial.
+
+#### 11.28.3 Tipos adicionados
+
+Arquivo alterado:
+
+- `src/types.ts`
+
+Tipos adicionados:
+
+```text
+OrcamentistaManualReaderIngestionStatus
+OrcamentistaManualReaderIngestionResult
+OrcamentistaManualReaderEvaluationSummary
+```
+
+#### 11.28.4 Ingestao manual criada
+
+Arquivo criado:
+
+- `src/lib/orcamentista/manualReaderIngestion.ts`
+
+Funcoes puras:
+
+```text
+parseManualReaderJson()
+ingestManualReaderOutput()
+buildManualReaderEvaluationResult()
+```
+
+Comportamento:
+
+- recebe string JSON;
+- bloqueia input vazio;
+- bloqueia JSON invalido;
+- valida shape minimo com `validateReaderOutputShape()`;
+- normaliza com `normalizeRawReaderOutput()`;
+- aplica `runReaderSafetyGate()`;
+- retorna status, output normalizado, safety gate, dimensional checks, Verifier, HITL, bloqueios, dispatch, erros e avisos.
+
+#### 11.28.5 Utilitarios criados
+
+Arquivo criado:
+
+- `src/lib/orcamentista/manualReaderIngestionUtils.ts`
+
+Funcoes puras:
+
+```text
+isValidJsonString()
+getManualIngestionStatusLabel()
+getManualIngestionBlockingReasons()
+summarizeManualReaderEvaluation()
+extractManualReaderHitlRequests()
+extractManualReaderCriticalDimensions()
+getManualReaderDispatchDecision()
+```
+
+Nenhuma funcao chama IA, API, banco, `fetch`, axios ou Supabase.
+
+#### 11.28.6 Painel atualizado
+
+Arquivo alterado:
+
+- `src/pages/Oportunidade/OrcamentistaRealReaderSandboxPanel.tsx`
+
+Area adicionada:
+
+```text
+Colar JSON real do Reader
+```
+
+A UI mostra:
+
+- textarea para JSON;
+- botao local "Avaliar JSON colado";
+- status de parse;
+- status de normalizacao;
+- safety gate result;
+- itens identificados;
+- itens inferidos;
+- informacoes pendentes;
+- riscos;
+- cotas criticas;
+- dimensional checks;
+- HITLs;
+- `allowed_to_dispatch`;
+- `requires_verifier`;
+- `requires_hitl`;
+- `blocks_consolidation`;
+- bloqueios e avisos.
+
+Avisos obrigatorios exibidos:
+
+- `Este JSON foi colado manualmente.`
+- `Nenhuma chamada de IA foi executada pelo EVIS.`
+- `Nenhum dado foi gravado no banco.`
+- `Resultado bloqueado não pode seguir para dispatch/consolidação.`
+
+#### 11.28.7 Confirmacoes de conformidade
+
+- Nenhuma IA real chamada.
+- Gemini real nao foi chamado.
+- OpenAI nao foi chamado.
+- Claude API nao foi chamada.
+- Nenhum `fetch` usado.
+- Nenhum axios usado.
+- Nenhum Supabase usado.
+- Nenhum OCR real executado.
+- Nenhum PDF real processado.
+- Nenhuma migration criada.
+- Banco/schema nao alterado.
+- Nenhum item gravado em `orcamento_itens`.
+- Nenhuma consolidacao no orçamento oficial.
+- Nenhuma proposta criada.
+- Obra/Diario preservados.
+- Rotas `/obras` e `/obras/:obraId` preservadas.
+
+#### 11.28.8 Proximo passo recomendado
+
+Usar a ingestao manual para comparar outputs reais de motores externos e endurecer o schema de resposta antes de qualquer integracao automatica por API.
