@@ -2600,3 +2600,119 @@ Implementar Guided Project Intake + Reading HITL Context, integrando essa politi
 - coletar premissas do usuario;
 - anexar evidencias indiretas lidas pelo Reader;
 - manter tudo como staging ate gate/HITL/revisao humana.
+
+---
+
+### 11.25 Fase 3D-A: Guided Project Intake + Reading HITL Context
+
+> Status: implementado apenas como tipos, documento canonico e policy pura.
+> Escopo: sem mock, sem utils, sem UI, sem banco e sem IA real.
+
+#### 11.25.1 Objetivo aplicado
+
+A Fase 3D-A criou a base canonica para guiar a entrada de documentos do Orçamentista IA na ordem racional de uma obra do zero e separar contexto de leitura em:
+
+- validado;
+- pendente;
+- bloqueado.
+
+Regras registradas:
+
+- usuario nao precisa enviar todos os arquivos de uma vez;
+- sistema solicita o proximo documento de forma inteligente;
+- documento fora de ordem pode ser lido (`allowed_to_read = true`);
+- documento fora de ordem fica com `context_status = incomplete`;
+- contexto pendente nao alimenta quantitativos finais;
+- correcoes humanas substituem leituras ambiguas;
+- projetos ausentes acionam Missing Project Fallback da Fase 3C quando aplicavel.
+
+#### 11.25.2 Documento canonico criado
+
+- `orcamentista/docs/EVIS_ORCAMENTISTA_GUIDED_PROJECT_INTAKE_AND_READING_HITL_CONTEXT.md`
+
+O documento explica:
+
+- objetivo do intake guiado;
+- diferenca entre leitura isolada e leitura contextual;
+- storytelling tecnico da obra;
+- ordem racional de documentos;
+- documento fora de ordem;
+- HITL por leitura;
+- contexto validado, pendente e bloqueado;
+- solicitacao inteligente do proximo documento;
+- integracao com Missing Project Fallback;
+- exemplo de fundacao enviada antes da sondagem;
+- exemplo de projeto eletrico ausente com estimativa controlada.
+
+#### 11.25.3 Tipos adicionados
+
+Tipos em `src/types.ts`:
+
+- `OrcamentistaReadingPhase`
+- `OrcamentistaProjectReadingSession`
+- `OrcamentistaProjectContextStory`
+- `OrcamentistaReadingPhaseStatus`
+- `OrcamentistaExpectedDocument`
+- `OrcamentistaReceivedDocumentContext`
+- `OrcamentistaReadingHitlQuestion`
+- `OrcamentistaReadingValidationDecision`
+- `OrcamentistaValidatedProjectContext`
+- `OrcamentistaPendingProjectContext`
+- `OrcamentistaBlockedProjectContext`
+- `OrcamentistaNextDocumentRequest`
+- `OrcamentistaContextPropagationStatus`
+
+Nenhum tipo generico sem prefixo foi criado.
+
+#### 11.25.4 Policy criada
+
+Arquivo criado:
+
+- `src/lib/orcamentista/guidedProjectIntakePolicy.ts`
+
+Conteudo:
+
+- configuracao estatica da ordem racional;
+- documentos esperados por fase;
+- classificacao de documento recebido;
+- solicitacao do proximo documento;
+- decisao de leitura fora de ordem;
+- acionamento do Missing Project Fallback quando aplicavel.
+
+Funcoes puras:
+
+```text
+getExpectedDocumentsForPhase()
+getNextReadingPhase()
+canAdvanceReadingPhase()
+classifyReceivedDocumentForReadingPhase()
+getMissingDocumentsForCurrentPhase()
+buildNextDocumentRequest()
+shouldAllowOutOfOrderReading()
+shouldActivateMissingProjectFallback()
+```
+
+Nenhuma funcao chama IA, API, banco, Supabase, `fetch` ou `axios`.
+
+#### 11.25.5 Confirmacoes de conformidade
+
+- Nenhum mock criado.
+- Nenhum util criado.
+- Nenhum painel criado.
+- `OrcamentistaTab.tsx` nao foi alterado.
+- Nenhum arquivo de Obra/Diario foi alterado.
+- Nenhuma migration criada.
+- Banco/schema nao alterado.
+- Nenhuma IA real chamada.
+- Nenhum PDF real processado.
+- Nenhum OCR executado.
+
+#### 11.25.6 Proximo passo recomendado
+
+Executar a subfase 3D-B:
+
+```text
+mock + utils
+```
+
+Somente depois da 3D-B considerar painel ou integracao visual em fase separada.

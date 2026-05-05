@@ -1877,3 +1877,174 @@ export type OrcamentistaFallbackSummary = {
   can_feed_proposal_with_warning_count: number;
   can_feed_execution_count: number;
 };
+
+// ── Fase 3D-A: Guided Project Intake + Reading HITL Context ────────────────
+
+export type OrcamentistaReadingPhase =
+  | 'arquitetonico_implantacao'
+  | 'sondagem_topografia'
+  | 'estrutural_fundacao'
+  | 'estrutural_superestrutura'
+  | 'lajes_cobertura_caixa_dagua'
+  | 'hidrossanitario'
+  | 'eletrico_dados_automacao'
+  | 'ppci_gas_climatizacao'
+  | 'memorial_acabamentos'
+  | 'compatibilizacao'
+  | 'quantitativos'
+  | 'custos';
+
+export type OrcamentistaReadingPhaseStatus =
+  | 'not_started'
+  | 'waiting_document'
+  | 'document_received'
+  | 'allowed_to_read'
+  | 'context_incomplete'
+  | 'hitl_required'
+  | 'validated'
+  | 'blocked'
+  | 'fallback_available'
+  | 'fallback_active';
+
+export type OrcamentistaContextPropagationStatus =
+  | 'not_available'
+  | 'validated'
+  | 'pending'
+  | 'blocked'
+  | 'incomplete'
+  | 'fallback_required'
+  | 'fallback_active';
+
+export type OrcamentistaExpectedDocument = {
+  id: string;
+  phase: OrcamentistaReadingPhase;
+  label: string;
+  description: string;
+  required: boolean;
+  accepted_disciplines: string[];
+  accepted_file_hints: string[];
+  missing_project_discipline?: OrcamentistaMissingProjectDiscipline;
+  unlocks_phases: OrcamentistaReadingPhase[];
+  blocks_final_quantities_if_missing: boolean;
+  can_activate_missing_project_fallback: boolean;
+};
+
+export type OrcamentistaReceivedDocumentContext = {
+  id: string;
+  document_id: string;
+  file_name: string;
+  detected_phase: OrcamentistaReadingPhase;
+  expected_phase: OrcamentistaReadingPhase;
+  received_order: number;
+  allowed_to_read: boolean;
+  out_of_order: boolean;
+  context_status: OrcamentistaContextPropagationStatus;
+  missing_prior_phases: OrcamentistaReadingPhase[];
+  can_feed_final_quantities: boolean;
+  can_activate_missing_project_fallback: boolean;
+  created_at: string;
+};
+
+export type OrcamentistaReadingHitlQuestion = {
+  id: string;
+  phase: OrcamentistaReadingPhase;
+  document_id?: string;
+  question: string;
+  reason: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  required_before_phase?: OrcamentistaReadingPhase;
+  blocks_context_propagation: boolean;
+  suggested_decisions: OrcamentistaReadingValidationDecision['decision_type'][];
+};
+
+export type OrcamentistaReadingValidationDecision = {
+  id: string;
+  phase: OrcamentistaReadingPhase;
+  decision_type:
+    | 'approve_reading'
+    | 'correct_reading'
+    | 'block_reading'
+    | 'request_document'
+    | 'activate_missing_project_fallback'
+    | 'keep_context_pending';
+  corrected_value?: string;
+  notes: string;
+  decided_by: 'human' | 'system_policy';
+  decided_at: string;
+};
+
+export type OrcamentistaValidatedProjectContext = {
+  id: string;
+  phase: OrcamentistaReadingPhase;
+  document_ids: string[];
+  validated_facts: string[];
+  human_corrections: OrcamentistaReadingValidationDecision[];
+  context_propagation_status: Extract<OrcamentistaContextPropagationStatus, 'validated'>;
+  can_feed_next_phases: boolean;
+  can_feed_final_quantities: boolean;
+  validated_at: string;
+};
+
+export type OrcamentistaPendingProjectContext = {
+  id: string;
+  phase: OrcamentistaReadingPhase;
+  document_ids: string[];
+  pending_questions: OrcamentistaReadingHitlQuestion[];
+  missing_documents: OrcamentistaExpectedDocument[];
+  context_propagation_status: Extract<OrcamentistaContextPropagationStatus, 'pending' | 'incomplete' | 'fallback_required'>;
+  can_feed_preliminary_reading: boolean;
+  can_feed_final_quantities: false;
+  created_at: string;
+};
+
+export type OrcamentistaBlockedProjectContext = {
+  id: string;
+  phase: OrcamentistaReadingPhase;
+  document_ids: string[];
+  block_reasons: string[];
+  required_actions: string[];
+  context_propagation_status: Extract<OrcamentistaContextPropagationStatus, 'blocked'>;
+  blocks_next_phases: boolean;
+  blocks_final_quantities: boolean;
+  created_at: string;
+};
+
+export type OrcamentistaNextDocumentRequest = {
+  id: string;
+  next_phase: OrcamentistaReadingPhase;
+  requested_documents: OrcamentistaExpectedDocument[];
+  reason: string;
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  can_continue_with_current_context: boolean;
+  fallback_available: boolean;
+  message_to_user: string;
+  created_at: string;
+};
+
+export type OrcamentistaProjectContextStory = {
+  id: string;
+  opportunity_id: string;
+  orcamento_id: string | null;
+  current_phase: OrcamentistaReadingPhase;
+  validated_contexts: OrcamentistaValidatedProjectContext[];
+  pending_contexts: OrcamentistaPendingProjectContext[];
+  blocked_contexts: OrcamentistaBlockedProjectContext[];
+  next_document_request: OrcamentistaNextDocumentRequest;
+  story_summary: string;
+  open_assumptions: string[];
+  blocked_propagations: OrcamentistaReadingPhase[];
+  updated_at: string;
+};
+
+export type OrcamentistaProjectReadingSession = {
+  id: string;
+  opportunity_id: string;
+  orcamento_id: string | null;
+  current_phase: OrcamentistaReadingPhase;
+  phase_status: Partial<Record<OrcamentistaReadingPhase, OrcamentistaReadingPhaseStatus>>;
+  received_documents: OrcamentistaReceivedDocumentContext[];
+  expected_documents: OrcamentistaExpectedDocument[];
+  context_story: OrcamentistaProjectContextStory;
+  created_at: string;
+  updated_at: string;
+};
