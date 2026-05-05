@@ -2131,3 +2131,235 @@ Executar uma primeira leitura real controlada de uma pagina isolada somente depo
 - sanity checks dimensionais;
 - HITL antes de qualquer consolidacao;
 - Gate e Revisao Humana antes de qualquer gravacao real em `orcamento_itens`.
+
+---
+
+### 11.23 Fase 3B: Primeira leitura real controlada em sandbox
+
+> Status: implementado como sandbox local/manual, sem chamada real de IA, sem banco e sem PDF real.
+> Escopo: uma pagina isolada, prompt package, normalizacao, safety runner e painel experimental.
+
+#### 11.23.1 Objetivo aplicado
+
+A Fase 3B criou a primeira estrutura segura para leitura real futura de uma unica pagina do Orçamentista IA.
+
+Regras preservadas:
+
+- uma pagina isolada;
+- nenhum processamento de PDF inteiro;
+- nenhum processamento multipagina;
+- nenhuma gravacao em `orcamento_itens`;
+- nenhuma consolidacao no orcamento oficial;
+- nenhuma proposta criada;
+- nenhuma Obra criada;
+- Diario de Obra preservado;
+- nenhuma migration ou alteracao de schema.
+
+#### 11.23.2 Documento canonico criado
+
+- `orcamentista/docs/EVIS_ORCAMENTISTA_FIRST_REAL_READER_SANDBOX.md`
+
+O documento registra:
+
+- objetivo da sandbox;
+- motivo de limitar a uma pagina;
+- motivo de nao gravar no banco;
+- formato do prompt do Reader;
+- formato do prompt do Verifier;
+- JSON esperado;
+- aplicacao das policies da Fase 3A;
+- aplicacao dos sanity checks;
+- regras para PDF rasterizado;
+- regra para dimensoes criticas;
+- tratamento do erro `35 m` vs `3,5 m`;
+- criterios para avancar para leitura real de mais paginas.
+
+#### 11.23.3 Tipos adicionados
+
+Tipos em `src/types.ts`:
+
+- `OrcamentistaFirstPageReadingStatus`
+- `OrcamentistaReaderSourceRef`
+- `OrcamentistaRawReaderItem`
+- `OrcamentistaRawReaderRisk`
+- `OrcamentistaRawReaderHitlRequest`
+- `OrcamentistaReaderCriticalDimension`
+- `OrcamentistaRawReaderModelOutput`
+- `OrcamentistaNormalizedReaderOutput`
+- `OrcamentistaReaderPromptPackage`
+- `OrcamentistaVerifierPromptPackage`
+- `OrcamentistaRealReaderSandboxInput`
+- `OrcamentistaReaderSafetyRunnerResult`
+- `OrcamentistaRealReaderSandboxResult`
+
+#### 11.23.4 Prompt templates
+
+Arquivo criado:
+
+- `src/lib/orcamentista/readerPromptTemplates.ts`
+
+Funcoes:
+
+```text
+buildPrimaryReaderPrompt()
+buildVerifierPrompt()
+```
+
+O prompt do Reader instrui:
+
+- nao gerar orcamento;
+- nao criar item oficial;
+- nao inventar;
+- separar `identified_items`, `inferred_items`, `missing_information`, `risks` e `hitl_requests`;
+- exigir fonte/evidencia;
+- marcar `critical_dimensions`;
+- exigir HITL em duvida;
+- nao afirmar conformidade normativa.
+
+#### 11.23.5 Normalizador
+
+Arquivo criado:
+
+- `src/lib/orcamentista/readerResultNormalizer.ts`
+
+Funcoes puras:
+
+```text
+normalizeRawReaderOutput()
+validateReaderOutputShape()
+coerceReaderConfidenceScores()
+extractCriticalDimensionsFromReaderOutput()
+flagMissingSourceReferences()
+```
+
+O normalizador:
+
+- valida se o output e JSON/objeto auditavel;
+- exige arrays principais;
+- limita confidence score;
+- transforma identificado em evidencia;
+- mantem inferido como `can_be_treated_as_fact: false`;
+- preserva `missing_information`, `risks` e `hitl_requests`;
+- extrai dimensoes criticas;
+- sinaliza fonte ausente.
+
+#### 11.23.6 Safety runner
+
+Arquivo criado:
+
+- `src/lib/orcamentista/readerSafetyRunner.ts`
+
+Funcoes puras:
+
+```text
+runReaderSafetyGate()
+applySourceQualityConfidenceCap()
+applyCriticalDimensionChecks()
+determineReaderVerifierRequirement()
+determineReaderHitlRequirement()
+determineReaderDispatchEligibility()
+```
+
+O runner aplica:
+
+- `readerSafetyPolicy.ts`;
+- `dimensionalSanityChecks.ts`;
+- `motorSelectionPolicy.ts`;
+- teto de confianca por qualidade de fonte;
+- Verifier obrigatorio para cota critica, fundacao, estaca, inferencia ou fonte ruim;
+- HITL para ambiguidades, fundacao/estaca e fonte insuficiente;
+- bloqueio de consolidacao quando sanity checks ou safety rules exigirem.
+
+#### 11.23.7 Sandbox implementada
+
+Arquivo criado:
+
+- `src/lib/orcamentista/realReaderSandbox.ts`
+
+Pipeline:
+
+```text
+input de uma pagina
+  -> prompt package do Reader
+  -> raw output mock/manual
+  -> normalizador
+  -> safety runner
+  -> prompt package do Verifier
+  -> resultado final da sandbox
+```
+
+O arquivo contem mock estrutural do caso `35 m` vs `3,5 m` para validar bloqueio.
+
+Status declarado:
+
+```text
+manual model run ready
+```
+
+Nao ha `fetch`, nao ha API key e nao ha chamada real de IA.
+
+#### 11.23.8 UI experimental
+
+Arquivos:
+
+- `src/pages/Oportunidade/OrcamentistaRealReaderSandboxPanel.tsx`
+- `src/pages/Oportunidade/OrcamentistaTab.tsx`
+
+O painel foi integrado no final da secao Workspace IA e mostra:
+
+- pagina isolada;
+- motor recomendado;
+- prompt package;
+- output normalizado;
+- safety gates;
+- dimensional checks;
+- HITL;
+- bloqueios;
+- CTA desabilitado: `Executar leitura real integrada — fase futura`.
+
+O painel nao tem acao de escrita e nao chama IA/API.
+
+#### 11.23.9 Tratamento do erro 35 m vs 3,5 m
+
+O mock da sandbox declara uma profundidade de estaca:
+
+```text
+E1 Ø25 h=35m
+```
+
+Tratamento esperado:
+
+- PDF rasterizado aplica teto de confianca;
+- fundacao/estaca aciona Verifier obrigatorio;
+- `checkPileDepthSanity()` bloqueia profundidade residencial de 25 cm acima de 15 m;
+- `checkDecimalAmbiguity()` bloqueia ambiguidade `35 m` vs `3,5 m`;
+- HITL obrigatorio;
+- `blocks_consolidation = true`;
+- `allowed_to_dispatch = false`;
+- nenhum item oficial e gravado.
+
+#### 11.23.10 Confirmacoes de conformidade
+
+- Nenhuma IA real chamada.
+- Gemini real nao foi chamado.
+- OpenAI nao foi chamado.
+- Claude API nao foi chamada.
+- Nenhum OCR real executado.
+- Nenhum PDF real processado.
+- Nenhuma migration criada.
+- Banco/schema nao alterado.
+- Nenhum item gravado em `orcamento_itens`.
+- Nenhuma consolidacao no orcamento oficial.
+- Proposta nao alterada.
+- Obra/Diario preservados.
+- Rotas `/obras` e `/obras/:obraId` preservadas.
+
+#### 11.23.11 Proximo passo recomendado
+
+Executar teste real de uma unica pagina com o motor escolhido, colar o JSON retornado no pipeline manual, comparar com Verifier independente e registrar:
+
+- aderencia ao schema;
+- diferencas entre Reader e Verifier;
+- sanity checks acionados;
+- HITL exigido;
+- motivo de bloqueio ou elegibilidade futura para dispatch.

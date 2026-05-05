@@ -1580,3 +1580,189 @@ export type OrcamentistaCriticalReadingPolicy = {
   blocks_if_ambiguous: boolean;
   notes: string;
 };
+
+// ── Fase 3B: primeira leitura real controlada em sandbox ───────────────────
+
+export type OrcamentistaFirstPageReadingStatus =
+  | 'manual_model_run_ready'
+  | 'mock_output_normalized'
+  | 'ready_for_verifier'
+  | 'blocked_by_safety_gate'
+  | 'invalid_reader_output';
+
+export type OrcamentistaReaderSourceRef = {
+  reference: string;
+  evidence_type?: OrcamentistaEvidenceType | 'UNKNOWN';
+  excerpt?: string;
+};
+
+export type OrcamentistaRawReaderItem = {
+  id?: string;
+  label?: string;
+  description?: string;
+  quantity?: string;
+  unit?: string;
+  value?: number | string;
+  confidence_score?: number;
+  source_reference?: string;
+  source_references?: string[];
+  evidence_type?: OrcamentistaEvidenceType | 'UNKNOWN';
+  tags?: string[];
+};
+
+export type OrcamentistaRawReaderRisk = {
+  id?: string;
+  description?: string;
+  severity?: 'low' | 'medium' | 'high' | 'critical';
+  source_reference?: string;
+};
+
+export type OrcamentistaRawReaderHitlRequest = {
+  id?: string;
+  question?: string;
+  reason?: string;
+  severity?: 'low' | 'medium' | 'high' | 'critical';
+  source_reference?: string;
+};
+
+export type OrcamentistaReaderCriticalDimension = {
+  id: string;
+  dimension_type: OrcamentistaCriticalDimensionType;
+  label: string;
+  value: number;
+  unit: string;
+  source_text: string;
+  source_reference: string;
+  confidence_score: number;
+  context_tags: string[];
+  pile_diameter_cm?: number;
+  pile_quantity?: number;
+  reported_concrete_volume_m3?: number;
+  expected_room_area_m2?: number;
+  source_type?: 'visual_calculation' | 'explicit_table' | 'manual_assumption' | 'rebar_schedule' | 'coefficient' | 'visual_estimate' | 'unknown';
+};
+
+export type OrcamentistaRawReaderModelOutput = {
+  page_summary?: string;
+  source_quality?: OrcamentistaReadingSourceQuality;
+  confidence_score?: number;
+  identified_items?: OrcamentistaRawReaderItem[];
+  inferred_items?: OrcamentistaRawReaderItem[];
+  missing_information?: OrcamentistaReaderMissingInfo[];
+  risks?: OrcamentistaRawReaderRisk[];
+  hitl_requests?: OrcamentistaRawReaderHitlRequest[];
+  critical_dimensions?: Partial<OrcamentistaReaderCriticalDimension>[];
+  contains_foundation_or_pile?: boolean;
+  notes?: string[];
+};
+
+export type OrcamentistaNormalizedReaderOutput = {
+  id: string;
+  document_id: string;
+  file_name: string;
+  page_number: number;
+  page_summary: string;
+  source_quality: OrcamentistaReadingSourceQuality;
+  confidence_score: number;
+  identified_items: OrcamentistaReaderEvidenceItem[];
+  inferred_items: OrcamentistaReaderInferredItem[];
+  missing_information: OrcamentistaReaderMissingInfo[];
+  risks: Required<OrcamentistaRawReaderRisk>[];
+  hitl_requests: Required<OrcamentistaRawReaderHitlRequest>[];
+  critical_dimensions: OrcamentistaReaderCriticalDimension[];
+  source_reference_warnings: string[];
+  shape_errors: string[];
+  contains_foundation_or_pile: boolean;
+  created_at: string;
+};
+
+export type OrcamentistaReaderPromptPackage = {
+  id: string;
+  document_id: string;
+  file_name: string;
+  page_number: number;
+  page_image_ref?: string;
+  page_text_ref?: string;
+  source_quality: OrcamentistaReadingSourceQuality;
+  reader_motor: OrcamentistaAiMotorId;
+  system_prompt: string;
+  user_prompt: string;
+  output_schema: string;
+  safety_notes: string[];
+  created_at: string;
+};
+
+export type OrcamentistaVerifierPromptPackage = {
+  id: string;
+  document_id: string;
+  file_name: string;
+  page_number: number;
+  page_image_ref?: string;
+  page_text_ref?: string;
+  source_quality: OrcamentistaReadingSourceQuality;
+  reader_motor: OrcamentistaAiMotorId;
+  verifier_motor: OrcamentistaAiMotorId;
+  normalized_reader_output: OrcamentistaNormalizedReaderOutput;
+  system_prompt: string;
+  user_prompt: string;
+  output_schema: string;
+  created_at: string;
+};
+
+export type OrcamentistaRealReaderSandboxInput = {
+  id: string;
+  opportunity_id: string;
+  orcamento_id: string | null;
+  document_id: string;
+  file_name: string;
+  page_number: number;
+  page_label?: string;
+  page_image_ref?: string;
+  page_text_ref?: string;
+  source_quality: OrcamentistaReadingSourceQuality;
+  reader_motor: OrcamentistaAiMotorId;
+  verifier_motor: OrcamentistaAiMotorId;
+  manual_model_run_only: true;
+  created_at: string;
+};
+
+export type OrcamentistaReaderSafetyRunnerResult = {
+  id: string;
+  source_quality: OrcamentistaReadingSourceQuality;
+  safety_gate_result: OrcamentistaSafetyGateResult;
+  dimensional_checks: OrcamentistaDimensionalSanityCheck[];
+  confidence_cap_applied: boolean;
+  capped_confidence_score: number;
+  requires_verifier: boolean;
+  requires_hitl: boolean;
+  blocks_consolidation: boolean;
+  allowed_to_dispatch: boolean;
+  dispatch_block_reasons: string[];
+  created_at: string;
+};
+
+export type OrcamentistaRealReaderSandboxResult = {
+  id: string;
+  status: OrcamentistaFirstPageReadingStatus;
+  document_id: string;
+  file_name: string;
+  page_number: number;
+  page_image_ref?: string;
+  page_text_ref?: string;
+  source_quality: OrcamentistaReadingSourceQuality;
+  reader_motor: OrcamentistaAiMotorId;
+  verifier_motor: OrcamentistaAiMotorId;
+  prompt_package: OrcamentistaReaderPromptPackage;
+  verifier_prompt_package?: OrcamentistaVerifierPromptPackage;
+  raw_reader_output: OrcamentistaRawReaderModelOutput;
+  normalized_output: OrcamentistaNormalizedReaderOutput;
+  safety_gate_result: OrcamentistaSafetyGateResult;
+  dimensional_checks: OrcamentistaDimensionalSanityCheck[];
+  safety_runner_result: OrcamentistaReaderSafetyRunnerResult;
+  requires_verifier: boolean;
+  requires_hitl: boolean;
+  blocks_consolidation: boolean;
+  allowed_to_dispatch: boolean;
+  manual_model_run_ready: boolean;
+  created_at: string;
+};

@@ -14,6 +14,7 @@ import OrcamentistaAgentDispatchPanel from './OrcamentistaAgentDispatchPanel';
 import { OrcamentistaConsolidatedPreviewPanel } from './OrcamentistaConsolidatedPreviewPanel';
 import OrcamentistaConsolidationGatePanel from './OrcamentistaConsolidationGatePanel';
 import OrcamentistaPayloadReviewPanel from './OrcamentistaPayloadReviewPanel';
+import OrcamentistaRealReaderSandboxPanel from './OrcamentistaRealReaderSandboxPanel';
 import { buildMockDocumentIntakeFiles } from '../../lib/orcamentista/documentIntakeMock';
 import { mockPipelineSteps, mockAiPreview } from '../../lib/orcamentista/mockPipeline';
 
@@ -358,13 +359,16 @@ export default function OrcamentistaTab() {
               {/* E8. Revisão humana do payload simulado */}
               <OrcamentistaPayloadReviewPanel />
 
-              {/* E9. Pipeline IA mockado */}
+              {/* E9. Sandbox de primeira leitura real controlada */}
+              <OrcamentistaRealReaderSandboxPanel />
+
+              {/* E10. Pipeline IA mockado */}
               <OrcamentistaAiPipelinePanel steps={mockPipelineSteps} />
 
-              {/* E10. Prévia IA mockada (legado) */}
+              {/* E11. Prévia IA mockada (legado) */}
               <OrcamentistaAiPreviewPanel preview={mockAiPreview} />
 
-              {/* E11. Chat do Orçamentista (staging/preview separado) */}
+              {/* E12. Chat do Orçamentista (staging/preview separado) */}
               <div className="rounded-lg border border-white/10 bg-white/5 p-4">
                 <p className="mb-1 font-mono text-[9px] font-bold uppercase tracking-widest text-white/30">
                   Orçamentista IA — Chat de análise
