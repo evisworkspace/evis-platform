@@ -11,6 +11,7 @@ import { OrcamentistaPageProcessingPanel } from './OrcamentistaPageProcessingPan
 import OrcamentistaReaderVerifierPanel from './OrcamentistaReaderVerifierPanel';
 import OrcamentistaHitlPanel from './OrcamentistaHitlPanel';
 import OrcamentistaAgentDispatchPanel from './OrcamentistaAgentDispatchPanel';
+import { OrcamentistaConsolidatedPreviewPanel } from './OrcamentistaConsolidatedPreviewPanel';
 import { buildMockDocumentIntakeFiles } from '../../lib/orcamentista/documentIntakeMock';
 import { mockPipelineSteps, mockAiPreview } from '../../lib/orcamentista/mockPipeline';
 
@@ -346,10 +347,13 @@ export default function OrcamentistaTab() {
               {/* E5. Dispatch mockado para agentes especialistas */}
               <OrcamentistaAgentDispatchPanel />
 
-              {/* E6. Pipeline IA mockado */}
+              {/* E6. Preview Consolidado mockado */}
+              <OrcamentistaConsolidatedPreviewPanel />
+
+              {/* E7. Pipeline IA mockado */}
               <OrcamentistaAiPipelinePanel steps={mockPipelineSteps} />
 
-              {/* E7. Prévia IA mockada */}
+              {/* E8. Prévia IA mockada (legado) */}
               <OrcamentistaAiPreviewPanel preview={mockAiPreview} />
 
               {/* E8. Chat do Orçamentista (staging/preview separado) */}

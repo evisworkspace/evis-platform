@@ -1632,6 +1632,59 @@ Documento -> Pagina -> Reader/Verifier -> HITL -> Agentes especialistas -> Previ
 - Nao existe orquestrador real, fila real, persistencia de outputs ou auditoria operacional.
 - Preview consolidado a partir de outputs de agentes ainda nao foi implementado.
 
-#### 11.18.10 Proximo passo recomendado
+#### 11.18.10 Proximo passo executado
 
-Avancar para uma fase futura de consolidacao de preview mockado a partir dos outputs dos agentes, ainda sem gravar em `orcamento_itens`, mantendo gates de HITL, preview e consolidacao separados.
+A Fase 2H implementou o Preview Consolidado mockado a partir dos outputs dos agentes, ainda sem gravar em `orcamento_itens`, mantendo gates de HITL, preview e consolidacao separados.
+
+---
+
+### 11.19 Fase 2H: Preview Consolidado Mockado
+
+> Status: implementado como camada visual mockada/local, sem IA real, sem banco, sem Diario de Obra e sem consolidacao oficial.
+> Escopo: agregacao e centralizacao das recomendacoes dos agentes para validacao pre-oficial.
+
+#### 11.19.1 Objetivo
+
+Criar uma camada que consolida os outputs dos agentes especialistas em uma previa tecnica-orcamentaria unica, sem gravar nada no orcamento oficial, permitindo que a revisao ocorra em um painel unificado antes de qualquer acao destrutiva ou persistencia.
+
+#### 11.19.2 Documento canonico criado
+
+- `orcamentista/docs/EVIS_ORCAMENTISTA_CONSOLIDATED_PREVIEW_CONTRACT.md`
+
+#### 11.19.3 Tipos adicionados
+
+Tipos em `src/types.ts`:
+- `OrcamentistaConsolidatedPreviewStatus`
+- `OrcamentistaConsolidatedPreviewHitl`
+- `OrcamentistaConsolidatedPreviewRisk`
+- `OrcamentistaConsolidatedPreviewService`
+- `OrcamentistaPreviewConsolidationBlocker`
+- `OrcamentistaConsolidatedPreviewPremise`
+- `OrcamentistaConsolidatedPreviewExclusion`
+- `OrcamentistaConsolidatedPreviewSummary`
+- `OrcamentistaConsolidatedPreview`
+
+#### 11.19.4 Confirmacoes de conformidade
+
+- Nenhuma IA real (Gemini, OpenAI, Claude) foi chamada.
+- Nenhum PDF real processado (sem OCR real).
+- Nenhuma migration criada, schema preservado.
+- Nenhum item gravado em `orcamento_itens`.
+- Nenhuma consolidacao no orcamento oficial.
+- Proposta nao alterada.
+- Obra/Diario preservados intactos.
+
+#### 11.19.5 Proximo passo recomendado
+
+Avancar para a Fase 2I como **Consolidation Gate Contract** / **Gate de Consolidacao Controlada**.
+
+Essa proxima fase ainda deve ser contrato, validacao e payload simulado:
+
+- sem gravacao direta no banco;
+- sem inserts reais em `orcamento_itens`;
+- sem proposta gerada a partir do preview;
+- com HITL explicito de aceite do preview;
+- com payload de consolidacao auditavel e rastreavel;
+- com bloqueios separados para itens identificados, inferidos e premissas manuais.
+
+A gravacao em `orcamento_itens` so deve ocorrer em fase posterior, depois de gate aprovado, HITL concluido, payload validado e autorizacao explicita.

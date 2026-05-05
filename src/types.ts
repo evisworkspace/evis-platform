@@ -1160,3 +1160,101 @@ export type OrcamentistaAgentDispatchSummary = {
   preview_blocked_agents: number;
   consolidation_blocked_agents: number;
 };
+
+// ── Fase 2H: Preview Consolidado Mockado ────────────────────────────────────
+
+export type OrcamentistaConsolidatedPreviewStatus =
+  | 'draft'
+  | 'blocked'
+  | 'ready_for_validation'
+  | 'validated'
+  | 'consolidated';
+
+export type OrcamentistaConsolidatedPreviewHitl = {
+  id: string;
+  source_hitl_request_id: string;
+  source_agent_id?: string;
+  title: string;
+  reason: string;
+  severity: OrcamentistaHitlIssueSeverity;
+  source_references: string[];
+};
+
+export type OrcamentistaConsolidatedPreviewRisk = {
+  id: string;
+  source_risk_id: string;
+  source_agent_id?: string;
+  description: string;
+  severity: OrcamentistaHitlIssueSeverity;
+  impact: string;
+  blocks_consolidation: boolean;
+};
+
+export type OrcamentistaConsolidatedPreviewService = {
+  id: string;
+  category: string;
+  discipline: string;
+  description: string;
+  unit: string;
+  estimated_quantity: number;
+  quantity_confidence: number;
+  estimated_unit_cost: number;
+  estimated_total: number;
+  cost_confidence: number;
+  source_agent_ids: string[];
+  source_page_refs: string[];
+  source_evidence_refs: string[];
+  identification_type: 'identified' | 'inferred' | 'manual_assumption';
+  requires_hitl: boolean;
+  blocks_consolidation: boolean;
+};
+
+export type OrcamentistaPreviewConsolidationBlocker = {
+  id: string;
+  reason: string;
+  severity: OrcamentistaHitlIssueSeverity;
+  source_type: 'risk' | 'hitl' | 'agent_output' | 'validation';
+  source_id: string;
+};
+
+export type OrcamentistaConsolidatedPreviewPremise = {
+  id: string;
+  description: string;
+  source_agent_ids: string[];
+};
+
+export type OrcamentistaConsolidatedPreviewExclusion = {
+  id: string;
+  description: string;
+  source_agent_ids: string[];
+};
+
+export type OrcamentistaConsolidatedPreviewSummary = {
+  total_services: number;
+  total_estimated_value: number;
+  average_confidence: number;
+  traceability_score: number;
+  total_risks: number;
+  total_hitls: number;
+  total_blockers: number;
+};
+
+export type OrcamentistaConsolidatedPreview = {
+  id: string;
+  opportunity_id: string;
+  orcamento_id: string | null;
+  status: OrcamentistaConsolidatedPreviewStatus;
+  generated_from_agent_output_ids: string[];
+  services: OrcamentistaConsolidatedPreviewService[];
+  risks: OrcamentistaConsolidatedPreviewRisk[];
+  hitls: OrcamentistaConsolidatedPreviewHitl[];
+  premises: OrcamentistaConsolidatedPreviewPremise[];
+  exclusions: OrcamentistaConsolidatedPreviewExclusion[];
+  blockers: OrcamentistaPreviewConsolidationBlocker[];
+  confidence_score: number;
+  traceability_score: number;
+  can_consolidate: boolean;
+  consolidation_blocked_reason?: string;
+  summary: OrcamentistaConsolidatedPreviewSummary;
+  generated_at: string;
+};
