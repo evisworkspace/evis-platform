@@ -1808,3 +1808,159 @@ Sequencia visual atual no Workspace IA:
 #### 11.20.8 Proximo passo recomendado
 
 Revisar o payload simulado e criar uma fase posterior especifica para gravacao controlada, com aceite humano explicito, `orcamento_id` confirmado, auditoria e insert em `orcamento_itens` somente depois de todos os bloqueios e HITLs estarem resolvidos.
+
+---
+
+### 11.21 Fase 2J: Revisao Humana Do Payload Simulado
+
+> Status: implementado como UI e contrato mockados, sem IA real, sem banco, sem proposta, sem Obra/Diario e sem gravacao oficial.
+> Escopo: revisar item por item do payload simulado gerado pelo Gate de Consolidacao antes de qualquer fase futura de persistencia.
+
+#### 11.21.1 Objetivo
+
+Criar a camada Human Review / Payload Approval UI do Orçamentista IA:
+
+```text
+Payload simulado
+  -> revisao humana local
+    -> aprovar item
+    -> rejeitar item
+    -> editar item localmente
+    -> manter pendente
+    -> solicitar validacao
+    -> resumo de aprovacao
+    -> fase futura: gravacao controlada em orcamento_itens
+```
+
+#### 11.21.2 Documento canonico criado
+
+- `orcamentista/docs/EVIS_ORCAMENTISTA_PAYLOAD_REVIEW_CONTRACT.md`
+
+O documento registra:
+
+- diferenca entre payload simulado, item aprovado e item gravado;
+- motivo para nao gravar em `orcamento_itens` nesta fase;
+- tipos de decisao humana;
+- regras de aprovacao, rejeicao, edicao e pendencia;
+- rastreabilidade obrigatoria;
+- exemplos JSON;
+- requisitos para futura gravacao real controlada.
+
+#### 11.21.3 Tipos adicionados
+
+Tipos em `src/types.ts`:
+
+- `OrcamentistaPayloadReviewStatus`
+- `OrcamentistaPayloadReviewItemStatus`
+- `OrcamentistaPayloadReviewDecisionType`
+- `OrcamentistaPayloadReviewSession`
+- `OrcamentistaPayloadReviewItem`
+- `OrcamentistaPayloadReviewDecision`
+- `OrcamentistaPayloadReviewEditPatch`
+- `OrcamentistaPayloadReviewSummary`
+
+#### 11.21.4 Mock e utilitarios
+
+Arquivos criados:
+
+- `src/lib/orcamentista/payloadReviewMock.ts`
+- `src/lib/orcamentista/payloadReviewUtils.ts`
+
+O mock usa `MOCK_CONSOLIDATION_GATE` como origem e simula:
+
+- item aprovado;
+- item rejeitado;
+- item editado localmente;
+- item pendente de HITL;
+- item bloqueado por rastreabilidade;
+- sessao geral com `can_write_to_budget = false`.
+
+Funcoes puras criadas:
+
+```text
+createPayloadReviewSession()
+applyPayloadReviewDecision()
+canApprovePayloadItem()
+canEditPayloadItem()
+canRejectPayloadItem()
+getPayloadReviewBlockingReasons()
+summarizePayloadReview()
+getPayloadReviewStatusLabel()
+getPayloadReviewItemStatusLabel()
+```
+
+Nenhuma funcao chama API, banco, Supabase, OCR ou IA.
+
+#### 11.21.5 UI criada
+
+Arquivo criado:
+
+- `src/pages/Oportunidade/OrcamentistaPayloadReviewPanel.tsx`
+
+A UI mostra:
+
+- cabecalho "Revisao humana do payload";
+- resumo de total, aprovados, editados, rejeitados, pendentes, bloqueados, valor revisado e "Pode gravar: nao";
+- lista de itens com descricao, unidade, quantidade, valor unitario, total, origem, status, rastreabilidade, bloqueios e decisao atual;
+- detalhe do item com payload original, payload editado, `source_agent_ids`, `source_page_refs`, `source_evidence_refs`, `confidence_score`, `traceability_score` e `simulated_only`;
+- acoes mockadas locais: aprovar, rejeitar, editar, manter pendente e solicitar validacao;
+- CTA desabilitado "Gravar itens aprovados no orcamento oficial - fase futura";
+- avisos obrigatorios: nenhuma decisao foi persistida, nenhum item foi gravado em `orcamento_itens` e gravacao real exigira autorizacao explicita em fase futura.
+
+#### 11.21.6 Integracao na aba do Orçamentista
+
+Arquivo alterado:
+
+- `src/pages/Oportunidade/OrcamentistaTab.tsx`
+
+Sequencia visual atual no Workspace IA:
+
+```text
+1. Documentos recebidos
+2. Processamento de paginas
+3. Reader + Verifier
+4. HITL Orcamentista
+5. Dispatch para agentes
+6. Preview consolidado
+7. Gate de consolidacao
+8. Revisao humana do payload
+9. Pipeline IA mockado
+10. Previa IA mockada legada
+11. Chat/workspace
+```
+
+Essa ordem comunica:
+
+```text
+Documento -> Pagina -> Reader/Verifier -> HITL -> Agentes -> Preview -> Gate -> Revisao humana -> Gravacao futura
+```
+
+#### 11.21.7 Confirmacoes de conformidade
+
+- Revisao humana nao grava no banco.
+- Decisoes sao locais/mockadas.
+- Nenhum item aprovado e enviado ao Supabase.
+- Nenhum item rejeitado e deletado do banco.
+- Edicao altera apenas estado local/mockado.
+- Itens sem rastreabilidade nao podem ser aprovados.
+- Itens com HITL pendente iniciam pendentes.
+- Itens inferidos exigem validacao humana explicita.
+- `can_write_to_budget` permanece `false`.
+- Botao de gravacao real permanece desabilitado.
+- Nenhuma IA real chamada.
+- Gemini nao foi chamado.
+- OpenAI nao foi chamado.
+- Claude API nao foi chamada.
+- Nenhum OCR real executado.
+- Nenhum PDF real processado.
+- Nenhuma migration criada.
+- Banco/schema nao alterado.
+- Nenhum item gravado em `orcamento_itens`.
+- Nenhuma consolidacao no orcamento oficial.
+- Proposta nao alterada.
+- Obra/Diario preservados.
+- Rotas `/obras` e `/obras/:obraId` preservadas.
+
+#### 11.21.8 Proximo passo recomendado
+
+A proxima fase deve ser uma gravacao controlada em `orcamento_itens` somente apos aprovacao explicita do usuario, confirmacao de `orcamento_id`, auditoria de RLS/schema, recalculo do payload final e persistencia auditavel das decisoes humanas.

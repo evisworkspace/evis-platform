@@ -1385,3 +1385,86 @@ export type OrcamentistaConsolidationGate = {
   summary: OrcamentistaConsolidationGateSummary;
   generated_at: string;
 };
+
+// ── Fase 2J: Revisao humana do payload simulado ────────────────────────────
+
+export type OrcamentistaPayloadReviewStatus =
+  | 'not_started'
+  | 'in_review'
+  | 'partially_reviewed'
+  | 'blocked'
+  | 'ready_for_future_write';
+
+export type OrcamentistaPayloadReviewItemStatus =
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'edited'
+  | 'blocked'
+  | 'validation_requested';
+
+export type OrcamentistaPayloadReviewDecisionType =
+  | 'approve'
+  | 'reject'
+  | 'edit'
+  | 'keep_pending'
+  | 'request_validation';
+
+export type OrcamentistaPayloadReviewEditPatch = Partial<
+  Pick<
+    OrcamentistaConsolidationPayloadItem,
+    'descricao' | 'categoria' | 'unidade' | 'quantidade' | 'valor_unitario' | 'codigo'
+  >
+>;
+
+export type OrcamentistaPayloadReviewDecision = {
+  item_id: string;
+  decision_type: OrcamentistaPayloadReviewDecisionType;
+  reason: string;
+  edit_patch?: OrcamentistaPayloadReviewEditPatch;
+  decided_at: string;
+};
+
+export type OrcamentistaPayloadReviewItem = {
+  id: string;
+  payload_item_id: string;
+  original_payload: OrcamentistaConsolidationPayloadItem;
+  edited_payload?: OrcamentistaConsolidationPayloadItem;
+  status: OrcamentistaPayloadReviewItemStatus;
+  decision_type?: OrcamentistaPayloadReviewDecisionType;
+  decision_reason?: string;
+  requires_traceability: boolean;
+  has_required_traceability: boolean;
+  requires_hitl_resolution: boolean;
+  blocks_write: boolean;
+  reviewed_by?: string;
+  reviewed_at?: string;
+};
+
+export type OrcamentistaPayloadReviewSummary = {
+  total_items: number;
+  approved_count: number;
+  edited_count: number;
+  rejected_count: number;
+  pending_count: number;
+  blocked_count: number;
+  validation_requested_count: number;
+  total_original_value: number;
+  total_reviewed_value: number;
+  can_write_to_budget: boolean;
+  write_blocked_reason: string;
+};
+
+export type OrcamentistaPayloadReviewSession = {
+  id: string;
+  consolidation_gate_id: string;
+  opportunity_id: string;
+  orcamento_id: string | null;
+  status: OrcamentistaPayloadReviewStatus;
+  items: OrcamentistaPayloadReviewItem[];
+  summary: OrcamentistaPayloadReviewSummary;
+  can_write_to_budget: boolean;
+  write_blocked_reason: string;
+  created_at: string;
+  updated_at: string;
+};
