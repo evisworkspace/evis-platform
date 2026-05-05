@@ -1,4 +1,5 @@
 import {
+  OrcamentistaCriticalDimensionType,
   OrcamentistaDimensionalSanityCheck,
   OrcamentistaNormalizedReaderOutput,
   OrcamentistaReaderCriticalDimension,
@@ -22,9 +23,63 @@ function isLengthUnit(unit: string): unit is LengthUnit {
   return unit === 'm' || unit === 'cm' || unit === 'mm';
 }
 
+function normalizeUnit(unit: string) {
+  return unit
+    .toLowerCase()
+    .replace('³', '3')
+    .replace('²', '2')
+    .trim();
+}
+
 function includesAny(text: string, tokens: string[]) {
   const normalized = text.toLowerCase();
   return tokens.some((token) => normalized.includes(token));
+}
+
+function dimensionSearchText(dimension: OrcamentistaReaderCriticalDimension) {
+  return `${dimension.dimension_type} ${dimension.label} ${dimension.unit} ${dimension.source_text} ${dimension.source_reference}`.toLowerCase();
+}
+
+function makeDimensionalObservation({
+  id,
+  dimension,
+  dimensionType,
+  expectedMin,
+  expectedMax,
+  severity = 'media',
+  requiresHitl,
+  blocksConsolidation,
+  message,
+  normalizedValue,
+  ambiguityCandidates,
+}: {
+  id: string;
+  dimension: OrcamentistaReaderCriticalDimension;
+  dimensionType: OrcamentistaCriticalDimensionType;
+  expectedMin: number;
+  expectedMax: number;
+  severity?: OrcamentistaDimensionalSanityCheck['severity'];
+  requiresHitl: boolean;
+  blocksConsolidation: boolean;
+  message: string;
+  normalizedValue?: number;
+  ambiguityCandidates?: number[];
+}): OrcamentistaDimensionalSanityCheck {
+  return {
+    id,
+    dimension_type: dimensionType,
+    value: dimension.value,
+    unit: dimension.unit,
+    expected_min: expectedMin,
+    expected_max: expectedMax,
+    severity,
+    requires_hitl: requiresHitl,
+    blocks_consolidation: blocksConsolidation,
+    message,
+    source_text: dimension.source_text || dimension.source_reference,
+    normalized_value: normalizedValue,
+    ambiguity_candidates: ambiguityCandidates,
+  };
 }
 
 function collectAppliesTo(output: OrcamentistaNormalizedReaderOutput) {
@@ -88,13 +143,163 @@ function checksForCriticalDimension(
   const checks: OrcamentistaDimensionalSanityCheck[] = [];
   const sourceText = dimension.source_text || dimension.source_reference;
   const sourceType = dimension.source_type ?? 'unknown';
+  const searchText = dimensionSearchText(dimension);
+  const unit = normalizeUnit(dimension.unit);
 
-  if (dimension.dimension_type === 'pile_depth' && isLengthUnit(dimension.unit)) {
+  if (
+    dimension.dimension_type === 'pile_diameter' ||
+    includesAny(searchText, ['diametro', 'diâmetro', 'estaca c25'])
+  ) {
+    checks.push(
+      makeDimensionalObservation({
+        id: `dim-check-pile-diameter-${dimension.id}`,
+        dimension,
+        dimensionType: 'pile_diameter',
+        expectedMin: 10,
+        expectedMax: 80,
+        severity: dimension.value < 10 || dimension.value > 80 ? 'alta' : 'media',
+        requiresHitl: true,
+        blocksConsolidation: dimension.value < 10 || dimension.value > 80,
+        message:
+          'Diametro de estaca identificado como cota critica; validar unidade e correspondencia C25/diametro antes de consolidar.',
+        normalizedValue: unit === 'm' ? dimension.value * 100 : unit === 'mm' ? dimension.value / 10 : dimension.value,
+      })
+    );
+  }
+
+  if (
+    dimension.dimension_type === 'pile_quantity' ||
+    (includesAny(searchText, ['quantidade', 'estacas']) && includesAny(searchText, ['estaca', 'c25', 'unid']))
+  ) {
+    checks.push(
+      makeDimensionalObservation({
+        id: `dim-check-pile-quantity-${dimension.id}`,
+        dimension,
+        dimensionType: 'pile_quantity',
+        expectedMin: 1,
+        expectedMax: 500,
+        severity: dimension.value <= 0 ? 'alta' : 'media',
+        requiresHitl: true,
+        blocksConsolidation: dimension.value <= 0,
+        message:
+          'Quantidade de estacas e dado critico; manter HITL para confirmar total oficial antes de quantitativo.',
+        normalizedValue: dimension.value,
+      })
+    );
+  }
+
+  if (
+    dimension.dimension_type === 'pile_depth' ||
+    includesAny(searchText, ['comprimento', 'profundidade'])
+  ) {
+    const normalizedDepthM = isLengthUnit(unit)
+      ? unit === 'cm'
+        ? dimension.value / 100
+        : unit === 'mm'
+          ? dimension.value / 1000
+          : dimension.value
+      : dimension.value;
+
+    checks.push(
+      makeDimensionalObservation({
+        id: `dim-check-pile-length-unit-${dimension.id}`,
+        dimension,
+        dimensionType: 'pile_depth',
+        expectedMin: 1,
+        expectedMax: 15,
+        severity: 'media',
+        requiresHitl: true,
+        blocksConsolidation: false,
+        message:
+          'Comprimento/profundidade de estaca identificado; validar se o valor representa barra de aco, profundidade executiva ou outra medida antes de consolidar.',
+        normalizedValue: normalizedDepthM,
+      })
+    );
+
+    if (isLengthUnit(unit)) {
+      checks.push(
+        ...runDimensionalSanityChecks({
+          pile_depth: {
+            value: dimension.value,
+            unit,
+            pile_diameter_cm: dimension.pile_diameter_cm,
+            building_type: 'residential',
+            source_text: sourceText,
+          },
+          decimal_ambiguity: {
+            source_text: sourceText,
+            parsed_value: dimension.value,
+            unit,
+          },
+        })
+      );
+    }
+  }
+
+  if (
+    dimension.dimension_type === 'concrete_volume' ||
+    dimension.dimension_type === 'pile_volume' ||
+    includesAny(searchText, ['volume', 'm3', 'm³'])
+  ) {
+    checks.push(
+      makeDimensionalObservation({
+        id: `dim-check-concrete-volume-${dimension.id}`,
+        dimension,
+        dimensionType: dimension.dimension_type === 'pile_volume' ? 'pile_volume' : 'concrete_volume',
+        expectedMin: 0,
+        expectedMax: Math.max(dimension.value * 1.3, dimension.value),
+        severity: 'media',
+        requiresHitl: true,
+        blocksConsolidation: false,
+        message:
+          'Volume de concreto identificado; comparar com diametro, quantidade e profundidade das estacas antes de consolidar.',
+        normalizedValue: dimension.value,
+      })
+    );
+  }
+
+  if (includesAny(searchText, ['fck', 'resistencia', 'resistência', 'mpa', 'kgf/cm'])) {
+    checks.push(
+      makeDimensionalObservation({
+        id: `dim-check-concrete-strength-unit-${dimension.id}`,
+        dimension,
+        dimensionType: 'foundation_dimension',
+        expectedMin: 10,
+        expectedMax: 60,
+        severity: 'alta',
+        requiresHitl: true,
+        blocksConsolidation: false,
+        message:
+          'Resistencia do concreto identificada em unidade potencialmente divergente; confirmar fck por elemento antes de consolidar.',
+        normalizedValue: unit.includes('kgf/cm') ? Number((dimension.value * 0.0980665).toFixed(2)) : dimension.value,
+      })
+    );
+  }
+
+  if (unit === 'cm' || unit === 'mm') {
+    checks.push(
+      makeDimensionalObservation({
+        id: `dim-check-unit-normalization-${dimension.id}`,
+        dimension,
+        dimensionType: dimension.dimension_type === 'pile_diameter' ? 'pile_diameter' : 'foundation_dimension',
+        expectedMin: 0,
+        expectedMax: dimension.value,
+        severity: 'baixa',
+        requiresHitl: false,
+        blocksConsolidation: false,
+        message:
+          'Cota em cm/mm detectada; qualquer uso em quantitativo deve normalizar unidade explicitamente antes de gravar payload.',
+        normalizedValue: unit === 'cm' ? dimension.value / 100 : dimension.value / 1000,
+      })
+    );
+  }
+
+  if (dimension.dimension_type === 'pile_depth' && isLengthUnit(unit)) {
     checks.push(
       ...runDimensionalSanityChecks({
         pile_depth: {
           value: dimension.value,
-          unit: dimension.unit,
+          unit,
           pile_diameter_cm: dimension.pile_diameter_cm,
           building_type: 'residential',
           source_text: sourceText,
@@ -126,14 +331,14 @@ function checksForCriticalDimension(
       dimension.dimension_type === 'foundation_dimension' ||
       dimension.dimension_type === 'critical_level' ||
       dimension.dimension_type === 'decimal_ambiguity') &&
-    isLengthUnit(dimension.unit)
+    isLengthUnit(unit)
   ) {
     checks.push(
       ...runDimensionalSanityChecks({
         decimal_ambiguity: {
           source_text: sourceText,
           parsed_value: dimension.value,
-          unit: dimension.unit,
+          unit,
         },
       })
     );
@@ -183,7 +388,42 @@ function checksForCriticalDimension(
 export function applyCriticalDimensionChecks(
   output: OrcamentistaNormalizedReaderOutput
 ): OrcamentistaDimensionalSanityCheck[] {
-  return output.critical_dimensions.flatMap(checksForCriticalDimension);
+  const checks = output.critical_dimensions.flatMap(checksForCriticalDimension);
+  const concreteStrengthDimensions = output.critical_dimensions.filter((dimension) =>
+    includesAny(dimensionSearchText(dimension), ['fck', 'resistencia', 'resistência', 'mpa', 'kgf/cm'])
+  );
+
+  if (concreteStrengthDimensions.length > 1) {
+    const normalizedStrengths = concreteStrengthDimensions.map((dimension) => {
+      const unit = normalizeUnit(dimension.unit);
+      return unit.includes('kgf/cm') ? Number((dimension.value * 0.0980665).toFixed(2)) : dimension.value;
+    });
+    const minStrength = Math.min(...normalizedStrengths);
+    const maxStrength = Math.max(...normalizedStrengths);
+
+    if (maxStrength - minStrength > 1) {
+      checks.push({
+        id: 'dim-check-fck-divergent-units',
+        dimension_type: 'foundation_dimension',
+        value: maxStrength,
+        unit: 'MPa',
+        expected_min: minStrength,
+        expected_max: maxStrength,
+        severity: 'alta',
+        requires_hitl: true,
+        blocks_consolidation: false,
+        message:
+          'Fck/resistencia do concreto aparece com valores ou unidades divergentes; confirmar classe por elemento antes de consolidar.',
+        source_text: concreteStrengthDimensions
+          .map((dimension) => dimension.source_text || dimension.source_reference)
+          .join(' | '),
+        normalized_value: maxStrength,
+        ambiguity_candidates: normalizedStrengths,
+      });
+    }
+  }
+
+  return checks;
 }
 
 export function determineReaderVerifierRequirement({

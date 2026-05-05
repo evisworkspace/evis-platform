@@ -110,7 +110,7 @@ function getPhaseStatusClass(status: 'complete' | 'current' | 'pending' | 'block
   const classes = {
     complete: 'border-brand-green/30 bg-brand-green/10 text-brand-green',
     current: 'border-brand-blue/40 bg-brand-blue/10 text-brand-blue',
-    pending: 'border-white/10 bg-white/[0.03] text-t3',
+    pending: 'border-white/10 bg-white/3 text-t3',
     blocked: 'border-red-500/30 bg-red-500/10 text-red-300',
   };
 
@@ -130,7 +130,7 @@ function getPhaseStatusLabel(status: 'complete' | 'current' | 'pending' | 'block
 
 function MiniMetric({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2">
+    <div className="rounded-lg border border-white/10 bg-white/3 px-3 py-2">
       <p className="font-mono text-[9px] font-bold uppercase tracking-widest text-t3">{label}</p>
       <p className="mt-1 text-sm font-semibold text-t1">{value}</p>
     </div>
@@ -153,7 +153,7 @@ function ContextList({
   };
 
   return (
-    <div className="rounded-lg border border-white/10 bg-white/[0.03]">
+    <div className="rounded-lg border border-white/10 bg-white/3">
       <div className="border-b border-white/10 px-4 py-3">
         <span className={`rounded border px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${toneClass[tone]}`}>
           {title}
@@ -290,7 +290,7 @@ export default function OrcamentistaGuidedIntakePanel() {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {expectedDocuments.map((label) => (
-                    <span key={label} className="rounded border border-white/10 bg-white/[0.03] px-2 py-1 text-xs text-t2">
+                    <span key={label} className="rounded border border-white/10 bg-white/3 px-2 py-1 text-xs text-t2">
                       {label}
                     </span>
                   ))}
@@ -362,7 +362,7 @@ export default function OrcamentistaGuidedIntakePanel() {
               {storyLines.map((line) => {
                 const [label, ...rest] = line.split(':');
                 return (
-                  <div key={line} className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+                  <div key={line} className="rounded-lg border border-white/10 bg-white/3 p-3">
                     <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-t3">{label}</p>
                     <p className="mt-1 text-sm leading-6 text-t2">{rest.join(':').trim()}</p>
                   </div>
@@ -370,7 +370,7 @@ export default function OrcamentistaGuidedIntakePanel() {
               })}
             </div>
 
-            <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.03] p-3 text-xs text-t3">
+            <div className="mt-4 rounded-lg border border-white/10 bg-white/3 p-3 text-xs text-t3">
               <p>Status de propagação: <span className="font-semibold text-t1">{propagation.status}</span></p>
               <p className="mt-1">
                 Quantitativos finais: {propagation.can_feed_quantities ? 'liberados' : 'bloqueados'} · Custos:{' '}
@@ -388,7 +388,7 @@ export default function OrcamentistaGuidedIntakePanel() {
 
           <div className="space-y-4">
             {Object.entries(hitlsByPhase).map(([phase, questions]) => (
-              <div key={phase} className="rounded-lg border border-white/10 bg-white/[0.03]">
+              <div key={phase} className="rounded-lg border border-white/10 bg-white/3">
                 <div className="border-b border-white/10 px-4 py-3">
                   <p className="text-xs font-bold uppercase tracking-wider text-t2">
                     {PHASE_LABELS[phase as OrcamentistaReadingPhase]}
@@ -433,7 +433,7 @@ export default function OrcamentistaGuidedIntakePanel() {
                           </p>
                           <div className="flex flex-wrap gap-2">
                             {question.suggested_decisions.map((decision) => (
-                              <span key={decision} className="rounded border border-white/10 bg-white/[0.03] px-2 py-1 text-[11px] text-t2">
+                              <span key={decision} className="rounded border border-white/10 bg-white/3 px-2 py-1 text-[11px] text-t2">
                                 {DECISION_LABELS[decision]}
                               </span>
                             ))}
@@ -446,7 +446,7 @@ export default function OrcamentistaGuidedIntakePanel() {
                               key={action.type}
                               type="button"
                               onClick={() => handleAction(question, action.type)}
-                              className="rounded border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-semibold text-t2 transition hover:border-brand-green/30 hover:bg-brand-green/10 hover:text-brand-green"
+                              className="rounded border border-white/10 bg-white/3 px-3 py-2 text-xs font-semibold text-t2 transition hover:border-brand-green/30 hover:bg-brand-green/10 hover:text-brand-green"
                             >
                               {action.label}
                             </button>

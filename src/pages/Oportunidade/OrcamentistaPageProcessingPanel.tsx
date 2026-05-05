@@ -67,7 +67,7 @@ export function OrcamentistaPageProcessingPanel() {
   return (
     <div className="space-y-6">
       <section className="overflow-hidden rounded-lg border border-blue-500/20 bg-blue-500/5">
-        <header className="border-b border-white/10 bg-white/[0.03] px-5 py-4">
+        <header className="border-b border-white/10 bg-white/3 px-5 py-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h2 className="flex items-center gap-2 text-sm font-bold text-t1">
@@ -86,7 +86,7 @@ export function OrcamentistaPageProcessingPanel() {
 
         <div className="space-y-6 p-5">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-            <div className="flex flex-col items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] p-3 text-center">
+            <div className="flex flex-col items-center justify-center rounded-lg border border-white/10 bg-white/3 p-3 text-center">
               <span className="mb-1 text-xs text-t3">Total</span>
               <span className="text-2xl font-semibold text-t1">{job.summary?.total_pages || 0}</span>
             </div>
@@ -118,7 +118,7 @@ export function OrcamentistaPageProcessingPanel() {
             </h3>
             <div className="overflow-hidden rounded-lg border border-white/10">
               <table className="min-w-full divide-y divide-white/10">
-                <thead className="bg-white/[0.03]">
+                <thead className="bg-white/3">
                   <tr>
                     <th scope="col" className="px-4 py-3 text-left font-mono text-[9px] font-bold uppercase tracking-widest text-t3">
                       Página
@@ -141,7 +141,7 @@ export function OrcamentistaPageProcessingPanel() {
                   {pages.map((page) => {
                     const risk = getPageProcessingRisk(page);
                     return (
-                      <tr key={page.id} className="transition-colors hover:bg-white/[0.03]">
+                      <tr key={page.id} className="transition-colors hover:bg-white/3">
                         <td className="whitespace-nowrap px-4 py-3">
                           <div className="flex flex-col">
                             <span className="text-sm font-medium text-t1">Pág. {page.page_number}</span>
@@ -200,7 +200,7 @@ export function OrcamentistaPageProcessingPanel() {
               </table>
             </div>
 
-            <div className="mt-4 flex gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-4 text-sm text-t3">
+            <div className="mt-4 flex gap-3 rounded-lg border border-white/10 bg-white/3 p-4 text-sm text-t3">
               <AlertCircle className="h-5 w-5 shrink-0 text-t4" />
               <div>
                 <p className="mb-1 font-medium text-t2">Nota sobre a Camada de Texto (Nativo)</p>
@@ -215,7 +215,7 @@ export function OrcamentistaPageProcessingPanel() {
           </div>
         </div>
 
-        <footer className="flex flex-col gap-3 border-t border-white/10 bg-white/[0.03] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <footer className="flex flex-col gap-3 border-t border-white/10 bg-white/3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-t3">Renderização determinística. Nenhuma IA envolvida nesta etapa.</p>
           <button
             type="button"

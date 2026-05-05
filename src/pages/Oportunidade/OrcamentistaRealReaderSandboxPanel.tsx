@@ -39,7 +39,7 @@ function ManualList({
   empty: string;
 }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+    <div className="rounded-lg border border-white/10 bg-white/3 p-3">
       <p className="mb-2 font-mono text-[9px] font-bold uppercase tracking-widest text-t4">{title}</p>
       {items.length > 0 ? (
         <ul className="space-y-1 text-xs leading-5 text-t2">
@@ -108,17 +108,17 @@ export default function OrcamentistaRealReaderSandboxPanel() {
       </header>
 
       <div className="grid gap-3 md:grid-cols-4">
-        <div className="rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3">
+        <div className="rounded-lg border border-white/10 bg-white/3 px-4 py-3">
           <p className="font-mono text-[9px] font-bold uppercase tracking-widest text-t4">Página</p>
           <p className="mt-1 text-sm font-bold text-t1">{sandbox.page_number}</p>
           <p className="mt-0.5 truncate text-[11px] text-t3">{sandbox.file_name}</p>
         </div>
-        <div className="rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3">
+        <div className="rounded-lg border border-white/10 bg-white/3 px-4 py-3">
           <p className="font-mono text-[9px] font-bold uppercase tracking-widest text-t4">Reader</p>
           <p className="mt-1 font-mono text-sm font-bold text-cyan-200">{sandbox.reader_motor}</p>
           <p className="mt-0.5 text-[11px] text-t3">prompt package gerado</p>
         </div>
-        <div className="rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3">
+        <div className="rounded-lg border border-white/10 bg-white/3 px-4 py-3">
           <p className="font-mono text-[9px] font-bold uppercase tracking-widest text-t4">Verifier</p>
           <p className="mt-1 font-mono text-sm font-bold text-purple-200">{sandbox.verifier_motor}</p>
           <p className="mt-0.5 text-[11px] text-t3">obrigatório se houver risco</p>
@@ -209,7 +209,7 @@ export default function OrcamentistaRealReaderSandboxPanel() {
         />
       </article>
 
-      <article className="space-y-4 rounded-lg border border-white/10 bg-white/[0.03] p-4">
+      <article className="space-y-4 rounded-lg border border-white/10 bg-white/3 p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h3 className="text-sm font-bold text-t1">Colar JSON real do Reader</h3>
@@ -291,11 +291,11 @@ export default function OrcamentistaRealReaderSandboxPanel() {
                 </div>
                 <p className="mt-1">{manualResult.allowed_to_dispatch ? 'Liberado' : 'Bloqueado'}</p>
               </div>
-              <div className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-t2">
+              <div className="rounded-lg border border-white/10 bg-white/3 px-3 py-2 text-xs text-t2">
                 <p className="font-mono text-[9px] font-bold uppercase tracking-widest text-t4">Cotas críticas</p>
                 <p className="mt-1 font-bold text-t1">{manualSummary.critical_dimensions_count}</p>
               </div>
-              <div className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-t2">
+              <div className="rounded-lg border border-white/10 bg-white/3 px-3 py-2 text-xs text-t2">
                 <p className="font-mono text-[9px] font-bold uppercase tracking-widest text-t4">Sanity checks</p>
                 <p className="mt-1 font-bold text-t1">{manualSummary.dimensional_checks_count}</p>
               </div>
