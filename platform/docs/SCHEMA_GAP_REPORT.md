@@ -2871,3 +2871,128 @@ painel + integracao visual
 ```
 
 Essa proxima etapa deve consumir o mock e os utilitarios da 3D-B sem gravar no banco e sem consolidar orçamento oficial.
+
+---
+
+### 11.27 Fase 3D-C: Guided Intake Panel + Visual Integration
+
+> Status: implementado como painel visual local, sem IA real, sem banco e sem processamento de PDF.
+> Escopo: expor a leitura guiada, HITLs por etapa e contexto tecnico separado no Workspace IA.
+
+#### 11.27.1 Objetivo aplicado
+
+A Fase 3D-C criou a camada visual para consumir o mock e os utilitarios puros da Fase 3D-B.
+
+O painel comunica o fluxo:
+
+```text
+Intake guiado
+  -> ordem de leitura por fase
+  -> documentos esperados/recebidos/ausentes
+  -> HITLs de leitura
+  -> contexto validado, pendente e bloqueado
+  -> proximo documento solicitado
+```
+
+#### 11.27.2 Painel visual criado
+
+Arquivo criado:
+
+- `src/pages/Oportunidade/OrcamentistaGuidedIntakePanel.tsx`
+
+O painel mostra:
+
+- cabecalho "Intake guiado e contexto tecnico";
+- timeline com 12 fases da leitura;
+- fase atual, fases completas, pendentes e bloqueadas;
+- documentos esperados;
+- documentos recebidos;
+- documentos ausentes;
+- documento de fundacao recebido fora de ordem;
+- proximo documento solicitado;
+- storytelling tecnico da obra;
+- HITLs por leitura;
+- acoes mockadas locais para decisao humana;
+- contexto validado, pendente e bloqueado em blocos separados.
+
+#### 11.27.3 Integracao no Workspace IA
+
+Arquivo alterado:
+
+- `src/pages/Oportunidade/OrcamentistaTab.tsx`
+
+O painel foi integrado no inicio da secao Workspace IA, antes de Documentos recebidos.
+
+Sequencia visual atual:
+
+```text
+1. Intake guiado e contexto tecnico
+2. Documentos recebidos
+3. Projetos ausentes / estimativas controladas
+4. Processamento de paginas
+5. Reader + Verifier
+6. HITL Orcamentista
+7. Dispatch para agentes
+8. Preview consolidado
+9. Gate de consolidacao
+10. Revisao humana do payload
+```
+
+Os blocos experimentais posteriores permanecem depois dessa sequencia.
+
+#### 11.27.4 HITLs e decisoes visiveis
+
+HITLs visiveis no painel:
+
+- quantidade de estacas: 21 unidades vs ambiguidade textual;
+- C25/R25 ou nomenclatura da estaca;
+- P6 indicado como `nasce`;
+- P23 em corte fora da tabela principal;
+- sondagem/topografia ausente;
+- relatorio de esforcos da fundacao ausente;
+- fck/concreto por elemento divergente.
+
+As acoes mockadas locais permitem simular:
+
+- validar valor detectado;
+- corrigir manualmente;
+- solicitar novo documento;
+- marcar como estimado;
+- manter bloqueado.
+
+Essas acoes alteram apenas estado local do componente.
+
+#### 11.27.5 Contexto separado
+
+O painel separa explicitamente:
+
+- contexto validado: tipo de obra, endereco mockado, arquitetonico parcial, 21 estacas e C25/Ø25 cm;
+- contexto pendente: sondagem, relatorio de esforcos, profundidade real, P6, P23 e fck por elemento;
+- contexto bloqueado: consolidacao da fundacao, quantitativos finais e uso executivo da fundacao.
+
+Avisos obrigatorios exibidos:
+
+- `Contexto pendente nao alimenta quantitativos finais.`
+- `Correcoes humanas substituem leituras ambiguas.`
+- `Documento fora de ordem pode ser lido, mas bloqueia consolidacao ate completar contexto.`
+
+#### 11.27.6 Confirmacoes de conformidade
+
+- Nenhuma IA real chamada.
+- Gemini real nao foi chamado.
+- OpenAI nao foi chamado.
+- Claude API nao foi chamada.
+- Nenhum OCR real executado.
+- Nenhum PDF real processado.
+- Nenhum `fetch`, axios ou Supabase usado.
+- Nenhuma migration criada.
+- Banco/schema nao alterado.
+- Nenhum item gravado em `orcamento_itens`.
+- Nenhuma consolidacao no orcamento oficial.
+- Proposta nao alterada.
+- Obra/Diario preservados.
+- Rotas `/obras` e `/obras/:obraId` preservadas.
+
+#### 11.27.7 Proximo passo recomendado
+
+Executar fase posterior para conectar esse painel a dados reais somente quando houver backend, persistencia auditavel de HITL e decisao explicita de liberar leitura real controlada.

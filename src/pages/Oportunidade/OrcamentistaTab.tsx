@@ -16,6 +16,7 @@ import OrcamentistaConsolidationGatePanel from './OrcamentistaConsolidationGateP
 import OrcamentistaPayloadReviewPanel from './OrcamentistaPayloadReviewPanel';
 import OrcamentistaRealReaderSandboxPanel from './OrcamentistaRealReaderSandboxPanel';
 import OrcamentistaMissingProjectFallbackPanel from './OrcamentistaMissingProjectFallbackPanel';
+import OrcamentistaGuidedIntakePanel from './OrcamentistaGuidedIntakePanel';
 import { buildMockDocumentIntakeFiles } from '../../lib/orcamentista/documentIntakeMock';
 import { mockPipelineSteps, mockAiPreview } from '../../lib/orcamentista/mockPipeline';
 
@@ -332,47 +333,50 @@ export default function OrcamentistaTab() {
             />
             <div className="mt-4 space-y-6">
 
-              {/* E1. Documentos recebidos / inventário mockado */}
+              {/* E1. Intake guiado e contexto técnico */}
+              <OrcamentistaGuidedIntakePanel />
+
+              {/* E2. Documentos recebidos / inventário mockado */}
               <OrcamentistaDocumentsPanel
                 documents={documentIntakeFiles}
                 isLoadingFiles={opportunityFiles.isFetching}
                 filesError={opportunityFilesError}
               />
 
-              {/* E2. Projetos ausentes / estimativas controladas */}
+              {/* E3. Projetos ausentes / estimativas controladas */}
               <OrcamentistaMissingProjectFallbackPanel />
 
-              {/* E3. Processamento de páginas mockado */}
+              {/* E4. Processamento de páginas mockado */}
               <OrcamentistaPageProcessingPanel />
 
-              {/* E4. Reader + Verifier mockado */}
+              {/* E5. Reader + Verifier mockado */}
               <OrcamentistaReaderVerifierPanel />
 
-              {/* E5. HITL do Orçamentista mockado */}
+              {/* E6. HITL do Orçamentista mockado */}
               <OrcamentistaHitlPanel />
 
-              {/* E6. Dispatch mockado para agentes especialistas */}
+              {/* E7. Dispatch mockado para agentes especialistas */}
               <OrcamentistaAgentDispatchPanel />
 
-              {/* E7. Preview Consolidado mockado */}
+              {/* E8. Preview Consolidado mockado */}
               <OrcamentistaConsolidatedPreviewPanel />
 
-              {/* E8. Gate de consolidação mockado */}
+              {/* E9. Gate de consolidação mockado */}
               <OrcamentistaConsolidationGatePanel />
 
-              {/* E9. Revisão humana do payload simulado */}
+              {/* E10. Revisão humana do payload simulado */}
               <OrcamentistaPayloadReviewPanel />
 
-              {/* E10. Sandbox de primeira leitura real controlada */}
+              {/* E11. Sandbox de primeira leitura real controlada */}
               <OrcamentistaRealReaderSandboxPanel />
 
-              {/* E11. Pipeline IA mockado */}
+              {/* E12. Pipeline IA mockado */}
               <OrcamentistaAiPipelinePanel steps={mockPipelineSteps} />
 
-              {/* E12. Prévia IA mockada (legado) */}
+              {/* E13. Prévia IA mockada (legado) */}
               <OrcamentistaAiPreviewPanel preview={mockAiPreview} />
 
-              {/* E13. Chat do Orçamentista (staging/preview separado) */}
+              {/* E14. Chat do Orçamentista (staging/preview separado) */}
               <div className="rounded-lg border border-white/10 bg-white/5 p-4">
                 <p className="mb-1 font-mono text-[9px] font-bold uppercase tracking-widest text-white/30">
                   Orçamentista IA — Chat de análise
