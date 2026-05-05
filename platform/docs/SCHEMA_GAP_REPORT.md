@@ -2363,3 +2363,240 @@ Executar teste real de uma unica pagina com o motor escolhido, colar o JSON reto
 - sanity checks acionados;
 - HITL exigido;
 - motivo de bloqueio ou elegibilidade futura para dispatch.
+
+---
+
+### 11.24 Fase 3C: Missing Project Fallback & Estimated Scope Policy
+
+> Status: implementado como politica local, mocks e UI experimental, sem IA real, sem banco e sem consolidacao.
+> Escopo: projetos ausentes, estimativas controladas, avisos, HITL e bloqueios executivos.
+
+#### 11.24.1 Objetivo aplicado
+
+A Fase 3C criou a camada de fallback para quando uma disciplina nao possui projeto proprio, permitindo continuidade do orçamento preliminar sem tratar estimativa como fato.
+
+Regras aplicadas:
+
+- projeto ausente nao bloqueia automaticamente orçamento preliminar;
+- projeto ausente bloqueia execucao e consolidacao final sem ressalva;
+- item sem projeto nunca e classificado como identificado;
+- item sem projeto usa `ESTIMATED_WITHOUT_PROJECT`, `MANUAL_ASSUMPTION` ou evidencia indireta;
+- evidencias indiretas de outros documentos usam `INDIRECT_EVIDENCE_FROM_PROJECT_DOCUMENTS`;
+- estimativa pode alimentar orçamento preliminar e proposta futura com aviso;
+- estimativa nao pode alimentar execucao sem validacao;
+- disciplinas criticas exigem HITL;
+- escopo de seguranca/legalizacao bloqueia consolidacao executiva.
+
+#### 11.24.2 Documento canonico criado
+
+- `orcamentista/docs/EVIS_ORCAMENTISTA_MISSING_PROJECT_FALLBACK_POLICY.md`
+
+O documento registra:
+
+- objetivo da politica;
+- diferenca entre projeto lido, inferencia, estimativa sem projeto, premissa manual e exclusao;
+- quando permitir orçamento preliminar;
+- quando bloquear consolidacao;
+- quando exigir HITL;
+- como estimar eletrica sem projeto;
+- como estimar hidrossanitario sem projeto;
+- como tratar sondagem, estrutural, PPCI, HVAC e acabamentos;
+- exemplos JSON;
+- relacao com SINAPI, CUB e historico interno;
+- proibicao de tratar estimativa como fato.
+
+#### 11.24.3 Tipos adicionados
+
+Tipos em `src/types.ts`:
+
+- `OrcamentistaScopeOriginType`
+- `OrcamentistaMissingProjectDiscipline`
+- `OrcamentistaScopeConfidenceLevel`
+- `OrcamentistaFallbackDecisionType`
+- `OrcamentistaEstimateBasisType`
+- `OrcamentistaEstimateBasis`
+- `OrcamentistaFallbackWarning`
+- `OrcamentistaEstimatedScopeItem`
+- `OrcamentistaMissingProjectFallback`
+- `OrcamentistaFallbackSummary`
+
+Origem critica adicionada:
+
+```text
+INDIRECT_EVIDENCE_FROM_PROJECT_DOCUMENTS
+```
+
+Essa origem e obrigatoria quando uma disciplina esta sem projeto proprio, mas o EVIS usa evidencias indiretas de arquitetonico, memorial, layout, implantacao ou interiores.
+
+#### 11.24.4 Politica de projeto ausente
+
+Arquivo criado:
+
+- `src/lib/orcamentista/missingProjectPolicy.ts`
+
+Funcoes puras:
+
+```text
+getMissingProjectPolicyForDiscipline()
+canProceedWithoutProject()
+shouldBlockFinalConsolidationWithoutProject()
+shouldRequireHitlForMissingProject()
+getFallbackModesForDiscipline()
+getWarningForEstimatedScope()
+```
+
+Disciplinas cobertas:
+
+- arquitetonico;
+- sondagem;
+- estrutural;
+- eletrico;
+- hidrossanitario;
+- PPCI;
+- HVAC/climatizacao;
+- acabamentos/memorial.
+
+Nenhuma funcao chama IA/API/banco.
+
+#### 11.24.5 Mock de fallback
+
+Arquivo criado:
+
+- `src/lib/orcamentista/estimatedScopeFallbackMock.ts`
+
+Casos simulados:
+
+- projeto eletrico ausente com estimativa por evidencias indiretas do arquitetonico/memorial;
+- projeto hidrossanitario ausente com estimativa por areas molhadas e aparelhos;
+- sondagem ausente bloqueando fundacao para consolidacao;
+- PPCI ausente permitindo verba, mas bloqueando execucao/legalizacao;
+- memorial de acabamentos ausente com premissa de padrao medio;
+- arquitetonico ausente bloqueando inicio racional;
+- HVAC ausente com verba preliminar por ambientes/premissas.
+
+#### 11.24.6 Utilitarios
+
+Arquivo criado:
+
+- `src/lib/orcamentista/estimatedScopeUtils.ts`
+
+Funcoes puras:
+
+```text
+summarizeEstimatedFallbacks()
+groupFallbacksByDiscipline()
+getFallbackBlockingItems()
+getFallbackWarnings()
+canFeedPreliminaryBudget()
+canFeedProposalWithWarnings()
+canFeedExecution()
+calculateEstimatedFallbackTotal()
+getScopeOriginLabel()
+getFallbackDecisionLabel()
+```
+
+Nenhuma funcao chama IA/API/banco.
+
+#### 11.24.7 UI experimental
+
+Arquivos:
+
+- `src/pages/Oportunidade/OrcamentistaMissingProjectFallbackPanel.tsx`
+- `src/pages/Oportunidade/OrcamentistaTab.tsx`
+
+O painel foi integrado na secao Workspace IA logo apos Documentos:
+
+```text
+Documentos
+→ Projetos ausentes / estimativas controladas
+→ Processamento de paginas
+→ Reader/Verifier
+→ HITL
+→ Agentes
+→ Preview
+→ Gate
+→ Revisao humana
+```
+
+A UI mostra:
+
+- disciplinas com projeto;
+- disciplinas ausentes;
+- estimativas permitidas;
+- escopos bloqueados;
+- HITLs pendentes;
+- valor estimado preliminar;
+- base de estimativa;
+- itens estimados;
+- avisos;
+- botoes mockados de decisao local.
+
+Avisos obrigatorios exibidos:
+
+- `Estimado sem projeto.`
+- `Nao e item identificado em projeto.`
+- `Revisar após recebimento do projeto executivo.`
+- `Nao consolidado no orçamento oficial nesta fase.`
+
+#### 11.24.8 Evidencia indireta obrigatoria
+
+Quando uma disciplina esta sem projeto proprio, mas existem outros documentos do mesmo projeto/orçamento, o EVIS pode usar evidencias indiretas como:
+
+- area construida;
+- quantidade e tipo de ambientes;
+- banheiros;
+- cozinha, lavanderia, area gourmet e areas externas;
+- padrao da obra;
+- pontos provaveis por ambiente;
+- equipamentos especiais;
+- forros/sancas/luminotecnica;
+- memorial ou premissas do cliente.
+
+Classificacao obrigatoria:
+
+```text
+INDIRECT_EVIDENCE_FROM_PROJECT_DOCUMENTS
+```
+
+Proibido classificar como:
+
+```text
+IDENTIFIED_FROM_PROJECT
+IDENTIFIED_FROM_ELECTRICAL_PROJECT
+```
+
+Resultado:
+
+- pode alimentar orçamento preliminar;
+- pode alimentar proposta com aviso;
+- exige HITL;
+- baixa/media confianca;
+- bloqueia execucao;
+- bloqueia consolidacao final;
+- revisao obrigatoria quando o projeto executivo chegar.
+
+#### 11.24.9 Confirmacoes de conformidade
+
+- Nenhuma IA real chamada.
+- Gemini real nao foi chamado.
+- OpenAI nao foi chamado.
+- Claude API nao foi chamada.
+- Nenhum OCR real executado.
+- Nenhum PDF real processado.
+- Nenhuma migration criada.
+- Banco/schema nao alterado.
+- Nenhum item gravado em `orcamento_itens`.
+- Nenhuma consolidacao no orcamento oficial.
+- Proposta nao alterada.
+- Obra/Diario preservados.
+- Rotas `/obras` e `/obras/:obraId` preservadas.
+
+#### 11.24.10 Proximo passo recomendado
+
+Implementar Guided Project Intake + Reading HITL Context, integrando essa politica ao inventario de documentos:
+
+- detectar quais disciplinas estao ausentes;
+- apresentar perguntas guiadas por disciplina;
+- coletar premissas do usuario;
+- anexar evidencias indiretas lidas pelo Reader;
+- manter tudo como staging ate gate/HITL/revisao humana.

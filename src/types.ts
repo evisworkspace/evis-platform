@@ -1766,3 +1766,114 @@ export type OrcamentistaRealReaderSandboxResult = {
   manual_model_run_ready: boolean;
   created_at: string;
 };
+
+// ── Fase 3C: Missing Project Fallback & Estimated Scope Policy ─────────────
+
+export type OrcamentistaScopeOriginType =
+  | 'IDENTIFIED_FROM_PROJECT'
+  | 'IDENTIFIED_FROM_DISCIPLINE_PROJECT'
+  | 'IDENTIFIED_FROM_ELECTRICAL_PROJECT'
+  | 'INDIRECT_EVIDENCE_FROM_OTHER_PROJECTS'
+  | 'INDIRECT_EVIDENCE_FROM_PROJECT_DOCUMENTS'
+  | 'ESTIMATED_WITHOUT_PROJECT'
+  | 'MANUAL_ASSUMPTION'
+  | 'EXCLUDED_FROM_SCOPE';
+
+export type OrcamentistaMissingProjectDiscipline =
+  | 'arquitetonico'
+  | 'sondagem'
+  | 'estrutural'
+  | 'eletrico'
+  | 'hidrossanitario'
+  | 'ppci'
+  | 'hvac_climatizacao'
+  | 'acabamentos_memorial';
+
+export type OrcamentistaScopeConfidenceLevel =
+  | 'baixa'
+  | 'media'
+  | 'alta';
+
+export type OrcamentistaFallbackDecisionType =
+  | 'estimate_by_reference'
+  | 'request_project'
+  | 'exclude_scope'
+  | 'manual_allowance'
+  | 'keep_pending';
+
+export type OrcamentistaEstimateBasisType =
+  | 'sinapi'
+  | 'cub'
+  | 'historico_interno'
+  | 'premissa_manual'
+  | 'evidencia_indireta'
+  | 'referencia_tecnica';
+
+export type OrcamentistaEstimateBasis = {
+  type: OrcamentistaEstimateBasisType;
+  label: string;
+  description: string;
+  source_reference: string;
+  indirect_evidence?: string[];
+  requires_user_validation: boolean;
+};
+
+export type OrcamentistaFallbackWarning = {
+  id: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  message: string;
+  blocks_execution: boolean;
+  blocks_final_consolidation: boolean;
+};
+
+export type OrcamentistaEstimatedScopeItem = {
+  id: string;
+  discipline: OrcamentistaMissingProjectDiscipline;
+  description: string;
+  unit: string;
+  estimated_quantity: number;
+  estimated_unit_cost: number;
+  estimated_total: number;
+  origin_type: OrcamentistaScopeOriginType;
+  estimate_basis: OrcamentistaEstimateBasis[];
+  confidence_level: OrcamentistaScopeConfidenceLevel;
+  source_reference: string;
+  warning_message: string;
+  requires_hitl: boolean;
+  can_feed_preliminary_budget: boolean;
+  can_feed_proposal_with_warning: boolean;
+  can_feed_execution: boolean;
+  blocks_final_consolidation: boolean;
+};
+
+export type OrcamentistaMissingProjectFallback = {
+  id: string;
+  opportunity_id: string;
+  orcamento_id: string | null;
+  discipline: OrcamentistaMissingProjectDiscipline;
+  required_project: boolean;
+  project_available: boolean;
+  fallback_allowed: boolean;
+  fallback_mode: OrcamentistaFallbackDecisionType[];
+  estimate_basis: OrcamentistaEstimateBasis[];
+  estimated_items: OrcamentistaEstimatedScopeItem[];
+  warnings: OrcamentistaFallbackWarning[];
+  requires_hitl: boolean;
+  blocks_execution: boolean;
+  blocks_final_consolidation: boolean;
+  user_decision: OrcamentistaFallbackDecisionType;
+  created_at: string;
+};
+
+export type OrcamentistaFallbackSummary = {
+  total_disciplines: number;
+  projects_available: number;
+  projects_missing: number;
+  fallback_allowed_count: number;
+  blocked_scopes_count: number;
+  hitl_required_count: number;
+  preliminary_estimated_total: number;
+  can_feed_preliminary_budget_count: number;
+  can_feed_proposal_with_warning_count: number;
+  can_feed_execution_count: number;
+};
