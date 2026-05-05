@@ -155,7 +155,7 @@ export default function OrcamentistaAiPipelinePanel({ steps }: Props) {
         ))}
       </div>
 
-      <div className="rounded-lg border border-white/5 bg-white/[0.03] px-4 py-3">
+      <div className="rounded-lg border border-white/5 bg-white/3 px-4 py-3">
         <p className="text-[10px] text-white/30">
           Este pipeline é uma demonstração visual da estrutura de agentes do Orçamentista IA.
           Nenhuma IA real foi acionada. Nenhum dado foi gravado no orçamento oficial.
