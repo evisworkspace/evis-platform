@@ -1200,6 +1200,208 @@ Documento -> Pagina renderizada -> Reader/Verifier -> Agentes -> Preview -> HITL
 - O dispatch para agentes especialistas ainda e apenas decisao mockada; nenhum agente real e executado.
 - HITL visual dedicado do Orçamentista ainda devera ser implementado antes de qualquer consolidacao.
 
-#### 11.16.10 Proximo passo recomendado
+#### 11.16.10 Proximo passo executado
 
-Avancar para a Fase 2F com um HITL visual especifico do Orçamentista, ainda mockado, para revisar divergencias do Reader/Verifier antes de liberar qualquer dispatch real ou consolidacao futura.
+A Fase 2F criou o HITL visual especifico do Orçamentista, ainda mockado, para revisar divergencias do Reader/Verifier antes de liberar qualquer dispatch real ou consolidacao futura.
+
+---
+
+### 11.17 Fase 2F: HITL Visual Especifico Do Orçamentista
+
+> Status: implementado como camada visual mockada/local, sem IA real, sem banco, sem Diario de Obra e sem consolidacao.  
+> Escopo: revisar pendencias do Orçamentista antes de dispatch futuro para agentes especialistas ou consolidacao futura.
+
+#### 11.17.1 Objetivo
+
+Criar uma camada dedicada de validacao humana pre-orcamento:
+
+```text
+Documento
+  -> Pagina renderizada
+    -> Reader primario
+      -> Verifier independente
+        -> Divergencia / pendencia / bloqueio
+          -> HITL Orçamentista
+            -> Decisao humana
+              -> Liberar dispatch futuro ou manter bloqueado
+```
+
+Essa camada nao e o HITL operacional do Diario de Obra. Ela existe antes de qualquer consolidacao e apenas registra decisoes mockadas em estado local de UI.
+
+#### 11.17.2 Documento canonico criado
+
+Arquivo criado:
+
+- `orcamentista/docs/EVIS_ORCAMENTISTA_HITL_UI_CONTRACT.md`
+
+Conteudo registrado:
+
+- objetivo do HITL do Orçamentista;
+- diferenca entre HITL de orcamento e HITL do Diario;
+- tipos de pendencia;
+- tipos de decisao humana;
+- quando bloquear consolidacao;
+- quando liberar dispatch futuro;
+- exemplos JSON;
+- regras de seguranca.
+
+#### 11.17.3 Tipos adicionados
+
+Arquivo alterado:
+
+- `src/types.ts`
+
+Tipos adicionados:
+
+```text
+OrcamentistaHitlIssue
+OrcamentistaHitlDecision
+OrcamentistaHitlDecisionType
+OrcamentistaHitlIssueSeverity
+OrcamentistaHitlIssueStatus
+OrcamentistaHitlResolution
+OrcamentistaHitlQueueSummary
+```
+
+Campos previstos:
+
+- `id`;
+- `source_type`;
+- `source_id`;
+- `document_id`;
+- `page_number`;
+- `agent_id`;
+- `issue_type`;
+- `severity`;
+- `title`;
+- `description`;
+- `evidence_summary`;
+- `recommended_action`;
+- `status`;
+- `decision_type`;
+- `decided_by`;
+- `decided_at`;
+- `blocks_consolidation`;
+- `blocks_dispatch`.
+
+#### 11.17.4 Mock HITL
+
+Arquivo criado:
+
+- `src/lib/orcamentista/hitlMock.ts`
+
+Pendencias simuladas:
+
+- demolicao sem validacao estrutural;
+- baixa concordancia Reader/Verifier;
+- quantidade inferida sem origem suficiente;
+- disciplina estrutural ausente;
+- custo sem fonte verificavel;
+- PPCI pendente.
+
+Essas pendencias cobrem severidades `critica`, `alta` e `media`, com bloqueios separados de dispatch e consolidacao.
+
+#### 11.17.5 Utilitarios HITL
+
+Arquivo criado:
+
+- `src/lib/orcamentista/hitlUtils.ts`
+
+Funcoes puras, sem API, banco ou IA:
+
+```text
+getHitlSeverityLabel()
+getHitlStatusLabel()
+groupHitlIssuesBySeverity()
+getBlockingIssues()
+canDispatchAfterHitl()
+canConsolidateAfterHitl()
+summarizeHitlQueue()
+applyMockHitlDecision()
+```
+
+Gates aplicados:
+
+- dispatch futuro permanece bloqueado enquanto houver `blocks_dispatch` ativo;
+- consolidacao futura permanece bloqueada enquanto houver `blocks_consolidation` ativo;
+- decisoes `manter_bloqueado`, `solicitar_documento` e `reanalisar_futuramente` mantem bloqueios;
+- decisoes `aprovar_com_ressalva`, `marcar_como_verba` e `ignorar_nesta_fase` podem liberar dispatch local conforme o caso;
+- nenhuma decisao transforma inferencia em fato.
+
+#### 11.17.6 UI criada
+
+Arquivo criado:
+
+- `src/pages/Oportunidade/OrcamentistaHitlPanel.tsx`
+
+A UI mostra:
+
+- fila de pendencias HITL;
+- resumo por severidade;
+- itens bloqueantes;
+- origem da pendencia;
+- documento/pagina/agente relacionado;
+- evidencia e acao recomendada;
+- gates separados de dispatch e consolidacao;
+- decisoes humanas mockadas:
+  - Aprovar com ressalva;
+  - Manter bloqueado;
+  - Solicitar documento;
+  - Marcar como verba;
+  - Ignorar nesta fase;
+  - Reanalisar futuramente;
+- reset do mock local.
+
+As acoes alteram apenas estado local do componente. Nada e persistido.
+
+#### 11.17.7 Integracao na aba do Orçamentista
+
+Arquivo alterado:
+
+- `src/pages/Oportunidade/OrcamentistaTab.tsx`
+
+Sequencia visual atual no Workspace IA:
+
+```text
+1. Documentos recebidos
+2. Processamento de paginas
+3. Reader + Verifier
+4. HITL Orçamentista
+5. Pipeline IA mockado
+6. Previa IA mockada
+7. Chat/workspace existente
+```
+
+Essa ordem comunica o fluxo correto:
+
+```text
+Documento -> Pagina -> Reader/Verifier -> HITL -> Agentes -> Preview -> Consolidacao futura
+```
+
+#### 11.17.8 Confirmacoes de conformidade
+
+- Nenhuma IA real chamada.
+- Gemini nao foi chamado.
+- OpenAI nao foi chamado.
+- Claude API nao foi chamada.
+- Nenhum OCR real executado.
+- Nenhum PDF real processado.
+- Nenhuma migration criada.
+- Banco/schema nao alterado.
+- Nenhum item gravado em `orcamento_itens`.
+- Nenhuma consolidacao no orcamento oficial.
+- `src/components/HITLReview.tsx` nao foi alterado.
+- Proposta nao alterada.
+- Obra/Diario preservados.
+- Rotas `/obras` e `/obras/:obraId` preservadas.
+
+#### 11.17.9 Riscos restantes
+
+- As decisoes HITL ainda sao locais e se perdem ao recarregar a tela.
+- Ainda nao existe entidade persistida para auditoria HITL do Orçamentista.
+- O painel nao consome pendencias reais do Reader/Verifier; usa mocks fixos.
+- A liberacao real de dispatch para agentes especialistas ainda depende de orquestracao futura.
+
+#### 11.17.10 Proximo passo recomendado
+
+Avancar para a Fase 2G com um contrato de dispatch mockado para agentes especialistas, consumindo apenas paginas/leituras/HITLs liberados e mantendo a consolidacao oficial bloqueada.

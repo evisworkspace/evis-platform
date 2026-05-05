@@ -9,6 +9,7 @@ import OrcamentistaAiPreviewPanel from './OrcamentistaAiPreviewPanel';
 import OrcamentistaDocumentsPanel from './OrcamentistaDocumentsPanel';
 import { OrcamentistaPageProcessingPanel } from './OrcamentistaPageProcessingPanel';
 import OrcamentistaReaderVerifierPanel from './OrcamentistaReaderVerifierPanel';
+import OrcamentistaHitlPanel from './OrcamentistaHitlPanel';
 import { buildMockDocumentIntakeFiles } from '../../lib/orcamentista/documentIntakeMock';
 import { mockPipelineSteps, mockAiPreview } from '../../lib/orcamentista/mockPipeline';
 
@@ -338,13 +339,16 @@ export default function OrcamentistaTab() {
               {/* E3. Reader + Verifier mockado */}
               <OrcamentistaReaderVerifierPanel />
 
-              {/* E4. Pipeline IA mockado */}
+              {/* E4. HITL do Orçamentista mockado */}
+              <OrcamentistaHitlPanel />
+
+              {/* E5. Pipeline IA mockado */}
               <OrcamentistaAiPipelinePanel steps={mockPipelineSteps} />
 
-              {/* E5. Prévia IA mockada */}
+              {/* E6. Prévia IA mockada */}
               <OrcamentistaAiPreviewPanel preview={mockAiPreview} />
 
-              {/* E6. Chat do Orçamentista (staging/preview separado) */}
+              {/* E7. Chat do Orçamentista (staging/preview separado) */}
               <div className="rounded-lg border border-white/10 bg-white/5 p-4">
                 <p className="mb-1 font-mono text-[9px] font-bold uppercase tracking-widest text-white/30">
                   Orçamentista IA — Chat de análise

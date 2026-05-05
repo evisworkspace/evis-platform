@@ -957,3 +957,85 @@ export type OrcamentistaReaderVerifierSummary = {
   verifier_run: OrcamentistaVerifierRun;
   dispatch_decision: OrcamentistaReaderDispatchDecision;
 };
+
+// ── Fase 2F: HITL visual especifico do Orçamentista ─────────────────────────
+
+export type OrcamentistaHitlIssueSeverity = 'baixa' | 'media' | 'alta' | 'critica';
+
+export type OrcamentistaHitlIssueStatus =
+  | 'pendente'
+  | 'em_revisao'
+  | 'aprovada_com_ressalva'
+  | 'bloqueada'
+  | 'documento_solicitado'
+  | 'convertida_em_verba'
+  | 'ignorada_nesta_fase'
+  | 'reanalisar_futuramente';
+
+export type OrcamentistaHitlDecisionType =
+  | 'aprovar_com_ressalva'
+  | 'manter_bloqueado'
+  | 'solicitar_documento'
+  | 'marcar_como_verba'
+  | 'ignorar_nesta_fase'
+  | 'reanalisar_futuramente';
+
+export type OrcamentistaHitlIssue = {
+  id: string;
+  source_type:
+    | 'reader_verifier'
+    | 'document_inventory'
+    | 'page_processing'
+    | 'agent_preview'
+    | 'costing'
+    | 'discipline_gap';
+  source_id: string;
+  document_id?: string;
+  document_name?: string;
+  page_number?: number;
+  agent_id?: string;
+  issue_type:
+    | 'divergencia_reader_verifier'
+    | 'risco_tecnico'
+    | 'quantidade_inferida'
+    | 'disciplina_ausente'
+    | 'custo_sem_fonte'
+    | 'documento_pendente'
+    | 'ppci_pendente';
+  severity: OrcamentistaHitlIssueSeverity;
+  title: string;
+  description: string;
+  evidence_summary: string;
+  recommended_action: string;
+  status: OrcamentistaHitlIssueStatus;
+  decision_type?: OrcamentistaHitlDecisionType;
+  decided_by?: string;
+  decided_at?: string;
+  blocks_consolidation: boolean;
+  blocks_dispatch: boolean;
+};
+
+export type OrcamentistaHitlDecision = {
+  issue_id: string;
+  decision_type: OrcamentistaHitlDecisionType;
+  decided_by: string;
+  decided_at: string;
+  notes: string;
+};
+
+export type OrcamentistaHitlResolution = {
+  issue: OrcamentistaHitlIssue;
+  decision: OrcamentistaHitlDecision;
+  dispatch_released: boolean;
+  consolidation_released: boolean;
+};
+
+export type OrcamentistaHitlQueueSummary = {
+  total_issues: number;
+  pending_issues: number;
+  critical_issues: number;
+  high_issues: number;
+  blocking_dispatch: number;
+  blocking_consolidation: number;
+  resolved_issues: number;
+};
