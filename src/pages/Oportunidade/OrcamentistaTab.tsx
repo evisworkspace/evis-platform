@@ -2,9 +2,12 @@ import { Link, useParams } from 'react-router-dom';
 import OrcamentistaChat from '../OrcamentistaChat';
 import { useAppContext } from '../../AppContext';
 import { useOportunidadeOrcamento } from '../../hooks/useOportunidadeOrcamento';
+import { useOpportunityFiles } from '../../hooks/useOportunidades';
 import OrcamentistaManualItemsPanel from './OrcamentistaManualItemsPanel';
 import OrcamentistaAiPipelinePanel from './OrcamentistaAiPipelinePanel';
 import OrcamentistaAiPreviewPanel from './OrcamentistaAiPreviewPanel';
+import OrcamentistaDocumentsPanel from './OrcamentistaDocumentsPanel';
+import { buildMockDocumentIntakeFiles } from '../../lib/orcamentista/documentIntakeMock';
 import { mockPipelineSteps, mockAiPreview } from '../../lib/orcamentista/mockPipeline';
 
 // ──────────────────────────────────────────────
@@ -101,6 +104,7 @@ export default function OrcamentistaTab() {
     atualizarItemManual,
     removerItemManual,
   } = useOportunidadeOrcamento(id, config);
+  const opportunityFiles = useOpportunityFiles(id, config);
 
   // ── Sem ID ──────────────────────────────────
   if (!id) {
@@ -156,6 +160,17 @@ export default function OrcamentistaTab() {
   const isBlocked    = createResult?.status === 'blocked';
   const isCreatedOk  = createResult?.status === 'created';
   const isErrResult  = createResult?.status === 'error';
+  const documentIntakeFiles = buildMockDocumentIntakeFiles({
+    opportunityId: id,
+    orcamentoId: orcamento?.id ?? opportunity.orcamento_id,
+    opportunityFiles: opportunityFiles.data ?? [],
+  });
+  const opportunityFilesError =
+    opportunityFiles.error instanceof Error
+      ? opportunityFiles.error.message
+      : opportunityFiles.error
+        ? 'Erro ao consultar opportunity_files.'
+        : null;
 
   return (
     <div className="min-h-screen bg-bg text-t1">
@@ -308,13 +323,20 @@ export default function OrcamentistaTab() {
             />
             <div className="mt-4 space-y-6">
 
-              {/* E1. Pipeline IA mockado */}
+              {/* E1. Documentos recebidos / inventário mockado */}
+              <OrcamentistaDocumentsPanel
+                documents={documentIntakeFiles}
+                isLoadingFiles={opportunityFiles.isFetching}
+                filesError={opportunityFilesError}
+              />
+
+              {/* E2. Pipeline IA mockado */}
               <OrcamentistaAiPipelinePanel steps={mockPipelineSteps} />
 
-              {/* E2. Prévia IA mockada */}
+              {/* E3. Prévia IA mockada */}
               <OrcamentistaAiPreviewPanel preview={mockAiPreview} />
 
-              {/* E3. Chat do Orçamentista (staging/preview separado) */}
+              {/* E4. Chat do Orçamentista (staging/preview separado) */}
               <div className="rounded-lg border border-white/10 bg-white/5 p-4">
                 <p className="mb-1 font-mono text-[9px] font-bold uppercase tracking-widest text-white/30">
                   Orçamentista IA — Chat de análise

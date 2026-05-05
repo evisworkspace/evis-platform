@@ -751,6 +751,194 @@ Garantir que antes de qualquer IA real processar um PDF, exista um contrato tipa
 - **Nenhuma alteracao nas tabelas/rotas de Obras ou Diarios**.
 - Todo output da IA (quando existir) estara submetido a *Evidence Type* e diferenciado claramente entre *Identified* (encontrado visualmente/texto) e *Inferred* (raciocinio derivado).
 
-#### 11.13.5 Proximo passo recomendado (Fase 2C)
+#### 11.13.5 Proximo passo executado (Fase 2C)
 
-Conectar um LLM real de processamento de imagem/texto (Gemini/Claude) para injetar dados na estrutura definida pelo `pdfReaderContract` usando arquivos reais da `opportunities.files`.
+A Fase 2C executou a camada de entrada e inventario de documentos antes de qualquer chamada real de IA.
+
+---
+
+### 11.14 Fase 2C: Document Intake / Upload e Inventario de Documentos
+
+> Status: implementado como camada mockada e read-only, sem IA real, sem OCR, sem renderizacao real de PDF, sem migration e sem persistencia oficial nova.  
+> Escopo: registrar visualmente documentos recebidos da oportunidade/orcamento e preparar o contrato tecnico para futura leitura por Reader + Verifier.
+
+#### 11.14.1 Objetivo
+
+Criar a primeira camada do fluxo documental do Orçamentista IA:
+
+```text
+Documentos recebidos
+  -> inventario tecnico mockado
+    -> Reader futuro
+      -> Verifier futuro
+        -> agentes especialistas futuros
+          -> preview IA
+            -> HITL
+              -> consolidacao futura manual
+```
+
+Esta fase nao transforma documento em orcamento. O inventario e apenas uma leitura tecnica simulada de preparacao.
+
+#### 11.14.2 Estrutura existente encontrada
+
+O codigo ja possuia base segura para leitura de arquivos de oportunidade:
+
+- `src/types.ts`: tipo `OpportunityFile`.
+- `src/hooks/useOportunidades.ts`: hook `useOpportunityFiles(opportunityId, config)`.
+- tabela conceitual/real esperada: `opportunity_files`.
+
+Decisao aplicada:
+
+- reaproveitar `useOpportunityFiles` apenas para leitura/listagem;
+- nao criar upload real;
+- nao criar bucket;
+- nao criar migration;
+- se nao houver registros ou a consulta falhar, usar fallback mockado local.
+
+#### 11.14.3 Tipos adicionados
+
+Foram adicionados tipos especificos do intake documental:
+
+```text
+OrcamentistaDocumentIntakeFile
+OrcamentistaDocumentInventory
+OrcamentistaDocumentInventoryPage
+OrcamentistaDocumentProcessingStatus
+OrcamentistaDocumentDisciplineSummary
+OrcamentistaDocumentReadinessStatus
+OrcamentistaDocumentUploadStatus
+OrcamentistaDocumentInventoryPageStatus
+```
+
+Esses tipos preservam os vinculos corretos:
+
+```text
+opportunity_id
+orcamento_id
+```
+
+Nao foi criado nem usado `obra_id = opp_<id>`.
+
+#### 11.14.4 Mock de Document Intake
+
+Arquivo criado:
+
+- `src/lib/orcamentista/documentIntakeMock.ts`
+
+Conteudo:
+
+- documentos mockados da oportunidade:
+  - `Projeto Arquitetônico.pdf`
+  - `Memorial Descritivo.pdf`
+  - `Planta Elétrica.pdf`
+- status de upload/registro;
+- status de processamento;
+- inventario simulado;
+- disciplinas detectadas;
+- disciplinas ausentes;
+- paginas simuladas;
+- risco inicial por documento;
+- adaptador para reaproveitar registros de `opportunity_files` em modo somente leitura.
+
+#### 11.14.5 Utilitarios de inventario
+
+Arquivo criado:
+
+- `src/lib/orcamentista/documentInventory.ts`
+
+Funcoes puras, sem IA e sem banco:
+
+```text
+summarizeDocumentInventory(documents)
+getReadinessStatus(document)
+getMissingDisciplines(documents)
+getPagesRequiringVerification(document)
+getBlockedPages(document)
+canRunReader(document)
+canDispatchToAgents(document)
+```
+
+Essas funcoes seguem as regras do contrato da Fase 2B:
+
+- baixa confianca exige verificacao;
+- pagina com HITL bloqueia evolucao automatica;
+- pagina marcada como bloqueante impede consolidacao futura;
+- despacho para agentes so e permitido quando Reader/Verifier/HITL nao estiverem pendentes.
+
+#### 11.14.6 UI criada
+
+Arquivo criado:
+
+- `src/pages/Oportunidade/OrcamentistaDocumentsPanel.tsx`
+
+A UI mostra:
+
+- cabecalho "Documentos da oportunidade";
+- aviso de que arquivo recebido nao e leitura validada;
+- aviso de que inventario mockado nao e orcamento oficial;
+- aviso de que IA real sera fase futura;
+- lista de documentos;
+- tipo, tamanho, fonte, status de upload, status de processamento e paginas;
+- disciplinas detectadas e ausentes;
+- readiness status;
+- inventario por pagina com tipo, disciplina, confianca e flags:
+  - Reader;
+  - Verifier;
+  - HITL;
+  - bloqueio de consolidacao;
+- alertas de documento parcial, disciplina ausente, pagina critica, baixa confianca e HITL obrigatorio;
+- botao "Analisar documento" desabilitado.
+
+#### 11.14.7 Integracao na aba do Orçamentista
+
+Arquivo alterado:
+
+- `src/pages/Oportunidade/OrcamentistaTab.tsx`
+
+Hierarquia aplicada no Workspace IA:
+
+```text
+1. Documentos recebidos
+2. Pipeline IA mockado
+3. Previa IA mockada
+4. Chat/workspace existente
+```
+
+A tela comunica que primeiro entram documentos, depois Reader/Verifier, depois agentes, depois preview, depois HITL e somente depois uma consolidacao futura manual.
+
+#### 11.14.8 Confirmacoes de conformidade
+
+- Nenhum LLM real chamado.
+- Gemini nao foi chamado.
+- OpenAI nao foi chamado.
+- Claude API nao foi chamada.
+- Nenhum OCR real implementado.
+- Nenhum PDF real renderizado.
+- Nenhuma pagina real processada.
+- Nenhuma pipeline produtiva criada.
+- Nenhuma migration criada.
+- Schema/banco nao alterado.
+- Nenhum item gravado automaticamente em `orcamento_itens`.
+- Nenhuma previa consolidada no orcamento oficial.
+- Proposta nao alterada.
+- Diario de Obra nao alterado.
+- Obra Ativa nao alterada.
+- Rotas `/obras` e `/obras/:obraId` preservadas.
+
+#### 11.14.9 Riscos restantes
+
+- `opportunity_files` existe como hook/tipo, mas a UI de upload real ainda nao foi implementada nesta fase.
+- O inventario por paginas e deterministico e mockado; ainda nao reflete paginas reais de PDFs.
+- O chat/workspace existente continua separado e deve ser revisado em fase futura para alinhar totalmente com o novo intake.
+- A liberacao real de Reader + Verifier dependera de decisao explicita de motor, armazenamento, custos, auditoria e HITL.
+
+#### 11.14.10 Proximo passo recomendado
+
+Implementar a Fase 2D com leitura real controlada somente apos aprovacao explicita:
+
+- escolher origem real dos arquivos (`opportunity_files`/storage/workspace);
+- renderizar paginas em ambiente controlado;
+- executar Reader conforme `pdfReaderContract`;
+- executar Verifier separado;
+- bloquear consolidacao ate HITL;
+- manter orcamento oficial separado ate acao manual futura.

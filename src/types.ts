@@ -672,3 +672,91 @@ export type OrcamentistaReaderGateStatus =
   | 'DISPATCHED_TO_SPECIALIST'
   | 'HITL_REQUIRED';
 
+// ── Fase 2C: Document Intake + Inventário mockado ───────────────────────────
+
+export type OrcamentistaDocumentUploadStatus =
+  | 'registered'
+  | 'received'
+  | 'partial'
+  | 'failed';
+
+export type OrcamentistaDocumentProcessingStatus =
+  | 'not_started'
+  | 'inventory_mocked'
+  | 'reader_pending'
+  | 'verification_pending'
+  | 'hitl_required'
+  | 'blocked'
+  | 'ready_for_future_analysis';
+
+export type OrcamentistaDocumentReadinessStatus =
+  | 'not_ready'
+  | 'partial_inventory'
+  | 'ready_for_reader'
+  | 'requires_verification'
+  | 'requires_hitl'
+  | 'blocked';
+
+export type OrcamentistaDocumentInventoryPageStatus =
+  | 'INVENTORY_ONLY'
+  | 'READER_PENDING'
+  | 'VERIFIER_PENDING'
+  | 'HITL_REQUIRED'
+  | 'BLOCKED'
+  | 'READY_FOR_READER';
+
+export type OrcamentistaDocumentDisciplineSummary = {
+  discipline: string;
+  detected: boolean;
+  pages_count: number;
+  confidence: number;
+  status: 'detected' | 'missing' | 'partial';
+};
+
+export type OrcamentistaDocumentInventoryPage = {
+  page_number: number;
+  page_label: string;
+  page_type: OrcamentistaPageType;
+  discipline: string;
+  confidence: number;
+  status: OrcamentistaDocumentInventoryPageStatus;
+  requires_reader: boolean;
+  requires_verifier: boolean;
+  requires_hitl: boolean;
+  blocks_consolidation: boolean;
+};
+
+export type OrcamentistaDocumentInventory = {
+  id: string;
+  document_id: string;
+  opportunity_id: string;
+  orcamento_id: string | null;
+  total_pages: number;
+  detected_disciplines: OrcamentistaDocumentDisciplineSummary[];
+  missing_disciplines: string[];
+  pages: OrcamentistaDocumentInventoryPage[];
+  readiness_status: OrcamentistaDocumentReadinessStatus;
+  initial_risk: 'baixo' | 'medio' | 'alto' | 'critico';
+  risk_notes: string[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type OrcamentistaDocumentIntakeFile = {
+  id: string;
+  opportunity_id: string;
+  orcamento_id: string | null;
+  file_name: string;
+  file_type: string;
+  file_size: number;
+  source: 'opportunity_files_readonly' | 'mock_local' | 'manual_registry_mock';
+  upload_status: OrcamentistaDocumentUploadStatus;
+  processing_status: OrcamentistaDocumentProcessingStatus;
+  total_pages: number;
+  detected_disciplines: OrcamentistaDocumentDisciplineSummary[];
+  missing_disciplines: string[];
+  readiness_status: OrcamentistaDocumentReadinessStatus;
+  inventory: OrcamentistaDocumentInventory;
+  created_at: string;
+  updated_at: string;
+};
