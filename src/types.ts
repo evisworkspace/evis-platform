@@ -1468,3 +1468,115 @@ export type OrcamentistaPayloadReviewSession = {
   created_at: string;
   updated_at: string;
 };
+
+// ── Fase 3A: Motor Selection & Reader Safety Policy ────────────────────────
+
+export type OrcamentistaAiMotorId =
+  | 'gpt_5_5'
+  | 'gemini_3_1'
+  | 'claude';
+
+export type OrcamentistaAiMotorRole =
+  | 'primary_reader'
+  | 'conservative_verifier'
+  | 'final_auditor'
+  | 'qualitative_reviewer'
+  | 'specialist_support'
+  | 'safety_checker';
+
+export type OrcamentistaMotorCostProfile = 'baixo' | 'medio' | 'alto';
+
+export type OrcamentistaMotorRiskProfile = 'baixo' | 'medio' | 'alto' | 'critico';
+
+export type OrcamentistaMotorCapability = {
+  id: OrcamentistaAiMotorId;
+  name: string;
+  role: OrcamentistaAiMotorRole[];
+  recommended_for: string[];
+  not_recommended_for: string[];
+  strengths: string[];
+  weaknesses: string[];
+  cost_profile: OrcamentistaMotorCostProfile;
+  risk_profile: OrcamentistaMotorRiskProfile;
+};
+
+export type OrcamentistaMotorSelectionPolicy = {
+  id: string;
+  version: string;
+  default_by_role: Partial<Record<OrcamentistaAiMotorRole, OrcamentistaAiMotorId>>;
+  motors: OrcamentistaMotorCapability[];
+  critical_dimension_policy: string[];
+  cost_benefit_policy: string[];
+  generated_at: string;
+};
+
+export type OrcamentistaReadingSourceQuality =
+  | 'vector_pdf_clear'
+  | 'vector_pdf_mixed'
+  | 'raster_pdf_clear'
+  | 'raster_pdf_low_resolution'
+  | 'compressed_image'
+  | 'readable_table'
+  | 'illegible_table'
+  | 'unknown';
+
+export type OrcamentistaReaderSafetyRule = {
+  id: string;
+  name: string;
+  applies_to: string[];
+  source_quality: OrcamentistaReadingSourceQuality[];
+  max_confidence_allowed: number;
+  requires_verifier: boolean;
+  requires_hitl: boolean;
+  blocks_consolidation: boolean;
+  reason: string;
+};
+
+export type OrcamentistaCriticalDimensionType =
+  | 'pile_depth'
+  | 'pile_diameter'
+  | 'pile_quantity'
+  | 'pile_volume'
+  | 'slab_area'
+  | 'steel_quantity'
+  | 'concrete_volume'
+  | 'critical_level'
+  | 'foundation_dimension'
+  | 'decimal_ambiguity';
+
+export type OrcamentistaDimensionalSanityCheck = {
+  id: string;
+  dimension_type: OrcamentistaCriticalDimensionType;
+  value: number;
+  unit: string;
+  expected_min: number;
+  expected_max: number;
+  severity: OrcamentistaHitlIssueSeverity;
+  requires_hitl: boolean;
+  blocks_consolidation: boolean;
+  message: string;
+  source_text?: string;
+  normalized_value?: number;
+  ambiguity_candidates?: number[];
+};
+
+export type OrcamentistaSafetyGateResult = {
+  id: string;
+  source_quality: OrcamentistaReadingSourceQuality;
+  applied_rule_ids: string[];
+  max_confidence_allowed: number;
+  requires_verifier: boolean;
+  requires_hitl: boolean;
+  blocks_consolidation: boolean;
+  messages: string[];
+};
+
+export type OrcamentistaCriticalReadingPolicy = {
+  id: string;
+  dimension_type: OrcamentistaCriticalDimensionType;
+  requires_dual_motor: boolean;
+  requires_deterministic_check: boolean;
+  requires_hitl: boolean;
+  blocks_if_ambiguous: boolean;
+  notes: string;
+};

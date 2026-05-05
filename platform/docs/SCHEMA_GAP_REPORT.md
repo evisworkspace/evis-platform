@@ -1964,3 +1964,170 @@ Documento -> Pagina -> Reader/Verifier -> HITL -> Agentes -> Preview -> Gate -> 
 #### 11.21.8 Proximo passo recomendado
 
 A proxima fase deve ser uma gravacao controlada em `orcamento_itens` somente apos aprovacao explicita do usuario, confirmacao de `orcamento_id`, auditoria de RLS/schema, recalculo do payload final e persistencia auditavel das decisoes humanas.
+
+---
+
+### 11.22 Fase 3A: Motor Selection & Reader Safety Policy
+
+> Status: implementado como politica tecnica e funcoes puras locais, sem IA real, sem banco, sem PDF/OCR real e sem alteracao de UI.
+> Escopo: formalizar selecao de motores, safety rules do Reader e sanity checks dimensionais antes de qualquer leitura real.
+
+#### 11.22.1 Benchmark de motores
+
+Benchmark externo registrado:
+
+- GPT-5.5 teve melhor equilibrio geral, boa organizacao e boa capacidade de auditoria, mas ainda exige schema rigido.
+- Claude teve boa leitura ampla, mas cometeu erro critico de dimensao: leu estaca como `35 m` quando o correto era `3,5 m`, com confianca alta e sem HITL.
+- Gemini 3.1 foi conservador e bloqueou dados ilegíveis, mas falhou como Reader primario em tabelas/imagens comprimidas.
+
+Decisao:
+
+```text
+Nenhum motor pode consolidar dimensao critica sozinho.
+```
+
+#### 11.22.2 Documento canonico criado
+
+- `orcamentista/docs/EVIS_ORCAMENTISTA_MOTOR_SELECTION_AND_READER_SAFETY_POLICY.md`
+
+O documento registra:
+
+- objetivo da politica;
+- resultado do benchmark;
+- funcao recomendada para cada motor;
+- papeis de Reader, Verifier, Auditor final e agentes especialistas;
+- regras para PDF rasterizado, PDF vetorial, tabelas ilegíveis, cotas criticas e quantitativos;
+- regras para `confidence_score`, `agreement_score`, HITL e bloqueio de consolidacao;
+- falhas esperadas;
+- exemplo critico da estaca `35 m` vs `3,5 m`;
+- politica de custo x beneficio.
+
+#### 11.22.3 Tipos adicionados
+
+Tipos em `src/types.ts`:
+
+- `OrcamentistaAiMotorId`
+- `OrcamentistaAiMotorRole`
+- `OrcamentistaMotorCostProfile`
+- `OrcamentistaMotorRiskProfile`
+- `OrcamentistaMotorSelectionPolicy`
+- `OrcamentistaMotorCapability`
+- `OrcamentistaReaderSafetyRule`
+- `OrcamentistaCriticalDimensionType`
+- `OrcamentistaDimensionalSanityCheck`
+- `OrcamentistaSafetyGateResult`
+- `OrcamentistaReadingSourceQuality`
+- `OrcamentistaCriticalReadingPolicy`
+
+#### 11.22.4 Politica de selecao de motor
+
+Arquivo criado:
+
+- `src/lib/orcamentista/motorSelectionPolicy.ts`
+
+Configuracao estatica:
+
+- GPT-5.5 como Reader primario inicial e Auditor final;
+- Gemini 3.1 como Verifier conservador e safety checker;
+- Claude como apoio textual/qualitativo e compatibilizacao narrativa.
+
+Funcoes puras:
+
+```text
+getRecommendedMotorForRole()
+getMotorPolicy()
+shouldUseSecondaryVerifier()
+shouldUseClaudeForQualitativeReview()
+getMotorRiskProfile()
+```
+
+Nenhuma funcao chama IA/API.
+
+#### 11.22.5 Politica de seguranca do Reader
+
+Arquivo criado:
+
+- `src/lib/orcamentista/readerSafetyPolicy.ts`
+
+Regras implementadas:
+
+- PDF rasterizado reduz confianca maxima;
+- tabela ilegivel bloqueia extracao quantitativa;
+- cota critica exige Verifier;
+- fundacao exige HITL;
+- estaca exige HITL para profundidade, diametro e quantidade;
+- quantitativo de aco exige fonte explicita ou quadro de armacao;
+- volume de concreto derivado de cota visual exige sanity check;
+- sondagem com endereco divergente bloqueia uso como evidencia;
+- inferencia nunca pode virar fato.
+
+Funcoes puras:
+
+```text
+getSafetyRulesForReadingContext()
+applyReaderSafetyRules()
+shouldForceHitlForReading()
+shouldBlockReadingConsolidation()
+getMaxAllowedConfidenceForSource()
+classifyReadingSourceQuality()
+```
+
+Nenhuma funcao chama IA/API, banco ou OCR.
+
+#### 11.22.6 Checagens dimensionais
+
+Arquivo criado:
+
+- `src/lib/orcamentista/dimensionalSanityChecks.ts`
+
+Checagens iniciais:
+
+- estaca residencial de diametro aproximado 25 cm acima de 15 m vira critica e bloqueia consolidacao;
+- estaca acima de 8 m exige HITL;
+- estaca menor que 1 m exige HITL;
+- volume calculado de estaca que nao bate com resumo de concreto bloqueia;
+- ambiguidade decimal `35 m` vs `3,5 m` bloqueia e exige HITL;
+- area de laje calculada visualmente exige HITL;
+- area de laje incompatível com ambiente/planta bloqueia;
+- aco por coeficiente e inferido, nao identificado;
+- sem quadro de armacao, aco nao consolida.
+
+Funcoes puras:
+
+```text
+checkPileDepthSanity()
+checkPileVolumeConsistency()
+checkDecimalAmbiguity()
+checkSlabAreaSanity()
+checkSteelQuantitySource()
+runDimensionalSanityChecks()
+```
+
+#### 11.22.7 Confirmacoes de conformidade
+
+- Nenhuma IA real chamada.
+- Gemini real nao foi chamado.
+- OpenAI nao foi chamado.
+- Claude API nao foi chamada.
+- Nenhum OCR real executado.
+- Nenhum PDF real processado.
+- Nenhuma migration criada.
+- Banco/schema nao alterado.
+- Nenhum item gravado em `orcamento_itens`.
+- Nenhuma consolidacao no orcamento oficial.
+- Proposta nao alterada.
+- Obra/Diario preservados.
+- Rotas `/obras` e `/obras/:obraId` preservadas.
+- UI nao foi alterada nesta fase.
+
+#### 11.22.8 Proximo passo recomendado
+
+Executar uma primeira leitura real controlada de uma pagina isolada somente depois de aplicar:
+
+- output schema rigido;
+- selecao de motor pela policy;
+- Verifier obrigatorio quando houver cota critica, baixa qualidade visual ou inferencia;
+- safety rules do Reader;
+- sanity checks dimensionais;
+- HITL antes de qualquer consolidacao;
+- Gate e Revisao Humana antes de qualquer gravacao real em `orcamento_itens`.
