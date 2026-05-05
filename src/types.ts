@@ -849,3 +849,111 @@ export type OrcamentistaPageProcessingJob = {
   errors?: OrcamentistaPageProcessingError[];
   summary?: OrcamentistaPageProcessingSummary;
 };
+
+// ── Fase 2E: Reader/Verifier UI Contract ───────────────────────────────────
+
+export type OrcamentistaReaderEvidenceStatus =
+  | 'IDENTIFIED'
+  | 'INFERRED'
+  | 'PENDING';
+
+export type OrcamentistaReaderEvidenceItem = {
+  id: string;
+  label: string;
+  description: string;
+  quantity?: string;
+  evidence_type: OrcamentistaEvidenceType;
+  evidence_status: OrcamentistaReaderEvidenceStatus;
+  source_reference: string;
+  confidence_score: number;
+};
+
+export type OrcamentistaReaderInferredItem = {
+  id: string;
+  element: string;
+  reasoning: string;
+  source_references: string[];
+  confidence_score: number;
+  can_be_treated_as_fact: false;
+};
+
+export type OrcamentistaReaderMissingInfo = {
+  id: string;
+  description: string;
+  impact: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  suggested_action: string;
+};
+
+export type OrcamentistaReaderRun = {
+  id: string;
+  rendered_page_id: string;
+  document_id: string;
+  document_name: string;
+  page_number: number;
+  page_label: string;
+  page_type: OrcamentistaPageType;
+  discipline: string;
+  identified_items: OrcamentistaReaderEvidenceItem[];
+  inferred_items: OrcamentistaReaderInferredItem[];
+  missing_information: OrcamentistaReaderMissingInfo[];
+  confidence_score: number;
+  evidence_items: OrcamentistaReaderEvidenceItem[];
+  source_references: string[];
+  requires_hitl: boolean;
+  blocks_consolidation: boolean;
+};
+
+export type OrcamentistaVerifierDisagreement = {
+  id: string;
+  field: string;
+  reader_value: string;
+  verifier_value: string;
+  reason: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  requires_hitl: boolean;
+  blocks_consolidation: boolean;
+  target_agents: string[];
+};
+
+export type OrcamentistaVerifierRun = {
+  id: string;
+  reader_run_id: string;
+  agreement_score: number;
+  verification_status:
+    | 'APPROVED'
+    | 'APPROVED_WITH_WARNINGS'
+    | 'HITL_REQUIRED'
+    | 'REANALYSIS_REQUIRED'
+    | 'BLOCKED';
+  disagreement_points: OrcamentistaVerifierDisagreement[];
+  confirmed_items: string[];
+  disputed_items: string[];
+  omitted_possible_items: string[];
+  requires_reanalysis: boolean;
+  requires_hitl: boolean;
+  blocks_consolidation: boolean;
+  verifier_notes: string[];
+};
+
+export type OrcamentistaReaderDispatchDecision = {
+  reader_run_id: string;
+  verifier_run_id: string;
+  target_agents: string[];
+  allowed_to_dispatch: boolean;
+  dispatch_status:
+    | 'not_started'
+    | 'ready_for_future_dispatch'
+    | 'requires_hitl'
+    | 'blocked'
+    | 'dispatched_mock';
+  dispatch_reason: string;
+  blocked_reason?: string;
+};
+
+export type OrcamentistaReaderVerifierSummary = {
+  id: string;
+  reader_run: OrcamentistaReaderRun;
+  verifier_run: OrcamentistaVerifierRun;
+  dispatch_decision: OrcamentistaReaderDispatchDecision;
+};

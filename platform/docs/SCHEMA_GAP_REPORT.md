@@ -974,6 +974,232 @@ Garantir que a IA nunca interaja com o PDF bruto, prevenindo alucinacoes visuais
 - O tamanho e custo de storage para PDFs pesados/arquitetonicos (milhares de PNGs a 300DPI) precisarao ser equacionados quando a renderizacao for implementada no backend.
 - A orquestracao de OCR para plantas antigas/escaneadas e uma etapa custosa computacionalmente.
 
-#### 11.15.6 Proximo passo recomendado
+#### 11.15.6 Proximo passo executado
 
-Avancar para a **Fase 2E - Integracao Primaria do Reader IA** usando a camada mockada de paginas. O proximo passo deve injetar prompts estruturados que consumam a representacao de `OrcamentistaRenderedPage` e gerem os `Identified Items` e `Inferred Items`, simulando o payload da IA sem consolidar nada oficial ainda.
+A Fase 2E criou o contrato visual Reader/Verifier em modo mockado, sem integracao real de IA. O objetivo foi expor a camada de leitura auditada entre paginas renderizadas e agentes especialistas.
+
+---
+
+### 11.16 Fase 2E: Reader/Verifier UI Contract
+
+> Status: implementado como contrato visual e tecnico mockado, sem IA real, sem PDF real, sem banco e sem consolidacao.  
+> Escopo: exibir leitura primaria, verificacao independente, divergencias, HITL, bloqueios e decisao de dispatch futuro para agentes especialistas.
+
+#### 11.16.1 Objetivo
+
+Criar a camada visual e contratual da leitura auditada:
+
+```text
+Documento
+  -> Pagina renderizada
+    -> Reader primario
+      -> Verifier independente
+        -> divergencias
+          -> HITL
+            -> bloqueio/liberacao
+              -> dispatch futuro para agentes especialistas
+```
+
+Essa fase reforca que Reader nao gera orcamento. Reader produz evidencias estruturadas. Verifier audita a leitura e decide se a pagina pode seguir, exige HITL ou bloqueia consolidacao futura.
+
+#### 11.16.2 Documento canonico criado
+
+Arquivo criado:
+
+- `orcamentista/docs/EVIS_ORCAMENTISTA_READER_VERIFIER_UI_CONTRACT.md`
+
+Conteudo registrado:
+
+- objetivo da camada Reader/Verifier;
+- diferenca entre documento, pagina renderizada, leitura primaria e verificacao;
+- por que Reader nao gera orcamento;
+- por que Verifier nao consolida orcamento;
+- diferenca entre identificado, inferido e pendente;
+- `confidence_score`;
+- `agreement_score`;
+- `disagreement_points`;
+- `requires_hitl`;
+- `blocks_consolidation`;
+- `dispatch_to_agents`;
+- exemplos JSON;
+- gates de seguranca.
+
+#### 11.16.3 Tipos adicionados
+
+Arquivo alterado:
+
+- `src/types.ts`
+
+Tipos adicionados:
+
+```text
+OrcamentistaReaderEvidenceStatus
+OrcamentistaReaderEvidenceItem
+OrcamentistaReaderInferredItem
+OrcamentistaReaderMissingInfo
+OrcamentistaReaderRun
+OrcamentistaVerifierDisagreement
+OrcamentistaVerifierRun
+OrcamentistaReaderDispatchDecision
+OrcamentistaReaderVerifierSummary
+```
+
+Esses tipos modelam:
+
+- leitura primaria do Reader;
+- evidencias identificadas;
+- inferencias marcadas como nao-fato;
+- informacoes pendentes;
+- verificacao independente;
+- divergencias por severidade;
+- flags de HITL e bloqueio;
+- decisao de dispatch futuro para agentes.
+
+#### 11.16.4 Mock Reader/Verifier
+
+Arquivo criado:
+
+- `src/lib/orcamentista/readerVerifierMock.ts`
+
+Cenarios simulados:
+
+1. **Pagina de arquitetura bloqueada**
+   - Reader identifica "parede a demolir".
+   - Verifier aponta que nao e possivel descartar interferencia estrutural.
+   - Resultado:
+     - `requires_hitl = true`
+     - `blocks_consolidation = true`
+     - dispatch bloqueado
+     - agentes alvo futuros: `estrutural`, `compatibilizacao_tecnica`
+
+2. **Pagina eletrica liberada para agentes**
+   - Reader identifica pontos eletricos e quadro de distribuicao.
+   - Verifier aprova com avisos.
+   - Resultado:
+     - dispatch futuro permitido para `eletrica_dados_automacao` e `quantitativo`
+     - inferencias permanecem marcadas como nao oficiais.
+
+3. **Memorial exigindo HITL**
+   - Reader identifica acabamento, infere rodape e marca area pendente.
+   - Verifier exige HITL para decidir cruzamento documental.
+   - Resultado:
+     - HITL obrigatorio
+     - sem consolidacao automatica.
+
+#### 11.16.5 Utilitarios Reader/Verifier
+
+Arquivo criado:
+
+- `src/lib/orcamentista/readerVerifierUtils.ts`
+
+Funcoes puras, sem IA, sem banco e sem API:
+
+```text
+getAgreementBand(score)
+getReaderConfidenceBand(score)
+shouldDispatchToAgents(summary)
+shouldRequireReaderHitl(summary)
+shouldBlockReaderConsolidation(summary)
+getVerifierStatusLabel(status)
+groupDisagreementsBySeverity(disagreements)
+summarizeReaderVerifierRuns(runs)
+```
+
+Gates aplicados:
+
+- baixa confianca do Reader aciona HITL;
+- baixa concordancia do Verifier aciona HITL;
+- divergencia `high` ou `critical` aciona HITL;
+- divergencia `critical` ou `blocks_consolidation` bloqueia consolidacao futura;
+- dispatch so e permitido quando Reader e Verifier nao exigem HITL, nao bloqueiam e ha agentes alvo.
+
+#### 11.16.6 UI criada
+
+Arquivo criado:
+
+- `src/pages/Oportunidade/OrcamentistaReaderVerifierPanel.tsx`
+
+A UI mostra:
+
+- cabecalho "Reader + Verifier";
+- explicacao de leitura primaria e validacao independente;
+- cards de resumo:
+  - paginas lidas;
+  - paginas verificadas;
+  - paginas liberadas para agentes;
+  - paginas com HITL;
+  - paginas bloqueadas;
+- lista de paginas com:
+  - documento;
+  - pagina;
+  - tipo;
+  - disciplina;
+  - `confidence_score`;
+  - `agreement_score`;
+  - status;
+  - agentes alvo;
+  - HITL;
+  - bloqueio;
+- detalhe da leitura:
+  - itens identificados;
+  - itens inferidos;
+  - informacoes pendentes;
+  - evidencias;
+  - divergencias do Verifier;
+  - decisao de dispatch;
+- avisos:
+  - "Identificado nao e inferido";
+  - "Previa de leitura nao e orcamento oficial";
+  - "Consolidacao sera fase futura";
+- CTA desabilitado:
+  - "Enviar para agentes especialistas - fase futura".
+
+#### 11.16.7 Integracao na aba do Orçamentista
+
+Arquivo alterado:
+
+- `src/pages/Oportunidade/OrcamentistaTab.tsx`
+
+Sequencia visual atual no Workspace IA:
+
+```text
+1. Documentos recebidos
+2. Processamento de paginas
+3. Reader + Verifier
+4. Pipeline IA mockado
+5. Previa IA mockada
+6. Chat/workspace existente
+```
+
+Essa ordem comunica o fluxo correto:
+
+```text
+Documento -> Pagina renderizada -> Reader/Verifier -> Agentes -> Preview -> HITL -> Consolidacao futura
+```
+
+#### 11.16.8 Confirmacoes de conformidade
+
+- Nenhuma IA real chamada.
+- Gemini nao foi chamado.
+- OpenAI nao foi chamado.
+- Claude API nao foi chamada.
+- Nenhum OCR real implementado.
+- Nenhum PDF real processado.
+- Nenhuma migration criada.
+- Banco/schema nao alterado.
+- Nenhum item gravado em `orcamento_itens`.
+- Nenhuma consolidacao no orcamento oficial.
+- Proposta nao alterada.
+- Obra/Diario preservados.
+- Rotas `/obras` e `/obras/:obraId` preservadas.
+
+#### 11.16.9 Riscos restantes
+
+- A execucao real do Reader e do Verifier ainda depende de definicao futura de motor, custo, observabilidade e estrategia de armazenamento.
+- A UI usa mocks fixos e nao consome paginas renderizadas reais.
+- O dispatch para agentes especialistas ainda e apenas decisao mockada; nenhum agente real e executado.
+- HITL visual dedicado do Orçamentista ainda devera ser implementado antes de qualquer consolidacao.
+
+#### 11.16.10 Proximo passo recomendado
+
+Avancar para a Fase 2F com um HITL visual especifico do Orçamentista, ainda mockado, para revisar divergencias do Reader/Verifier antes de liberar qualquer dispatch real ou consolidacao futura.
