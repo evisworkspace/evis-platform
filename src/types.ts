@@ -560,3 +560,115 @@ export type OrcamentistaAiPreview = {
   origem: 'preview_ia_mock';
   aviso: string;
 };
+
+// ── Fase 2B: PDF Reader + Verification Contract ──────────────────────────────
+
+export type OrcamentistaDocument = {
+  file_id: string;
+  file_name: string;
+  total_pages: number;
+  uploaded_at: string;
+  status: 'pending' | 'processing' | 'processed' | 'error';
+};
+
+export type OrcamentistaPageType =
+  | 'PLANTA_BAIXA'
+  | 'CORTE'
+  | 'FACHADA'
+  | 'DETALHE'
+  | 'MEMORIAL'
+  | 'ESPECIFICACAO'
+  | 'QUANTITATIVO'
+  | 'DESCONHECIDO';
+
+export type OrcamentistaEvidenceType =
+  | 'TEXT_EXPLICIT'
+  | 'TABLE_ROW'
+  | 'DRAWING_ANNOTATION'
+  | 'DRAWING_MEASUREMENT'
+  | 'INFERRED_FROM_CONTEXT';
+
+export type OrcamentistaPageRender = {
+  file_id: string;
+  page_number: number;
+  image_url: string; // Caminho determinístico da imagem gerada
+  width: number;
+  height: number;
+};
+
+export type OrcamentistaPageTextExtraction = {
+  file_id: string;
+  page_number: number;
+  raw_text: string;
+  extracted_at: string;
+};
+
+export type OrcamentistaPageClassification = {
+  file_id: string;
+  page_number: number;
+  page_type: OrcamentistaPageType;
+  discipline: string; // Ex: ARQUITETURA, ESTRUTURA, ELETRICA
+  confidence: number;
+};
+
+export type OrcamentistaExtractedItem = {
+  element: string;
+  quantity?: string;
+  evidence_type: OrcamentistaEvidenceType;
+  source_reference: string;
+};
+
+export type OrcamentistaInferredItem = {
+  element: string;
+  reasoning: string;
+};
+
+export type OrcamentistaPrimaryPageReading = {
+  file_id: string;
+  page_number: number;
+  classification: OrcamentistaPageClassification;
+  identified_items: OrcamentistaExtractedItem[];
+  inferred_items: OrcamentistaInferredItem[];
+  missing_information: string[];
+  reading_confidence: number;
+};
+
+export type OrcamentistaReadingDisagreement = {
+  field: string;
+  primary_value: string | object;
+  verifier_value: string | object;
+  reason: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+};
+
+export type OrcamentistaReaderVerificationResult = {
+  file_id: string;
+  page_number: number;
+  agreement_score: number;
+  disagreements: OrcamentistaReadingDisagreement[];
+  requires_reanalysis: boolean;
+  requires_hitl: boolean;
+  blocks_consolidation: boolean;
+};
+
+export type OrcamentistaVerifiedPageReading = {
+  primary_reading: OrcamentistaPrimaryPageReading;
+  verification_result: OrcamentistaReaderVerificationResult;
+  final_status: 'APPROVED' | 'HITL_REQUIRED' | 'REJECTED';
+};
+
+export type OrcamentistaReaderDispatchTarget = {
+  file_id: string;
+  page_number: number;
+  target_agent_id: string;
+  discipline: string;
+  dispatch_reason: string;
+};
+
+export type OrcamentistaReaderGateStatus =
+  | 'CLASSIFIED'
+  | 'PRIMARY_READ'
+  | 'VERIFIED'
+  | 'DISPATCHED_TO_SPECIALIST'
+  | 'HITL_REQUIRED';
+

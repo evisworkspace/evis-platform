@@ -716,8 +716,41 @@ auditor, hitl_review, consolidador_preview.
 - Arquivos proibidos nao alterados: HITLReview, geminiService, AppContext, Diario, Servicos, Cronograma, Relatorios.
 - obra_id = opp_<id> ausente em todo o codigo desta fase.
 
-#### 11.12.7 Proximo passo recomendado (Fase 2B)
+#### 11.12.7 Proximo passo executado
 
-Conectar o pipeline a arquivos reais da oportunidade (opportunity_files),
-implementar o leitor multimodal com Gemini e popular a previa com dados extraidos reais.
-Manter separacao HITL e nao consolidar automaticamente.
+O pipeline mockado visualizou a estrutura do fluxo de orcamento. O proximo passo executado foi criar as bases contratuais (Fase 2B) da leitura de documentos.
+
+---
+
+### 11.13 Fase 2B: PDF Reader + Verification Contract
+
+> Status: implementado em nivel arquitetural (tipos e mocks) sem IA real, sem arquivos processados e sem banco alterado.
+> Escopo: criar contrato rigoroso, tipagens estritas, mocks e documentacao de leitura/verificacao.
+
+#### 11.13.1 Objetivo
+
+Garantir que antes de qualquer IA real processar um PDF, exista um contrato tipado rigoroso. O "Reader" **nunca** gera orcamento, ele extrai "evidencias", que sofrem auditoria cruzada por um "Verifier". Se a confianca for alta e houver concordancia, os dados seguem para as disciplinas especialistas; caso contrario, o processo bloqueia na etapa de HITL.
+
+#### 11.13.2 Arquivos criados
+
+- `orcamentista/docs/EVIS_ORCAMENTISTA_PDF_READER_VERIFICATION_CONTRACT.md`: documento arquitetural.
+- `src/lib/orcamentista/pdfReaderContract.ts`: definicao de limites/thresholds e validacoes booleanas sem IA.
+- `src/lib/orcamentista/pdfReaderMock.ts`: mocks simulando inventario, renderizacao, classificacao e leitura de paginas.
+- `src/lib/orcamentista/pdfReaderVerification.ts`: mock simulando a verificacao da segunda IA (com uma divergencia injetada de proposito para ativar HITL).
+
+#### 11.13.3 Arquivos alterados
+
+- `src/types.ts`: Adicao de multiplos tipos cobrindo todo o contrato de leitura, render, inferencia, divergencia e despacho (`OrcamentistaDocument`, `OrcamentistaPageType`, `OrcamentistaEvidenceType`, `OrcamentistaPageRender`, `OrcamentistaPageTextExtraction`, `OrcamentistaPageClassification`, `OrcamentistaExtractedItem`, `OrcamentistaInferredItem`, `OrcamentistaPrimaryPageReading`, `OrcamentistaReadingDisagreement`, `OrcamentistaReaderVerificationResult`, `OrcamentistaVerifiedPageReading`, `OrcamentistaReaderDispatchTarget`, `OrcamentistaReaderGateStatus`).
+- `src/lib/orcamentista/agentRegistry.ts`: Adicionado o agente `reader_verifier` (Leitor Verificador / Auditor de Leitura).
+
+#### 11.13.4 Confirmacoes de conformidade
+
+- **Nenhum LLM chamado**. (Funcoes sao asynconas, simulam delay, e devolvem objetos pre-definidos).
+- **Nenhum processamento de PDF real** (sem OCR ou bibliotecas geradoras de imagem).
+- **Nenhum dado gravado no banco** (apenas mocks simulando comportamento).
+- **Nenhuma alteracao nas tabelas/rotas de Obras ou Diarios**.
+- Todo output da IA (quando existir) estara submetido a *Evidence Type* e diferenciado claramente entre *Identified* (encontrado visualmente/texto) e *Inferred* (raciocinio derivado).
+
+#### 11.13.5 Proximo passo recomendado (Fase 2C)
+
+Conectar um LLM real de processamento de imagem/texto (Gemini/Claude) para injetar dados na estrutura definida pelo `pdfReaderContract` usando arquivos reais da `opportunities.files`.

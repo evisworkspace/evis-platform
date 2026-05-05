@@ -13,6 +13,17 @@ export const agentRegistry: OrcamentistaAgentDefinition[] = [
     outputSchema: 'ArquivoLido[]',
   },
   {
+    id: 'reader_verifier',
+    nome: 'Leitor Verificador (Auditor de Leitura)',
+    disciplina: 'auditoria_leitura',
+    descricao: 'Verifica a leitura primária de PDFs comparando com a imagem original para evitar alucinações. Aciona HITL em divergências.',
+    status: 'idle',
+    exigeHitl: true,
+    podeGerarItens: false,
+    podeBloquearConsolidacao: true,
+    outputSchema: 'OrcamentistaReaderVerificationResult',
+  },
+  {
     id: 'classificador_documentos',
     nome: 'Classificador de Documentos',
     disciplina: 'classificacao',
