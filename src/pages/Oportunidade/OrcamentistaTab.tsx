@@ -3,6 +3,9 @@ import OrcamentistaChat from '../OrcamentistaChat';
 import { useAppContext } from '../../AppContext';
 import { useOportunidadeOrcamento } from '../../hooks/useOportunidadeOrcamento';
 import OrcamentistaManualItemsPanel from './OrcamentistaManualItemsPanel';
+import OrcamentistaAiPipelinePanel from './OrcamentistaAiPipelinePanel';
+import OrcamentistaAiPreviewPanel from './OrcamentistaAiPreviewPanel';
+import { mockPipelineSteps, mockAiPreview } from '../../lib/orcamentista/mockPipeline';
 
 // ──────────────────────────────────────────────
 // OrcamentistaTab — Fase 1F
@@ -303,21 +306,30 @@ export default function OrcamentistaTab() {
               badge="PRÉVIA — NÃO CONSOLIDADA"
               badgeVariant="purple"
             />
-            <div className="mt-4 space-y-3">
-              <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 px-5 py-4">
-                <p className="text-sm font-semibold text-purple-300">Prévia IA — dados não oficiais</p>
-                <p className="mt-1 text-xs text-t3">
-                  Este workspace é um ambiente de análise e sugestão do Orçamentista IA.
-                  As composições geradas aqui são{' '}
-                  <strong className="text-t2">prévia e não consolidadas</strong> — não entram
-                  no orçamento oficial acima até validação humana explícita (HITL).
+            <div className="mt-4 space-y-6">
+
+              {/* E1. Pipeline IA mockado */}
+              <OrcamentistaAiPipelinePanel steps={mockPipelineSteps} />
+
+              {/* E2. Prévia IA mockada */}
+              <OrcamentistaAiPreviewPanel preview={mockAiPreview} />
+
+              {/* E3. Chat do Orçamentista (staging/preview separado) */}
+              <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+                <p className="mb-1 font-mono text-[9px] font-bold uppercase tracking-widest text-white/30">
+                  Orçamentista IA — Chat de análise
                 </p>
+                <p className="mb-4 text-xs text-white/40">
+                  Ambiente de análise livre. Dados do chat são staging — não alimentam o
+                  orçamento oficial nem a proposta automaticamente.
+                </p>
+                <OrcamentistaChat
+                  opportunityId={id}
+                  workspaceId={workspaceId}
+                  backTo={`/oportunidades/${id}`}
+                />
               </div>
-              <OrcamentistaChat
-                opportunityId={id}
-                workspaceId={workspaceId}
-                backTo={`/oportunidades/${id}`}
-              />
+
             </div>
           </section>
         )}

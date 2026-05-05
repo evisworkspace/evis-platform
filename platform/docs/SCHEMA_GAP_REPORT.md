@@ -655,3 +655,69 @@ Foi executado teste na aplicacao rodando localmente, na oportunidade "TESTE 03":
 - **PDF/Envio/Workflow sofisticado?** Nao. O status inicial e estritamente "rascunho".
 
 **Conclusao da Fase 1E:** A etapa de criacao de propostas a partir do orcamento da oportunidade esta concluida e 100% funcional.
+
+---
+
+### 11.12 Fase 2A: Pipeline IA Mockado
+
+> Status: implementado sem IA real, sem migration, sem alteracao de banco.
+> Escopo: estrutura visual e logica mockada do pipeline do Orcamentista IA.
+
+#### 11.12.1 Objetivo
+
+Criar a fundacao visual e estrutural do pipeline do Orcamentista IA, mantendo separacao
+total entre a previa IA e o orcamento oficial. Nenhuma IA real foi acionada.
+
+#### 11.12.2 Arquivos criados
+
+- `src/lib/orcamentista/agentRegistry.ts`: registry com 21 agentes registrados.
+- `src/lib/orcamentista/mockPipeline.ts`: pipeline mockado com 10 etapas e previa IA simulada.
+- `src/pages/Oportunidade/OrcamentistaAiPipelinePanel.tsx`: painel visual das etapas do pipeline.
+- `src/pages/Oportunidade/OrcamentistaAiPreviewPanel.tsx`: painel visual da previa IA mockada.
+
+#### 11.12.3 Arquivos alterados
+
+- `src/types.ts`: 6 novos tipos adicionados (OrcamentistaAgentDefinition, OrcamentistaPipelineStep,
+  OrcamentistaPreviewService, OrcamentistaPreviewRisk, OrcamentistaPreviewHitl, OrcamentistaAiPreview).
+- `src/pages/Oportunidade/OrcamentistaTab.tsx`: secao Workspace IA expandida com os 2 novos paineis.
+
+#### 11.12.4 Agentes registrados (21)
+
+reader_multimodal, classificador_documentos, planner_tecnico, civil_arquitetonico,
+estrutural, eletrica_dados_automacao, hidrossanitario, impermeabilizacao,
+climatizacao_exaustao_ventilacao, ppci_incendio, marcenaria_mobiliario_tecnico,
+vidros_esquadrias_serralheria, acabamentos, documentacao_aprovacoes,
+administracao_gestao_obra, compatibilizacao_tecnica, quantitativo, custos,
+auditor, hitl_review, consolidador_preview.
+
+#### 11.12.5 Etapas do pipeline (10)
+
+1. briefing_inventario        — concluido (mock)
+2. leitura_macro_projeto      — concluido (mock)
+3. planejamento_tecnico       — concluido (mock)
+4. agentes_dominio            — em_execucao 45% (mock)
+5. quantitativos              — pendente
+6. composicao_custos          — pendente
+7. auditoria_cruzada          — pendente
+8. hitl                       — pendente
+9. preview_orcamento          — pendente
+10. pronto_para_consolidacao  — pendente
+
+#### 11.12.6 Confirmacoes de conformidade
+
+- Nenhuma IA real acionada.
+- Nenhum RAG.
+- Nenhum PDF real lido.
+- Nenhum item gravado em orcamento_itens automaticamente.
+- Nenhuma consolidacao automatica.
+- Orcamento oficial manual continua funcionando.
+- Proposta existente nao foi alterada.
+- Legado de Obra preservado.
+- Arquivos proibidos nao alterados: HITLReview, geminiService, AppContext, Diario, Servicos, Cronograma, Relatorios.
+- obra_id = opp_<id> ausente em todo o codigo desta fase.
+
+#### 11.12.7 Proximo passo recomendado (Fase 2B)
+
+Conectar o pipeline a arquivos reais da oportunidade (opportunity_files),
+implementar o leitor multimodal com Gemini e popular a previa com dados extraidos reais.
+Manter separacao HITL e nao consolidar automaticamente.

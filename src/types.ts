@@ -485,3 +485,78 @@ export type OpportunityFile = {
   tamanho_bytes: number | null;
   created_at: string;
 };
+
+// ── Fase 2A: Pipeline IA mockado ──────────────────────────────────────────────
+
+export type OrcamentistaAgentStatus = 'idle' | 'em_execucao' | 'concluido' | 'aguardando_hitl' | 'erro';
+
+export type OrcamentistaAgentDefinition = {
+  id: string;
+  nome: string;
+  disciplina: string;
+  descricao: string;
+  status: OrcamentistaAgentStatus;
+  exigeHitl: boolean;
+  podeGerarItens: boolean;
+  podeBloquearConsolidacao: boolean;
+  outputSchema: string;
+};
+
+export type OrcamentistaPipelineStepStatus =
+  | 'pendente'
+  | 'em_execucao'
+  | 'concluido'
+  | 'aguardando_hitl'
+  | 'bloqueado'
+  | 'erro';
+
+export type OrcamentistaPipelineStep = {
+  id: string;
+  nome: string;
+  descricao: string;
+  status: OrcamentistaPipelineStepStatus;
+  progresso: number;
+  agentes: string[];
+};
+
+export type OrcamentistaPreviewService = {
+  codigo?: string;
+  descricao: string;
+  unidade: string;
+  quantidade_estimada: number;
+  custo_estimado: number;
+  categoria?: string;
+  confianca: number;
+  origem: 'preview_ia_mock';
+  observacoes?: string;
+};
+
+export type OrcamentistaPreviewRisk = {
+  id: string;
+  descricao: string;
+  severidade: 'baixa' | 'media' | 'alta' | 'critica';
+  impacto: string;
+  disciplina?: string;
+};
+
+export type OrcamentistaPreviewHitl = {
+  id: string;
+  titulo: string;
+  motivo: string;
+  disciplina?: string;
+  severidade: 'baixa' | 'media' | 'alta' | 'critica';
+  status: 'pendente';
+};
+
+export type OrcamentistaAiPreview = {
+  servicos_sugeridos: OrcamentistaPreviewService[];
+  quantitativos_estimados: string;
+  custos_estimados: number;
+  riscos: OrcamentistaPreviewRisk[];
+  pendencias_hitl: OrcamentistaPreviewHitl[];
+  premissas: string[];
+  exclusoes: string[];
+  confianca: number;
+  origem: 'preview_ia_mock';
+  aviso: string;
+};
