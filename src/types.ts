@@ -1258,3 +1258,130 @@ export type OrcamentistaConsolidatedPreview = {
   summary: OrcamentistaConsolidatedPreviewSummary;
   generated_at: string;
 };
+
+// ── Fase 2I: Gate de Consolidação Mockado ──────────────────────────────────
+
+export type OrcamentistaConsolidationGateStatus =
+  | 'blocked'
+  | 'pending_hitl'
+  | 'payload_simulated'
+  | 'ready_for_future_review';
+
+export type OrcamentistaConsolidationCandidateItem = {
+  id: string;
+  preview_service_id: string;
+  description: string;
+  category: string;
+  discipline: string;
+  unit: string;
+  quantity: number;
+  unit_cost: number;
+  total_cost: number;
+  origin: 'consolidated_preview_mock';
+  codigo?: string;
+  identification_type: OrcamentistaConsolidatedPreviewService['identification_type'];
+  source_agent_ids: string[];
+  source_page_refs: string[];
+  source_evidence_refs: string[];
+  quantity_confidence: number;
+  cost_confidence: number;
+  confidence_score: number;
+  traceability_score: number;
+  requires_hitl: boolean;
+  blocks_consolidation: boolean;
+};
+
+export type OrcamentistaConsolidationPayloadItem = {
+  id: string;
+  preview_service_id: string;
+  descricao: string;
+  categoria: string;
+  unidade: string;
+  quantidade: number;
+  valor_unitario: number;
+  valor_total: number;
+  origem: 'consolidated_preview_mock';
+  codigo?: string;
+  source_agent_ids: string[];
+  source_page_refs: string[];
+  source_evidence_refs: string[];
+  confidence_score: number;
+  traceability_score: number;
+  requires_hitl: boolean;
+  blocks_consolidation: boolean;
+  simulated_only: true;
+};
+
+export type OrcamentistaConsolidationValidationIssue = {
+  id: string;
+  candidate_item_id?: string;
+  source_service_id: string;
+  code:
+    | 'requires_hitl'
+    | 'blocks_consolidation'
+    | 'missing_source_agent_ids'
+    | 'missing_source_page_refs'
+    | 'missing_source_evidence_refs'
+    | 'low_quantity_confidence'
+    | 'low_cost_confidence'
+    | 'inferred_without_validation'
+    | 'manual_assumption_without_validation';
+  severity: OrcamentistaHitlIssueSeverity;
+  field: string;
+  message: string;
+  blocks_payload: boolean;
+  blocks_consolidation: boolean;
+  required_action: string;
+};
+
+export type OrcamentistaConsolidationBlockedItem = {
+  id: string;
+  candidate_item_id: string;
+  preview_service_id: string;
+  description: string;
+  reason: string;
+  severity: OrcamentistaHitlIssueSeverity;
+  missing_fields: string[];
+  required_action: string;
+  validation_issues: OrcamentistaConsolidationValidationIssue[];
+};
+
+export type OrcamentistaConsolidationPendingHitlItem = {
+  id: string;
+  candidate_item_id: string;
+  preview_service_id: string;
+  description: string;
+  reason: string;
+  severity: OrcamentistaHitlIssueSeverity;
+  required_human_action: string;
+  validation_issues: OrcamentistaConsolidationValidationIssue[];
+};
+
+export type OrcamentistaConsolidationGateSummary = {
+  total_candidates: number;
+  approved_count: number;
+  blocked_count: number;
+  pending_hitl_count: number;
+  simulated_payload_count: number;
+  total_simulated_value: number;
+  critical_issues: number;
+  can_write_to_budget: boolean;
+  write_blocked_reason: string;
+};
+
+export type OrcamentistaConsolidationGate = {
+  id: string;
+  preview_id: string;
+  opportunity_id: string;
+  orcamento_id: string | null;
+  status: OrcamentistaConsolidationGateStatus;
+  approved_items: OrcamentistaConsolidationCandidateItem[];
+  blocked_items: OrcamentistaConsolidationBlockedItem[];
+  pending_hitl_items: OrcamentistaConsolidationPendingHitlItem[];
+  simulated_payload: OrcamentistaConsolidationPayloadItem[];
+  validation_issues: OrcamentistaConsolidationValidationIssue[];
+  can_write_to_budget: boolean;
+  write_blocked_reason: string;
+  summary: OrcamentistaConsolidationGateSummary;
+  generated_at: string;
+};

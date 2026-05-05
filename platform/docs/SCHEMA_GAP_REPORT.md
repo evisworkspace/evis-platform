@@ -1688,3 +1688,123 @@ Essa proxima fase ainda deve ser contrato, validacao e payload simulado:
 - com bloqueios separados para itens identificados, inferidos e premissas manuais.
 
 A gravacao em `orcamento_itens` so deve ocorrer em fase posterior, depois de gate aprovado, HITL concluido, payload validado e autorizacao explicita.
+
+---
+
+### 11.20 Fase 2I: Gate de Consolidacao Mockado
+
+> Status: implementado como camada visual/contratual mockada, sem IA real, sem banco, sem proposta, sem Obra/Diario e sem consolidacao oficial.
+> Escopo: validar o preview consolidado e montar um payload simulado semelhante a `orcamento_itens` para revisao humana futura.
+
+#### 11.20.1 Objetivo
+
+Criar o Gate de Consolidacao entre o Preview Consolidado da Fase 2H e qualquer futura gravacao oficial. O Gate valida rastreabilidade, HITL, bloqueios, confianca de quantidade, confianca de custo e origem dos candidatos antes de montar um payload simulado.
+
+#### 11.20.2 Documento canonico criado
+
+- `orcamentista/docs/EVIS_ORCAMENTISTA_CONSOLIDATION_GATE_CONTRACT.md`
+
+#### 11.20.3 Tipos adicionados
+
+Tipos em `src/types.ts`:
+
+- `OrcamentistaConsolidationGateStatus`
+- `OrcamentistaConsolidationGate`
+- `OrcamentistaConsolidationCandidateItem`
+- `OrcamentistaConsolidationPayloadItem`
+- `OrcamentistaConsolidationBlockedItem`
+- `OrcamentistaConsolidationPendingHitlItem`
+- `OrcamentistaConsolidationValidationIssue`
+- `OrcamentistaConsolidationGateSummary`
+
+#### 11.20.4 Mock e utilitarios
+
+Arquivos criados:
+
+- `src/lib/orcamentista/consolidationGateMock.ts`
+- `src/lib/orcamentista/consolidationGateUtils.ts`
+
+O mock usa `MOCK_CONSOLIDATED_PREVIEW` como origem e separa:
+
+- itens aprovados para payload simulado;
+- itens bloqueados por rastreabilidade, baixa confianca ou bloqueio de consolidacao;
+- itens pendentes de HITL;
+- issues de validacao por item;
+- `can_write_to_budget = false` por contrato da fase.
+
+Funcoes puras criadas:
+
+```text
+validatePreviewServiceForConsolidation()
+buildSimulatedBudgetItemPayload()
+getConsolidationBlockedItems()
+getConsolidationPendingHitlItems()
+getConsolidationApprovedItems()
+canWriteConsolidationToBudget()
+summarizeConsolidationGate()
+getConsolidationGateStatusLabel()
+getConsolidationIssueSeverityLabel()
+```
+
+Nenhuma funcao chama API, banco, Supabase, OCR ou IA.
+
+#### 11.20.5 UI criada
+
+Arquivo criado:
+
+- `src/pages/Oportunidade/OrcamentistaConsolidationGatePanel.tsx`
+
+A UI mostra:
+
+- cabecalho "Gate de consolidacao";
+- resumo de candidatos, aprovados, bloqueados, pendentes de HITL e payload simulado;
+- indicacao "Pode gravar: nao";
+- motivo do bloqueio;
+- itens aprovados com quantidade, unidade, custo, origem, confianca e rastreabilidade;
+- itens bloqueados com motivo, severidade, campo ausente e acao necessaria;
+- pendencias HITL com acao humana requerida;
+- JSON visual do payload simulado;
+- CTA desabilitado "Gravar no orcamento oficial - fase futura";
+- avisos de que nada foi gravado em `orcamento_itens`, o payload e simulado, itens inferidos exigem HITL e a gravacao real sera fase futura.
+
+#### 11.20.6 Integracao na aba do Orçamentista
+
+Arquivo alterado:
+
+- `src/pages/Oportunidade/OrcamentistaTab.tsx`
+
+Sequencia visual atual no Workspace IA:
+
+```text
+1. Documentos recebidos
+2. Processamento de paginas
+3. Reader + Verifier
+4. HITL Orcamentista
+5. Dispatch para agentes
+6. Preview consolidado
+7. Gate de consolidacao
+8. Pipeline IA mockado
+9. Previa IA mockada legada
+10. Chat/workspace
+```
+
+#### 11.20.7 Confirmacoes de conformidade
+
+- Nenhuma IA real chamada.
+- Gemini nao foi chamado.
+- OpenAI nao foi chamado.
+- Claude API nao foi chamada.
+- Nenhum OCR real executado.
+- Nenhum PDF real processado.
+- Nenhuma migration criada.
+- Banco/schema nao alterado.
+- Nenhum item gravado em `orcamento_itens`.
+- Nenhuma consolidacao no orcamento oficial.
+- Payload gerado e apenas simulado/local.
+- Proposta nao alterada.
+- Obra/Diario preservados.
+- Rotas `/obras` e `/obras/:obraId` preservadas.
+
+#### 11.20.8 Proximo passo recomendado
+
+Revisar o payload simulado e criar uma fase posterior especifica para gravacao controlada, com aceite humano explicito, `orcamento_id` confirmado, auditoria e insert em `orcamento_itens` somente depois de todos os bloqueios e HITLs estarem resolvidos.
