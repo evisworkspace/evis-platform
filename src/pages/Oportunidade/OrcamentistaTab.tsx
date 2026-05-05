@@ -7,6 +7,7 @@ import OrcamentistaManualItemsPanel from './OrcamentistaManualItemsPanel';
 import OrcamentistaAiPipelinePanel from './OrcamentistaAiPipelinePanel';
 import OrcamentistaAiPreviewPanel from './OrcamentistaAiPreviewPanel';
 import OrcamentistaDocumentsPanel from './OrcamentistaDocumentsPanel';
+import { OrcamentistaPageProcessingPanel } from './OrcamentistaPageProcessingPanel';
 import { buildMockDocumentIntakeFiles } from '../../lib/orcamentista/documentIntakeMock';
 import { mockPipelineSteps, mockAiPreview } from '../../lib/orcamentista/mockPipeline';
 
@@ -329,6 +330,9 @@ export default function OrcamentistaTab() {
                 isLoadingFiles={opportunityFiles.isFetching}
                 filesError={opportunityFilesError}
               />
+
+              {/* E1.5. Processamento de páginas mockado */}
+              <OrcamentistaPageProcessingPanel />
 
               {/* E2. Pipeline IA mockado */}
               <OrcamentistaAiPipelinePanel steps={mockPipelineSteps} />

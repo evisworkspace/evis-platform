@@ -760,3 +760,92 @@ export type OrcamentistaDocumentIntakeFile = {
   created_at: string;
   updated_at: string;
 };
+
+// ── Fase 2D: Page Rendering / Processing Contract ───────────────────────────
+
+export type OrcamentistaPageProcessingStatus = 
+  | 'PENDING'
+  | 'RENDERING_IMAGE'
+  | 'EXTRACTING_TEXT'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'BLOCKED';
+
+export type OrcamentistaPageProcessingError = {
+  code: string;
+  message: string;
+  details?: string;
+  severity: 'warning' | 'error' | 'critical';
+};
+
+export type OrcamentistaPageReadinessForReader = 
+  | 'READY'
+  | 'READY_WITH_WARNINGS'
+  | 'REQUIRES_OCR'
+  | 'BLOCKED';
+
+export type OrcamentistaPageImageAsset = {
+  asset_type: 'image/png' | 'image/jpeg' | 'image/webp';
+  storage_ref: string;
+  mime_type: string;
+  size_bytes: number;
+  checksum?: string;
+  generated_by: string;
+  generated_at: string;
+};
+
+export type OrcamentistaPageTextAsset = {
+  asset_type: 'text/plain' | 'text/markdown' | 'application/json';
+  storage_ref: string;
+  mime_type: string;
+  size_bytes: number;
+  checksum?: string;
+  generated_by: string;
+  generated_at: string;
+};
+
+export type OrcamentistaRenderedPage = {
+  id: string;
+  document_id: string;
+  file_id: string;
+  page_number: number;
+  page_label: string;
+  render_status: OrcamentistaPageProcessingStatus;
+  image_ref?: OrcamentistaPageImageAsset;
+  thumbnail_ref?: OrcamentistaPageImageAsset;
+  text_ref?: OrcamentistaPageTextAsset;
+  has_text_layer: boolean;
+  is_scanned: boolean;
+  width?: number;
+  height?: number;
+  dpi?: number;
+  processing_confidence: number;
+  ready_for_reader: OrcamentistaPageReadinessForReader;
+  requires_ocr_future: boolean;
+  errors?: OrcamentistaPageProcessingError[];
+  created_at: string;
+};
+
+export type OrcamentistaPageProcessingSummary = {
+  total_pages: number;
+  processed_pages: number;
+  failed_pages: number;
+  ready_for_reader: number;
+  requires_ocr: number;
+  blocked_pages: number;
+};
+
+export type OrcamentistaPageProcessingJob = {
+  id: string;
+  document_id: string;
+  opportunity_id: string;
+  orcamento_id: string | null;
+  status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'PARTIAL';
+  total_pages: number;
+  processed_pages: number;
+  failed_pages: number;
+  started_at?: string;
+  finished_at?: string;
+  errors?: OrcamentistaPageProcessingError[];
+  summary?: OrcamentistaPageProcessingSummary;
+};

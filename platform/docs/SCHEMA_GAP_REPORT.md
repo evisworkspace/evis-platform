@@ -932,13 +932,48 @@ A tela comunica que primeiro entram documentos, depois Reader/Verifier, depois a
 - O chat/workspace existente continua separado e deve ser revisado em fase futura para alinhar totalmente com o novo intake.
 - A liberacao real de Reader + Verifier dependera de decisao explicita de motor, armazenamento, custos, auditoria e HITL.
 
-#### 11.14.10 Proximo passo recomendado
+#### 11.14.10 Proximo passo executado
 
-Implementar a Fase 2D com leitura real controlada somente apos aprovacao explicita:
+O passo seguinte (Fase 2D) foi estabelecer o contrato tecnico de renderizacao e processamento de paginas, atuando como ponte entre o documento bruto e a leitura IA.
 
-- escolher origem real dos arquivos (`opportunity_files`/storage/workspace);
-- renderizar paginas em ambiente controlado;
-- executar Reader conforme `pdfReaderContract`;
-- executar Verifier separado;
-- bloquear consolidacao ate HITL;
-- manter orcamento oficial separado ate acao manual futura.
+---
+
+### 11.15 Fase 2D: Page Rendering / Processing Contract
+
+> Status: implementado como camada mockada e read-only, sem IA real, sem OCR real, sem renderizacao real de PDF, sem migration e sem persistencia oficial nova.  
+> Escopo: criar o contrato tecnico (Page Processing Contract) que transforma documentos em paginas auditaveis isolando a IA do arquivo bruto.
+
+#### 11.15.1 Objetivo
+
+Garantir que a IA nunca interaja com o PDF bruto, prevenindo alucinacoes visuais, quebra de reprodutibilidade e falhas de rastreabilidade para o HITL. A plataforma EVIS deve desconstruir deterministicamente o PDF em imagens de alta resolucao e texto nativo por pagina antes de despachar para o Reader IA.
+
+#### 11.15.2 Arquivos criados
+
+- `orcamentista/docs/EVIS_ORCAMENTISTA_PAGE_RENDERING_PROCESSING_CONTRACT.md`: documento canonico descrevendo o objetivo, regras, status e pipeline futuro de renderizacao.
+- `src/lib/orcamentista/pageProcessingContract.ts`: constantes, tipos de asset, limites e funcoes de pureza para gerir o ciclo de vida do render de uma pagina.
+- `src/lib/orcamentista/pageProcessingMock.ts`: mock de `OrcamentistaPageProcessingJob` e `OrcamentistaRenderedPage` contendo exemplos de PDF com camada de texto, PDF vetorizado, planta escaneada e pagina corrompida.
+- `src/lib/orcamentista/pageProcessingUtils.ts`: utilitarios para agrupar e resumir o inventario de imagens e textos.
+- `src/pages/Oportunidade/OrcamentistaPageProcessingPanel.tsx`: painel visual de processamento de paginas.
+
+#### 11.15.3 Arquivos alterados
+
+- `src/types.ts`: adicionados tipos essenciais (`OrcamentistaPageProcessingStatus`, `OrcamentistaPageProcessingError`, `OrcamentistaPageReadinessForReader`, `OrcamentistaPageImageAsset`, `OrcamentistaPageTextAsset`, `OrcamentistaRenderedPage`, `OrcamentistaPageProcessingSummary`, `OrcamentistaPageProcessingJob`).
+- `src/pages/Oportunidade/OrcamentistaTab.tsx`: o painel `OrcamentistaPageProcessingPanel` foi injetado imediatamente apos o painel de Intake de Documentos.
+
+#### 11.15.4 Confirmacoes de conformidade
+
+- **Nenhum LLM real chamado.** O processo foi inteiramente mockado para estabelecer o contrato.
+- **Nenhum PDF real renderizado.** As resolucoes, caminhos e status sao strings mockadas.
+- **Nenhum OCR real.** A definicao de `requires_ocr_future` atua como flag para infraestrutura futura.
+- **Nenhum dado gravado no orcamento oficial.**
+- **Obra/Diario totalmente preservados.**
+- **Separacao de responsabilidades clara:** O documento mostra que arquivo nao e pagina renderizada, pagina nao e leitura IA, e leitura IA nao e orcamento.
+
+#### 11.15.5 Riscos restantes
+
+- O tamanho e custo de storage para PDFs pesados/arquitetonicos (milhares de PNGs a 300DPI) precisarao ser equacionados quando a renderizacao for implementada no backend.
+- A orquestracao de OCR para plantas antigas/escaneadas e uma etapa custosa computacionalmente.
+
+#### 11.15.6 Proximo passo recomendado
+
+Avancar para a **Fase 2E - Integracao Primaria do Reader IA** usando a camada mockada de paginas. O proximo passo deve injetar prompts estruturados que consumam a representacao de `OrcamentistaRenderedPage` e gerem os `Identified Items` e `Inferred Items`, simulando o payload da IA sem consolidar nada oficial ainda.
