@@ -1039,3 +1039,124 @@ export type OrcamentistaHitlQueueSummary = {
   blocking_consolidation: number;
   resolved_issues: number;
 };
+
+// ── Fase 2G: Dispatch mockado para agentes especialistas ────────────────────
+
+export type OrcamentistaAgentDispatchStatus =
+  | 'waiting'
+  | 'released'
+  | 'blocked'
+  | 'running_mock'
+  | 'completed';
+
+export type OrcamentistaAgentOutputStatus =
+  | 'not_started'
+  | 'completed'
+  | 'completed_with_warnings'
+  | 'blocked'
+  | 'waiting_dependencies';
+
+export type OrcamentistaAgentDispatchBlocker = {
+  id: string;
+  reason: string;
+  severity: OrcamentistaHitlIssueSeverity;
+  source_type:
+    | 'page_processing'
+    | 'reader_verifier'
+    | 'hitl'
+    | 'dependency'
+    | 'discipline_gap';
+  source_id: string;
+  blocks_dispatch: boolean;
+  blocks_preview: boolean;
+  blocks_consolidation: boolean;
+};
+
+export type OrcamentistaAgentDispatchInput = {
+  source_page_ids: string[];
+  source_reader_run_ids: string[];
+  source_hitl_issue_ids: string[];
+  source_references: string[];
+  evidence_summary: string;
+  constraints: string[];
+};
+
+export type OrcamentistaDomainAgentFinding = {
+  id: string;
+  title: string;
+  description: string;
+  discipline: string;
+  source_references: string[];
+  confidence_score: number;
+};
+
+export type OrcamentistaDomainAgentSuggestedService = {
+  id: string;
+  description: string;
+  unit: string;
+  quantity_basis: string;
+  confidence_score: number;
+  source_references: string[];
+  is_official: false;
+};
+
+export type OrcamentistaDomainAgentRisk = {
+  id: string;
+  description: string;
+  severity: OrcamentistaHitlIssueSeverity;
+  impact: string;
+  blocks_preview: boolean;
+  blocks_consolidation: boolean;
+};
+
+export type OrcamentistaDomainAgentHitlRequest = {
+  id: string;
+  title: string;
+  reason: string;
+  severity: OrcamentistaHitlIssueSeverity;
+  source_references: string[];
+};
+
+export type OrcamentistaDomainAgentOutput = {
+  id: string;
+  dispatch_job_id: string;
+  agent_id: string;
+  status: OrcamentistaAgentOutputStatus;
+  confidence_score: number;
+  findings: OrcamentistaDomainAgentFinding[];
+  suggested_services: OrcamentistaDomainAgentSuggestedService[];
+  risks: OrcamentistaDomainAgentRisk[];
+  hitl_requests: OrcamentistaDomainAgentHitlRequest[];
+  missing_information: string[];
+  blocks_preview: boolean;
+  blocks_consolidation: boolean;
+  source_references: string[];
+};
+
+export type OrcamentistaAgentDispatchJob = {
+  id: string;
+  agent_id: string;
+  agent_name: string;
+  discipline: string;
+  status: OrcamentistaAgentDispatchStatus;
+  source_page_ids: string[];
+  source_reader_run_ids: string[];
+  source_hitl_issue_ids: string[];
+  allowed_to_run: boolean;
+  blockers: OrcamentistaAgentDispatchBlocker[];
+  input_summary: OrcamentistaAgentDispatchInput;
+  started_at?: string;
+  finished_at?: string;
+  output?: OrcamentistaDomainAgentOutput;
+};
+
+export type OrcamentistaAgentDispatchSummary = {
+  total_agents: number;
+  released_agents: number;
+  blocked_agents: number;
+  completed_agents: number;
+  waiting_agents: number;
+  hitl_pending_agents: number;
+  preview_blocked_agents: number;
+  consolidation_blocked_agents: number;
+};

@@ -1402,6 +1402,236 @@ Documento -> Pagina -> Reader/Verifier -> HITL -> Agentes -> Preview -> Consolid
 - O painel nao consome pendencias reais do Reader/Verifier; usa mocks fixos.
 - A liberacao real de dispatch para agentes especialistas ainda depende de orquestracao futura.
 
-#### 11.17.10 Proximo passo recomendado
+#### 11.17.10 Proximo passo executado
 
-Avancar para a Fase 2G com um contrato de dispatch mockado para agentes especialistas, consumindo apenas paginas/leituras/HITLs liberados e mantendo a consolidacao oficial bloqueada.
+Fase 2G executada com contrato e UI de dispatch mockado para agentes especialistas, consumindo apenas paginas/leituras/HITLs liberados e mantendo a consolidacao oficial bloqueada.
+
+---
+
+### 11.18 Fase 2G: Dispatch Mockado Para Agentes Especialistas
+
+> Status: implementado como contrato, mock e painel visual local, sem IA real, sem banco e sem consolidacao.  
+> Escopo: ponte mockada entre Reader/Verifier + HITL e agentes especialistas de dominio.
+
+#### 11.18.1 Objetivo
+
+Criar a camada de dispatch para comunicar o fluxo:
+
+```text
+Documentos
+  -> Paginas renderizadas
+    -> Reader primario
+      -> Verifier independente
+        -> HITL Orcamentista
+          -> Dispatch para agentes especialistas
+            -> Outputs tecnicos mockados
+              -> Preview futuro
+                -> Consolidacao futura
+```
+
+Dispatch nao gera orcamento. Ele apenas encaminha evidencias auditadas e liberadas para agentes especialistas mockados.
+
+#### 11.18.2 Documento canonico criado
+
+Arquivo criado:
+
+- `orcamentista/docs/EVIS_ORCAMENTISTA_AGENT_DISPATCH_CONTRACT.md`
+
+Conteudo registrado:
+
+- objetivo do dispatch;
+- diferenca entre dispatch, agente especialista e consolidacao;
+- por que dispatch nao gera orcamento;
+- como o dispatch recebe dados do Reader/Verifier/HITL;
+- criterios para liberar ou bloquear um agente;
+- status possiveis;
+- estrutura de input por agente;
+- estrutura de output mockado;
+- regras de seguranca;
+- exemplos JSON.
+
+#### 11.18.3 Tipos adicionados
+
+Arquivo alterado:
+
+- `src/types.ts`
+
+Tipos adicionados:
+
+```text
+OrcamentistaAgentDispatchStatus
+OrcamentistaAgentDispatchInput
+OrcamentistaAgentDispatchJob
+OrcamentistaAgentDispatchBlocker
+OrcamentistaAgentOutputStatus
+OrcamentistaDomainAgentOutput
+OrcamentistaDomainAgentFinding
+OrcamentistaDomainAgentSuggestedService
+OrcamentistaDomainAgentRisk
+OrcamentistaDomainAgentHitlRequest
+OrcamentistaAgentDispatchSummary
+```
+
+Campos previstos:
+
+- `id`;
+- `agent_id`;
+- `agent_name`;
+- `discipline`;
+- `status`;
+- `source_page_ids`;
+- `source_reader_run_ids`;
+- `source_hitl_issue_ids`;
+- `allowed_to_run`;
+- `blockers`;
+- `input_summary`;
+- `started_at`;
+- `finished_at`;
+- `confidence_score`;
+- `findings`;
+- `suggested_services`;
+- `risks`;
+- `hitl_requests`;
+- `missing_information`;
+- `blocks_preview`;
+- `blocks_consolidation`;
+- `source_references`.
+
+#### 11.18.4 Mock de dispatch
+
+Arquivo criado:
+
+- `src/lib/orcamentista/agentDispatchMock.ts`
+
+Agentes simulados:
+
+- `civil_arquitetonico`;
+- `estrutural`;
+- `eletrica_dados_automacao`;
+- `hidrossanitario`;
+- `ppci_incendio`;
+- `acabamentos`;
+- `compatibilizacao_tecnica`;
+- `quantitativo`;
+- `custos`;
+- `auditor`.
+
+Cenarios mockados:
+
+- Civil liberado e concluido;
+- Eletrica liberada e concluida com pendencia;
+- Estrutural bloqueado por HITL;
+- PPCI bloqueado por disciplina ausente;
+- Acabamentos concluido com premissa inferida;
+- Compatibilizacao bloqueada por baixa concordancia Reader/Verifier;
+- Quantitativo aguardando outputs de dominio;
+- Custos aguardando quantitativos e fonte;
+- Auditor aguardando todos os agentes;
+- Hidrossanitario cadastrado como slot tecnico futuro sem fonte vinculada.
+
+#### 11.18.5 Utilitarios de dispatch
+
+Arquivo criado:
+
+- `src/lib/orcamentista/agentDispatchUtils.ts`
+
+Funcoes puras, sem API, banco ou IA:
+
+```text
+getAgentDispatchStatusLabel()
+getAgentOutputStatusLabel()
+groupDispatchJobsByStatus()
+getBlockedDispatchJobs()
+getRunnableDispatchJobs()
+getCompletedAgentOutputs()
+summarizeAgentDispatch()
+canRunDomainAgent()
+canGeneratePreviewFromAgentOutputs()
+getAgentBlockerReasons()
+```
+
+Gates aplicados:
+
+- agente nao executa se `blocks_dispatch` estiver ativo;
+- pendencia critica bloqueia dispatch;
+- Reader/Verifier bloqueado impede agente relacionado;
+- HITL bloqueante impede dispatch;
+- disciplina ausente bloqueia agente compativel;
+- dependencias de dominio bloqueiam quantitativo, custos e auditor;
+- preview futuro fica bloqueado quando houver blocker de preview ou agente bloqueado;
+- consolidacao futura permanece bloqueada quando output ou blocker marcar `blocks_consolidation`.
+
+#### 11.18.6 UI criada
+
+Arquivo criado:
+
+- `src/pages/Oportunidade/OrcamentistaAgentDispatchPanel.tsx`
+
+A UI mostra:
+
+- cabecalho "Dispatch para agentes especialistas";
+- aviso de que dispatch nao gera orcamento oficial;
+- resumo de agentes totais, liberados, bloqueados, concluidos, aguardando e com HITL pendente;
+- lista de agentes com status, disciplina, permissao de execucao, paginas/fontes e confianca;
+- motivos de bloqueio;
+- detalhe de entrada por agente;
+- achados tecnicos;
+- servicos sugeridos mockados marcados como nao oficiais;
+- riscos;
+- pendencias;
+- HITL solicitado;
+- flags de bloqueio de preview/consolidacao;
+- CTA desabilitado "Gerar preview consolidado - fase futura".
+
+#### 11.18.7 Integracao na aba do Orçamentista
+
+Arquivo alterado:
+
+- `src/pages/Oportunidade/OrcamentistaTab.tsx`
+
+Sequencia visual atual no Workspace IA:
+
+```text
+1. Documentos recebidos
+2. Processamento de paginas
+3. Reader + Verifier
+4. HITL Orçamentista
+5. Dispatch para agentes
+6. Pipeline IA mockado
+7. Previa IA mockada
+8. Chat/workspace existente
+```
+
+Essa ordem comunica o fluxo correto:
+
+```text
+Documento -> Pagina -> Reader/Verifier -> HITL -> Agentes especialistas -> Preview -> Consolidacao futura
+```
+
+#### 11.18.8 Confirmacoes de conformidade
+
+- Nenhuma IA real chamada.
+- Gemini nao foi chamado.
+- OpenAI nao foi chamado.
+- Claude API nao foi chamada.
+- Nenhum OCR real executado.
+- Nenhum PDF real processado.
+- Nenhuma migration criada.
+- Banco/schema nao alterado.
+- Nenhum item gravado em `orcamento_itens`.
+- Nenhuma consolidacao no orcamento oficial.
+- Output de agente e apenas previa tecnica mockada.
+- Proposta nao alterada.
+- Obra/Diario preservados.
+- Rotas `/obras` e `/obras/:obraId` preservadas.
+
+#### 11.18.9 Riscos restantes
+
+- O dispatch ainda e estatico e nao consome estado real de decisoes HITL locais.
+- Dependencias entre agentes ainda sao declarativas no mock.
+- Nao existe orquestrador real, fila real, persistencia de outputs ou auditoria operacional.
+- Preview consolidado a partir de outputs de agentes ainda nao foi implementado.
+
+#### 11.18.10 Proximo passo recomendado
+
+Avancar para uma fase futura de consolidacao de preview mockado a partir dos outputs dos agentes, ainda sem gravar em `orcamento_itens`, mantendo gates de HITL, preview e consolidacao separados.
