@@ -165,11 +165,14 @@ function normalizeIdentifiedItem(
 ): OrcamentistaReaderEvidenceItem {
   const confidence = Math.min(coerceReaderConfidenceScores(item.confidence_score, 0.5), confidenceCap);
   const sourceReference = asString(item.source_reference, '');
+  const itemText = readStringField(item, ['item', 'label', 'description']);
+  const category = readStringField(item, ['category']);
+  const label = itemText || category || `Item identificado ${index + 1}`;
 
   return {
     id: asString(item.id, `identified-${index + 1}`),
-    label: asString(item.label, `Item identificado ${index + 1}`),
-    description: asString(item.description, 'Descricao nao informada pelo Reader.'),
+    label,
+    description: itemText || label,
     quantity: item.quantity,
     evidence_type: normalizeEvidenceType(item.evidence_type, 'TEXT_EXPLICIT'),
     evidence_status: 'IDENTIFIED',
@@ -186,6 +189,8 @@ function normalizeInferredItem(
   const supportingEvidence = readStringArrayField(item, ['evidence_that_supports', 'evidence', 'textual_evidence']);
   const explicitSourceReferences = normalizeTags(item.source_references);
   const singularSourceReference = asString(item.source_reference, '');
+  const inferredItemText = readStringField(item, ['item', 'label', 'description']);
+  const reasoning = readStringField(item, ['reasoning', 'justification']) || supportingEvidence.join('; ');
   const sourceReferences =
     explicitSourceReferences.length > 0
       ? explicitSourceReferences
@@ -195,8 +200,8 @@ function normalizeInferredItem(
 
   return {
     id: asString(item.id, `inferred-${index + 1}`),
-    element: asString(item.label, `Inferencia ${index + 1}`),
-    reasoning: asString(item.description, 'Inferencia sem justificativa suficiente.'),
+    element: inferredItemText || `Inferencia ${index + 1}`,
+    reasoning: reasoning || asString(item.description, inferredItemText || 'Inferencia sem justificativa suficiente.'),
     source_references: sourceReferences,
     confidence_score: Math.min(coerceReaderConfidenceScores(item.confidence_score, 0.4), confidenceCap, 0.6),
     can_be_treated_as_fact: false,
@@ -216,10 +221,11 @@ function normalizeMissingInfo(item: OrcamentistaReaderMissingInfo, index: number
 function normalizeRisk(item: OrcamentistaRawReaderRisk, index: number): Required<OrcamentistaRawReaderRisk> {
   const sourceReference = asString(item.source_reference, '');
   const sourceReferenceStatus = sourceReference ? 'specific' : 'global_page_risk';
+  const riskDescription = readStringField(item, ['risk', 'description', 'title']);
 
   return {
     id: asString(item.id, `risk-${index + 1}`),
-    description: asString(item.description, 'Risco nao descrito.'),
+    description: riskDescription || 'Risco nao descrito.',
     severity: normalizeSeverity(item.severity),
     source_reference: sourceReference,
     source_reference_status: sourceReferenceStatus,
@@ -268,7 +274,7 @@ function normalizeCriticalDimension(
   return {
     id: asString(dimension.id, `critical-dimension-${index + 1}`),
     dimension_type: dimension.dimension_type ?? 'foundation_dimension',
-    label: asString(dimension.label, `Dimensao critica ${index + 1}`),
+    label: readStringField(dimension, ['item', 'label']) || `Dimensao critica ${index + 1}`,
     value,
     unit: asString(dimension.unit, 'm'),
     source_text: sourceText,

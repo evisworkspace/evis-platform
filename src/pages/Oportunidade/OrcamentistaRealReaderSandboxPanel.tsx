@@ -54,6 +54,22 @@ function ManualList({
   );
 }
 
+function compactLabelDescription(label: string, description: string) {
+  return label === description ? label : `${label}: ${description}`;
+}
+
+function readDisplayString(source: unknown, keys: string[]) {
+  if (typeof source !== 'object' || source === null || Array.isArray(source)) return '';
+  const record = source as Record<string, unknown>;
+
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+
+  return '';
+}
+
 export default function OrcamentistaRealReaderSandboxPanel() {
   const sandbox = useMemo(() => runRealReaderSandbox(), []);
   const [manualJson, setManualJson] = useState('');
@@ -289,12 +305,20 @@ export default function OrcamentistaRealReaderSandboxPanel() {
               <ManualList
                 title="Itens identificados"
                 empty="Nenhum item identificado."
-                items={manualNormalized?.identified_items.map((item) => `${item.label}: ${item.description}`) ?? []}
+                items={
+                  manualNormalized?.identified_items.map((item) =>
+                    compactLabelDescription(item.label, item.description)
+                  ) ?? []
+                }
               />
               <ManualList
                 title="Itens inferidos"
                 empty="Nenhuma inferência."
-                items={manualNormalized?.inferred_items.map((item) => `${item.element}: ${item.reasoning}`) ?? []}
+                items={
+                  manualNormalized?.inferred_items.map((item) =>
+                    compactLabelDescription(item.element, item.reasoning)
+                  ) ?? []
+                }
               />
               <ManualList
                 title="Informações pendentes"
@@ -311,13 +335,16 @@ export default function OrcamentistaRealReaderSandboxPanel() {
                 empty="Nenhuma cota crítica."
                 items={manualCriticalDimensions.map(
                   (dimension) =>
-                    `${dimension.label}: ${dimension.value}${dimension.unit} · ${dimension.source_text || dimension.source_reference}`
+                    `${dimension.label}: ${dimension.value}${dimension.unit} · ${dimension.source_reference || dimension.source_text}`
                 )}
               />
               <ManualList
                 title="HITLs"
                 empty="Nenhum HITL gerado."
-                items={manualHitls.map((hitl) => `${hitl.question} (${hitl.severity})`)}
+                items={manualHitls.map((hitl) => {
+                  const requiredDecision = readDisplayString(hitl, ['required_decision', 'question']);
+                  return `Decisão: ${requiredDecision} · Motivo: ${hitl.reason} (${hitl.severity})`;
+                })}
               />
             </div>
 
