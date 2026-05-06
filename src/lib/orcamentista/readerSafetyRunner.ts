@@ -40,6 +40,90 @@ function dimensionSearchText(dimension: OrcamentistaReaderCriticalDimension) {
   return `${dimension.dimension_type} ${dimension.label} ${dimension.unit} ${dimension.source_text} ${dimension.source_reference}`.toLowerCase();
 }
 
+function dimensionPrimaryText(dimension: OrcamentistaReaderCriticalDimension) {
+  return `${dimension.dimension_type} ${dimension.label} ${dimension.unit}`.toLowerCase();
+}
+
+function dimensionEvidenceText(dimension: OrcamentistaReaderCriticalDimension) {
+  return `${dimension.source_text} ${dimension.source_reference}`.toLowerCase();
+}
+
+function isRestrictedQuantityUnit(unit: string) {
+  return ['cm', 'mm', 'm', 'mpa', 'kg', 'm3'].includes(unit) || unit.includes('kgf/cm');
+}
+
+function isDiameterDimension(dimension: OrcamentistaReaderCriticalDimension) {
+  const primaryText = dimensionPrimaryText(dimension);
+  const evidenceText = dimensionEvidenceText(dimension);
+
+  if (includesAny(primaryText, ['comprimento', 'profundidade', 'depth', 'length'])) return false;
+
+  return (
+    dimension.dimension_type === 'pile_diameter' ||
+    includesAny(primaryText, ['diametro', 'diâmetro', 'diameter']) ||
+    includesAny(evidenceText, ['d =', 'd=', 'ø'])
+  );
+}
+
+function isLengthDimension(dimension: OrcamentistaReaderCriticalDimension) {
+  const primaryText = dimensionPrimaryText(dimension);
+  const evidenceText = dimensionEvidenceText(dimension);
+
+  return (
+    dimension.dimension_type === 'pile_depth' ||
+    includesAny(primaryText, ['comprimento', 'profundidade', 'depth', 'length']) ||
+    includesAny(evidenceText, ['c.total', 'barra', 'barras', 'aço', 'aco', 'unit '])
+  );
+}
+
+function isQuantityDimension(dimension: OrcamentistaReaderCriticalDimension, unit: string) {
+  const primaryText = dimensionPrimaryText(dimension);
+  const evidenceText = dimensionEvidenceText(dimension);
+  const hasExplicitTotal =
+    includesAny(primaryText, ['total de estacas', 'quantidade total', 'quantity']) ||
+    includesAny(evidenceText, ['quantidade total', 'quantidade oficial', 'tabela estacas indica quantidade']);
+  const hasQuantityUnit = unit === 'unid' || unit === 'un' || unit === 'und' || unit === 'unidade' || unit === 'unidades';
+
+  if (isDiameterDimension(dimension) || isLengthDimension(dimension)) return false;
+  if (isRestrictedQuantityUnit(unit) && !hasExplicitTotal) return false;
+
+  return (
+    dimension.dimension_type === 'pile_quantity' ||
+    hasExplicitTotal ||
+    hasQuantityUnit ||
+    includesAny(primaryText, ['quantidade', 'unidades'])
+  );
+}
+
+function isVolumeDimension(dimension: OrcamentistaReaderCriticalDimension, unit: string) {
+  const primaryText = dimensionPrimaryText(dimension);
+
+  return (
+    dimension.dimension_type === 'concrete_volume' ||
+    dimension.dimension_type === 'pile_volume' ||
+    unit === 'm3' ||
+    includesAny(primaryText, ['volume'])
+  );
+}
+
+function isConcreteStrengthDimension(dimension: OrcamentistaReaderCriticalDimension, unit: string) {
+  const primaryText = dimensionPrimaryText(dimension);
+
+  return (
+    unit === 'mpa' ||
+    unit.includes('kgf/cm') ||
+    includesAny(primaryText, ['fck', 'resistencia', 'resistência'])
+  );
+}
+
+function hasDecimalSeparatorAmbiguity(dimension: OrcamentistaReaderCriticalDimension, unit: string) {
+  const evidenceText = dimensionEvidenceText(dimension);
+
+  if (unit !== 'm') return false;
+
+  return /(^|[^0-9])\d{2}([,.]\d+)?\s*m\b/.test(evidenceText);
+}
+
 function makeDimensionalObservation({
   id,
   dimension,
@@ -143,13 +227,14 @@ function checksForCriticalDimension(
   const checks: OrcamentistaDimensionalSanityCheck[] = [];
   const sourceText = dimension.source_text || dimension.source_reference;
   const sourceType = dimension.source_type ?? 'unknown';
-  const searchText = dimensionSearchText(dimension);
   const unit = normalizeUnit(dimension.unit);
+  const isDiameter = isDiameterDimension(dimension);
+  const isLength = isLengthDimension(dimension);
+  const isQuantity = isQuantityDimension(dimension, unit);
+  const isVolume = isVolumeDimension(dimension, unit);
+  const isConcreteStrength = isConcreteStrengthDimension(dimension, unit);
 
-  if (
-    dimension.dimension_type === 'pile_diameter' ||
-    includesAny(searchText, ['diametro', 'diâmetro', 'estaca c25'])
-  ) {
+  if (isDiameter) {
     checks.push(
       makeDimensionalObservation({
         id: `dim-check-pile-diameter-${dimension.id}`,
@@ -167,10 +252,7 @@ function checksForCriticalDimension(
     );
   }
 
-  if (
-    dimension.dimension_type === 'pile_quantity' ||
-    (includesAny(searchText, ['quantidade', 'estacas']) && includesAny(searchText, ['estaca', 'c25', 'unid']))
-  ) {
+  if (isQuantity) {
     checks.push(
       makeDimensionalObservation({
         id: `dim-check-pile-quantity-${dimension.id}`,
@@ -188,10 +270,7 @@ function checksForCriticalDimension(
     );
   }
 
-  if (
-    dimension.dimension_type === 'pile_depth' ||
-    includesAny(searchText, ['comprimento', 'profundidade'])
-  ) {
+  if (isLength) {
     const normalizedDepthM = isLengthUnit(unit)
       ? unit === 'cm'
         ? dimension.value / 100
@@ -211,7 +290,7 @@ function checksForCriticalDimension(
         requiresHitl: true,
         blocksConsolidation: false,
         message:
-          'Comprimento/profundidade de estaca identificado; validar se o valor representa barra de aco, profundidade executiva ou outra medida antes de consolidar.',
+          'Comprimento/profundidade ou comprimento de barra identificado; validar se representa profundidade executiva, comprimento de barra ou outra medida antes de consolidar.',
         normalizedValue: normalizedDepthM,
       })
     );
@@ -226,21 +305,21 @@ function checksForCriticalDimension(
             building_type: 'residential',
             source_text: sourceText,
           },
-          decimal_ambiguity: {
-            source_text: sourceText,
-            parsed_value: dimension.value,
-            unit,
-          },
+          ...(hasDecimalSeparatorAmbiguity(dimension, unit)
+            ? {
+                decimal_ambiguity: {
+                  source_text: sourceText,
+                  parsed_value: dimension.value,
+                  unit,
+                },
+              }
+            : {}),
         })
       );
     }
   }
 
-  if (
-    dimension.dimension_type === 'concrete_volume' ||
-    dimension.dimension_type === 'pile_volume' ||
-    includesAny(searchText, ['volume', 'm3', 'm³'])
-  ) {
+  if (isVolume) {
     checks.push(
       makeDimensionalObservation({
         id: `dim-check-concrete-volume-${dimension.id}`,
@@ -258,7 +337,7 @@ function checksForCriticalDimension(
     );
   }
 
-  if (includesAny(searchText, ['fck', 'resistencia', 'resistência', 'mpa', 'kgf/cm'])) {
+  if (isConcreteStrength) {
     checks.push(
       makeDimensionalObservation({
         id: `dim-check-concrete-strength-unit-${dimension.id}`,
@@ -287,8 +366,9 @@ function checksForCriticalDimension(
         severity: 'baixa',
         requiresHitl: false,
         blocksConsolidation: false,
-        message:
-          'Cota em cm/mm detectada; qualquer uso em quantitativo deve normalizar unidade explicitamente antes de gravar payload.',
+        message: isLength
+          ? 'Valor em cm convertido para metros; validar se representa comprimento/profundidade executiva, comprimento de barra ou outra medida antes de consolidar.'
+          : 'Cota em cm/mm detectada; qualquer uso em quantitativo deve normalizar unidade explicitamente antes de gravar payload.',
         normalizedValue: unit === 'cm' ? dimension.value / 100 : dimension.value / 1000,
       })
     );
