@@ -1811,6 +1811,147 @@ export type OrcamentistaManualReaderEvaluationSummary = {
   blocks_consolidation: boolean;
 };
 
+// ── Fase 3F: Manual Verifier Result Ingestion + Reader Comparison ──────────
+
+export type OrcamentistaManualVerifierIngestionStatus =
+  | 'empty_input'
+  | 'invalid_json'
+  | 'invalid_shape'
+  | 'evaluated'
+  | 'evaluated_requires_hitl'
+  | 'blocked_by_divergence';
+
+export type OrcamentistaVerifierDivergenceSeverity = 'low' | 'medium' | 'high' | 'critical';
+
+export type OrcamentistaVerifierAgreementScore = {
+  score: number;
+  band: 'low' | 'medium' | 'high';
+  matched_points: number;
+  total_points: number;
+  provided_score?: number;
+  calculated_score: number;
+};
+
+export type OrcamentistaVerifierDivergence = {
+  id: string;
+  category:
+    | 'identified_item'
+    | 'inferred_item'
+    | 'critical_dimension'
+    | 'risk'
+    | 'hitl'
+    | 'missing_information'
+    | 'document_traceability'
+    | 'other';
+  title: string;
+  reader_value: string;
+  verifier_value: string;
+  reason: string;
+  severity: OrcamentistaVerifierDivergenceSeverity;
+  requires_hitl: boolean;
+  blocks_consolidation: boolean;
+};
+
+export type OrcamentistaVerifierConfirmedItem = {
+  id: string;
+  category:
+    | 'identified_item'
+    | 'inferred_item'
+    | 'critical_dimension'
+    | 'risk'
+    | 'hitl'
+    | 'missing_information';
+  label: string;
+  reader_reference?: string;
+  verifier_reference?: string;
+  confidence_score?: number;
+};
+
+export type OrcamentistaVerifierDisputedItem = {
+  id: string;
+  category: OrcamentistaVerifierDivergence['category'];
+  label: string;
+  reader_value: string;
+  verifier_value: string;
+  severity: OrcamentistaVerifierDivergenceSeverity;
+  requires_hitl: boolean;
+};
+
+export type OrcamentistaVerifierHitlRequest = {
+  id: string;
+  title: string;
+  reason: string;
+  required_decision: string;
+  severity: OrcamentistaVerifierDivergenceSeverity;
+  source_divergence_ids: string[];
+};
+
+export type OrcamentistaVerifierDispatchDecision = {
+  allowed_to_dispatch: boolean;
+  requires_hitl: boolean;
+  blocks_consolidation: boolean;
+  decision: 'dispatch_allowed' | 'dispatch_blocked' | 'requires_hitl';
+  reasons: string[];
+};
+
+export type OrcamentistaVerifierComparisonResult = {
+  id: string;
+  reader_output_id: string;
+  agreement_score: OrcamentistaVerifierAgreementScore;
+  divergence_points: OrcamentistaVerifierDivergence[];
+  confirmed_items: OrcamentistaVerifierConfirmedItem[];
+  disputed_items: OrcamentistaVerifierDisputedItem[];
+  verifier_hitls: OrcamentistaVerifierHitlRequest[];
+  blocks_consolidation: boolean;
+  allowed_to_dispatch: boolean;
+  requires_hitl: boolean;
+  dispatch_decision: OrcamentistaVerifierDispatchDecision;
+  recommendations: string[];
+  created_at: string;
+};
+
+export type OrcamentistaManualVerifierNormalizedOutput = {
+  id: string;
+  agreement_score?: number;
+  verified_items: string[];
+  confirmed_items: string[];
+  disputed_items: string[];
+  divergence_points: OrcamentistaVerifierDivergence[];
+  identified_items: string[];
+  inferred_items: string[];
+  critical_dimensions: string[];
+  risks: string[];
+  hitl_requests: OrcamentistaVerifierHitlRequest[];
+  missing_information: string[];
+  recommendations: string[];
+  requires_hitl: boolean;
+  blocks_consolidation: boolean;
+  created_at: string;
+};
+
+export type OrcamentistaManualVerifierIngestionResult = {
+  id: string;
+  parse_status: OrcamentistaManualVerifierIngestionStatus;
+  parsed_output?: unknown;
+  normalized_verifier_output?: OrcamentistaManualVerifierNormalizedOutput;
+  verifier_summary?: {
+    verified_items_count: number;
+    confirmed_items_count: number;
+    disputed_items_count: number;
+    divergence_points_count: number;
+    critical_dimensions_count: number;
+    risks_count: number;
+    hitl_requests_count: number;
+    missing_information_count: number;
+    requires_hitl: boolean;
+    blocks_consolidation: boolean;
+  };
+  comparison_result?: OrcamentistaVerifierComparisonResult;
+  errors: string[];
+  warnings: string[];
+  created_at: string;
+};
+
 // ── Fase 3C: Missing Project Fallback & Estimated Scope Policy ─────────────
 
 export type OrcamentistaScopeOriginType =

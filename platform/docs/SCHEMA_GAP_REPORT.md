@@ -3160,3 +3160,179 @@ Avisos obrigatorios exibidos:
 #### 11.28.8 Proximo passo recomendado
 
 Usar a ingestao manual para comparar outputs reais de motores externos e endurecer o schema de resposta antes de qualquer integracao automatica por API.
+
+---
+
+### 11.29 Fase 3F: Manual Verifier Result Ingestion
+
+> Status: implementado como ingestao manual, comparacao local e UI experimental, sem IA real, sem API, sem banco e sem consolidacao oficial.
+> Escopo: colar JSON externo do Verifier, comparar com Reader normalizado e manter gates de seguranca.
+
+#### 11.29.1 Objetivo
+
+Criar a etapa manual equivalente ao Verifier:
+
+```text
+Reader normalizado
+  -> Verifier externo executado fora do EVIS
+  -> JSON do Verifier colado manualmente
+  -> validacao local
+  -> normalizacao do Verifier
+  -> comparacao Reader x Verifier
+  -> agreement_score
+  -> divergencias
+  -> HITLs
+  -> dispatch/consolidacao bloqueados quando necessario
+```
+
+#### 11.29.2 Documento canonico criado
+
+- `orcamentista/docs/EVIS_ORCAMENTISTA_MANUAL_VERIFIER_INGESTION_AND_READER_COMPARISON.md`
+
+O documento registra:
+
+- objetivo da ingestao manual do Verifier;
+- motivo de ainda nao haver API real;
+- diferenca entre Reader e Verifier;
+- shape flexivel aceito para JSON do Verifier;
+- comparacao de identificados, inferidos, pendencias, riscos, HITLs e cotas criticas;
+- calculo de `agreement_score`;
+- classificacao de divergencias;
+- regras de dispatch, HITL e bloqueio de consolidacao;
+- exemplo com fundacao/estacas;
+- proibicao de gravacao no orcamento oficial.
+
+#### 11.29.3 Tipos adicionados
+
+Arquivo alterado:
+
+- `src/types.ts`
+
+Tipos adicionados:
+
+```text
+OrcamentistaManualVerifierIngestionStatus
+OrcamentistaManualVerifierIngestionResult
+OrcamentistaVerifierComparisonResult
+OrcamentistaVerifierAgreementScore
+OrcamentistaVerifierDivergence
+OrcamentistaVerifierDivergenceSeverity
+OrcamentistaVerifierConfirmedItem
+OrcamentistaVerifierDisputedItem
+OrcamentistaVerifierHitlRequest
+OrcamentistaVerifierDispatchDecision
+OrcamentistaManualVerifierNormalizedOutput
+```
+
+#### 11.29.4 Ingestao manual criada
+
+Arquivo criado:
+
+- `src/lib/orcamentista/manualVerifierIngestion.ts`
+
+Funcoes puras:
+
+```text
+parseManualVerifierJson()
+ingestManualVerifierOutput()
+buildManualVerifierEvaluationResult()
+```
+
+Comportamento:
+
+- recebe string JSON;
+- bloqueia input vazio;
+- bloqueia JSON invalido;
+- valida shape minimo por campos reconhecidos de Verifier;
+- normaliza `verified_items`, `confirmed_items`, `disputed_items`, `divergence_points`, `critical_dimensions`, `risks`, `hitl_requests`, `agreement_score`, `requires_hitl` e `blocks_consolidation`;
+- se houver Reader normalizado, executa comparacao local;
+- retorna status, Verifier normalizado, resumo, comparacao, erros e avisos.
+
+#### 11.29.5 Comparador criado
+
+Arquivo criado:
+
+- `src/lib/orcamentista/manualVerifierComparisonUtils.ts`
+
+Funcoes puras:
+
+```text
+compareReaderAndVerifierOutputs()
+calculateAgreementScore()
+extractConfirmedItems()
+extractDisputedItems()
+extractVerifierDivergences()
+classifyVerifierDivergenceSeverity()
+buildVerifierHitlRequests()
+getVerifierBlockingReasons()
+getVerifierDispatchDecision()
+summarizeVerifierComparison()
+```
+
+Regras:
+
+- divergencia em quantidade de estacas vira `high` ou `critical`;
+- divergencia em diametro de estaca vira `critical`;
+- divergencia em comprimento/profundidade vira `critical`;
+- divergencia em fck/resistencia vira `high`;
+- divergencia em volume de concreto vira `high`;
+- divergencia em P6/P23 vira `medium` ou `high`;
+- divergencia em folha/prancha/carimbo vira `medium`;
+- se houver divergencia `high` ou `critical`, dispatch fica bloqueado, HITL exigido e consolidacao bloqueada;
+- se `agreement_score < 0.90`, HITL e exigido;
+- se `agreement_score < 0.80`, consolidacao fica bloqueada.
+
+#### 11.29.6 Painel atualizado
+
+Arquivo alterado:
+
+- `src/pages/Oportunidade/OrcamentistaRealReaderSandboxPanel.tsx`
+
+Area adicionada:
+
+```text
+Colar JSON do Verifier
+```
+
+A UI mostra:
+
+- textarea para JSON do Verifier;
+- botao local "Comparar Reader x Verifier";
+- status de parse do Verifier;
+- `agreement_score`;
+- itens confirmados;
+- itens disputados;
+- divergencias;
+- HITLs do Verifier;
+- dispatch decision;
+- bloqueios, erros e avisos.
+
+Avisos obrigatorios exibidos:
+
+- `Este JSON do Verifier foi colado manualmente.`
+- `Nenhuma chamada de IA foi executada pelo EVIS.`
+- `Nenhum dado foi gravado no banco.`
+- `Divergências críticas exigem HITL antes de qualquer dispatch ou consolidação.`
+
+#### 11.29.7 Confirmacoes de conformidade
+
+- Nenhuma IA real chamada.
+- Gemini real nao foi chamado.
+- OpenAI nao foi chamado.
+- Claude API nao foi chamada.
+- Nenhum `fetch` usado.
+- Nenhum axios usado.
+- Nenhum Supabase usado.
+- Nenhum OCR real executado.
+- Nenhum PDF real processado.
+- Nenhuma migration criada.
+- Banco/schema nao alterado.
+- Nenhum item gravado em `orcamento_itens`.
+- Nenhuma consolidacao no orcamento oficial.
+- Nenhuma proposta criada.
+- Obra/Diario preservados.
+- Rotas `/obras` e `/obras/:obraId` preservadas.
+
+#### 11.29.8 Proximo passo recomendado
+
+Usar a ingestao manual do Verifier com outputs reais de motores externos para calibrar schema, severidade, agreement score e criterios de HITL antes de qualquer integracao automatica.

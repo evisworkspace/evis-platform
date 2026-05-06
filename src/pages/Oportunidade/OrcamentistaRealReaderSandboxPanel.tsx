@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Ban, FileJson, GitCompareArrows, Lock, ShieldCheck, TriangleAlert } from 'lucide-react';
 import { runRealReaderSandbox } from '../../lib/orcamentista/realReaderSandbox';
 import { ingestManualReaderOutput } from '../../lib/orcamentista/manualReaderIngestion';
+import { ingestManualVerifierOutput } from '../../lib/orcamentista/manualVerifierIngestion';
 import {
   extractManualReaderCriticalDimensions,
   extractManualReaderHitlRequests,
@@ -13,7 +14,11 @@ import {
   isValidJsonString,
   summarizeManualReaderEvaluation,
 } from '../../lib/orcamentista/manualReaderIngestionUtils';
-import { OrcamentistaManualReaderIngestionResult } from '../../types';
+import {
+  OrcamentistaManualReaderIngestionResult,
+  OrcamentistaManualVerifierIngestionResult,
+  OrcamentistaManualVerifierIngestionStatus,
+} from '../../types';
 
 function statusClass(active: boolean) {
   return active
@@ -70,10 +75,19 @@ function readDisplayString(source: unknown, keys: string[]) {
   return '';
 }
 
+function getVerifierParseStatusLabel(status: OrcamentistaManualVerifierIngestionStatus) {
+  if (status === 'empty_input') return 'Aguardando JSON';
+  if (status === 'invalid_json') return 'JSON inválido';
+  if (status === 'invalid_shape') return 'Shape inválido';
+  return 'JSON válido';
+}
+
 export default function OrcamentistaRealReaderSandboxPanel() {
   const sandbox = useMemo(() => runRealReaderSandbox(), []);
   const [manualJson, setManualJson] = useState('');
   const [manualResult, setManualResult] = useState<OrcamentistaManualReaderIngestionResult | null>(null);
+  const [verifierJson, setVerifierJson] = useState('');
+  const [verifierResult, setVerifierResult] = useState<OrcamentistaManualVerifierIngestionResult | null>(null);
   const normalized = sandbox.normalized_output;
   const safety = sandbox.safety_runner_result;
   const manualSummary = manualResult ? summarizeManualReaderEvaluation(manualResult) : null;
@@ -84,9 +98,26 @@ export default function OrcamentistaRealReaderSandboxPanel() {
   const manualTechnicalWarnings = manualResult ? getManualReaderTechnicalWarnings(manualResult) : [];
   const manualDispatch = manualResult ? getManualReaderDispatchDecision(manualResult) : null;
   const manualNormalized = manualResult?.normalized_output;
+  const verifierComparison = verifierResult?.comparison_result;
+  const verifierDispatch = verifierComparison?.dispatch_decision;
+  const verifierHasBlockingDivergence = Boolean(
+    verifierComparison?.divergence_points.some(
+      (divergence) => divergence.severity === 'high' || divergence.severity === 'critical'
+    )
+  );
 
   function handleManualEvaluation() {
     setManualResult(ingestManualReaderOutput({ jsonString: manualJson }));
+    setVerifierResult(null);
+  }
+
+  function handleVerifierEvaluation() {
+    const nextResult = ingestManualVerifierOutput({
+      jsonString: verifierJson,
+      readerOutput: manualNormalized,
+    });
+
+    setVerifierResult(nextResult);
   }
 
   return (
@@ -404,6 +435,171 @@ export default function OrcamentistaRealReaderSandboxPanel() {
             </div>
           ))}
         </div>
+      </article>
+
+      <article className="space-y-4 rounded-lg border border-purple-500/20 bg-purple-500/5 p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h3 className="text-sm font-bold text-t1">Colar JSON do Verifier</h3>
+            <p className="mt-1 max-w-3xl text-xs leading-5 text-t3">
+              Cole aqui o JSON retornado por um Verifier externo. O EVIS compara localmente com o Reader
+              normalizado e mantém divergências críticas bloqueadas para HITL.
+            </p>
+          </div>
+          <span
+            className={`w-fit rounded border px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest ${
+              isValidJsonString(verifierJson)
+                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
+                : 'border-amber-500/30 bg-amber-500/10 text-amber-200'
+            }`}
+          >
+            {isValidJsonString(verifierJson) ? 'JSON parseável' : 'Aguardando JSON válido'}
+          </span>
+        </div>
+
+        <textarea
+          value={verifierJson}
+          onChange={(event) => setVerifierJson(event.target.value)}
+          spellCheck={false}
+          placeholder={`{
+  "agreement_score": 0.74,
+  "confirmed_items": ["Diâmetro C25 confirmado em 25 cm"],
+  "disputed_items": ["Comprimento 600 cm pode ser barra de aço, não profundidade"],
+  "divergence_points": [
+    {
+      "title": "Comprimento/profundidade das estacas",
+      "reader_value": "600 cm",
+      "verifier_value": "Comprimento de barra CA50, não profundidade executiva",
+      "reason": "Tabela de aço usa unit 600 cm.",
+      "severity": "critical"
+    }
+  ],
+  "hitl_requests": [],
+  "blocks_consolidation": true
+}`}
+          className="min-h-56 w-full rounded-lg border border-white/10 bg-black/20 p-3 font-mono text-xs leading-5 text-t2 outline-none transition placeholder:text-t4 focus:border-purple-500/40"
+        />
+
+        <button
+          type="button"
+          onClick={handleVerifierEvaluation}
+          className="w-full rounded-lg border border-purple-500/30 bg-purple-500/10 px-4 py-3 text-xs font-bold uppercase tracking-widest text-purple-200 transition hover:bg-purple-500/20"
+        >
+          Comparar Reader x Verifier
+        </button>
+
+        {verifierResult && (
+          <div className="space-y-4">
+            <div className="grid gap-3 md:grid-cols-4">
+              <div
+                className={`rounded-lg border px-4 py-3 ${statusClass(
+                  verifierResult.parse_status === 'empty_input' ||
+                    verifierResult.parse_status === 'invalid_json' ||
+                    verifierResult.parse_status === 'invalid_shape'
+                )}`}
+              >
+                <p className="font-mono text-[9px] font-bold uppercase tracking-widest">Parse Verifier</p>
+                <p className="mt-1 text-sm font-bold">{getVerifierParseStatusLabel(verifierResult.parse_status)}</p>
+              </div>
+              <div className={`rounded-lg border px-4 py-3 ${statusClass((verifierComparison?.agreement_score.score ?? 0) < 0.9)}`}>
+                <p className="font-mono text-[9px] font-bold uppercase tracking-widest">Agreement</p>
+                <p className="mt-1 text-sm font-bold">
+                  {verifierComparison ? `${Math.round(verifierComparison.agreement_score.score * 100)}%` : 'N/A'}
+                </p>
+              </div>
+              <div
+                className={`rounded-lg border px-4 py-3 ${statusClass(
+                  !verifierComparison || verifierHasBlockingDivergence || Boolean(verifierComparison.requires_hitl)
+                )}`}
+              >
+                <p className="font-mono text-[9px] font-bold uppercase tracking-widest">Comparação</p>
+                <p className="mt-1 text-sm font-bold">
+                  {!verifierComparison
+                    ? 'Sem comparação'
+                    : verifierHasBlockingDivergence
+                    ? 'Bloqueada por divergência'
+                    : verifierComparison.requires_hitl
+                      ? 'Requer HITL'
+                      : 'Sem bloqueio'}
+                </p>
+              </div>
+              <div className={`rounded-lg border px-4 py-3 ${statusClass(Boolean(verifierComparison?.blocks_consolidation))}`}>
+                <p className="font-mono text-[9px] font-bold uppercase tracking-widest">Dispatch</p>
+                <p className="mt-1 text-sm font-bold">{verifierComparison?.allowed_to_dispatch ? 'Liberado' : 'Bloqueado'}</p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <ManualList
+                title="Itens confirmados"
+                empty="Nenhum item confirmado pelo Verifier."
+                items={verifierComparison?.confirmed_items.map((item) => item.label) ?? []}
+              />
+              <ManualList
+                title="Itens disputados"
+                empty="Nenhum item disputado pelo Verifier."
+                items={
+                  verifierComparison?.disputed_items.map(
+                    (item) => `${item.label} (${item.severity})`
+                  ) ?? []
+                }
+              />
+              <ManualList
+                title="Divergências"
+                empty="Nenhuma divergência informada."
+                items={
+                  verifierComparison?.divergence_points.map(
+                    (item) => `${item.title}: ${item.reason} (${item.severity})`
+                  ) ?? []
+                }
+              />
+              <ManualList
+                title="HITLs do Verifier"
+                empty="Nenhum HITL do Verifier."
+                items={
+                  verifierComparison?.verifier_hitls.map(
+                    (item) => `${item.required_decision} (${item.severity})`
+                  ) ?? []
+                }
+              />
+            </div>
+
+            <div className="grid gap-3 lg:grid-cols-2">
+              <article className="space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-t3">Dispatch decision do Verifier</h4>
+                <JsonBlock value={verifierDispatch ?? verifierResult.warnings} />
+              </article>
+              <article className="space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-t3">Comparação Reader x Verifier</h4>
+                <JsonBlock
+                  value={{
+                    agreement_score: verifierComparison?.agreement_score,
+                    divergence_points: verifierComparison?.divergence_points,
+                    recommendations: verifierComparison?.recommendations,
+                    errors: verifierResult.errors,
+                    warnings: verifierResult.warnings,
+                  }}
+                />
+              </article>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-4">
+              {[
+                'Este JSON do Verifier foi colado manualmente.',
+                'Nenhuma chamada de IA foi executada pelo EVIS.',
+                'Nenhum dado foi gravado no banco.',
+                'Divergências críticas exigem HITL antes de qualquer dispatch ou consolidação.',
+              ].map((warning) => (
+                <div
+                  key={warning}
+                  className="rounded-lg border border-purple-500/20 bg-purple-500/10 p-3 text-xs leading-5 text-purple-200"
+                >
+                  {warning}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </article>
 
       <button
