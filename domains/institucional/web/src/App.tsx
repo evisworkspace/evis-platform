@@ -851,9 +851,10 @@ const JourneyImageCard = ({ url, index, journeyImages }: any) => {
       await setDoc(doc(db, 'config', 'journey'), { images: newImages }, { merge: true });
     } catch(err) { 
       console.error(err);
-      alert('Erro ao atualizar imagem. Verifique sua conexão.');
+      alert(uploadErrorMessage(err));
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -1056,19 +1057,82 @@ const Modal = ({ children, onClose }: any) => (
   </motion.div>
 );
 
+const uploadErrorMessage = (err: unknown) => {
+  if (err instanceof Error) {
+    if (err.message === 'VITE_IMGBB_API_KEY não configurada.') {
+      return 'Chave de upload não configurada.';
+    }
+
+    if (err.message === 'Arquivo não informado.' || err.message === 'Arquivo inválido.') {
+      return err.message;
+    }
+
+    if (err.message === 'API recusou o upload.') {
+      return err.message;
+    }
+  }
+
+  return 'Falha no envio de uma ou mais imagens.';
+};
+
 const uploadToImgbb = async (file: File): Promise<string> => {
+  const apiKey = import.meta.env.VITE_IMGBB_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('VITE_IMGBB_API_KEY não configurada.');
+  }
+
+  if (!file) {
+    throw new Error('Arquivo não informado.');
+  }
+
+  if (!file.type?.startsWith('image/')) {
+    console.error('Arquivo inválido para upload ImgBB:', file);
+    throw new Error('Arquivo inválido.');
+  }
+
+  console.info('Enviando imagem para ImgBB:', {
+    name: file.name,
+    type: file.type,
+    size: file.size,
+  });
+
   const formData = new FormData();
   formData.append('image', file);
-  const apiKey = import.meta.env.VITE_IMGBB_API_KEY || '8f05ed5bc595dceaf0914c6fb7cdad4e'; // API pública fallback para demo
-  const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+
+  const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
     method: 'POST',
     body: formData
   });
-  const data = await res.json();
-  if (data.success) {
-    return data.data.url;
+
+  const responseText = await response.text();
+  let data: any = null;
+
+  try {
+    data = responseText ? JSON.parse(responseText) : null;
+  } catch (err) {
+    console.error('Resposta da ImgBB não é JSON válido:', {
+      status: response.status,
+      body: responseText,
+      error: err,
+    });
   }
-  throw new Error('Erro ao fazer upload da imagem.');
+
+  if (!response.ok) {
+    console.error('ImgBB recusou o upload:', {
+      status: response.status,
+      body: data || responseText,
+    });
+    throw new Error('API recusou o upload.');
+  }
+
+  const uploadedUrl = data?.data?.display_url || data?.data?.url;
+
+  if (!uploadedUrl) {
+    throw new Error('Resposta da ImgBB não contém URL da imagem.');
+  }
+
+  return uploadedUrl;
 };
 
 const AddProjectForm = ({ onComplete }: any) => {
@@ -1081,14 +1145,27 @@ const AddProjectForm = ({ onComplete }: any) => {
     if (files.length === 0) return;
     
     setIsUploading(true);
-    try {
-      const urls = await Promise.all(files.map(f => uploadToImgbb(f)));
-      setForm(prev => ({ ...prev, photos: [...prev.photos, ...urls] }));
-    } catch (err) {
-      alert('Houve um problema ao enviar algumas imagens.');
-    } finally {
-      setIsUploading(false);
+    let successCount = 0;
+    let failCount = 0;
+    let firstError: unknown;
+
+    for (const file of files) {
+      try {
+        const url = await uploadToImgbb(file);
+        setForm(prev => ({ ...prev, photos: [...prev.photos, url] }));
+        successCount++;
+      } catch (err) {
+        console.error(`Falha ao enviar ${file.name}:`, err);
+        firstError ||= err;
+        failCount++;
+      }
     }
+
+    if (failCount > 0) {
+      alert(`${uploadErrorMessage(firstError)} ${successCount} enviadas, ${failCount} falharam.`);
+    }
+    
+    setIsUploading(false);
   };
 
   const removePhoto = (index: number) => {
@@ -1155,14 +1232,27 @@ const AddConceptForm = ({ onComplete }: any) => {
     if (files.length === 0) return;
     
     setIsUploading(true);
-    try {
-      const urls = await Promise.all(files.map(f => uploadToImgbb(f)));
-      setPhotos(prev => [...prev, ...urls]);
-    } catch (err) {
-      alert('Houve um problema ao enviar algumas imagens.');
-    } finally {
-      setIsUploading(false);
+    let successCount = 0;
+    let failCount = 0;
+    let firstError: unknown;
+
+    for (const file of files) {
+      try {
+        const url = await uploadToImgbb(file);
+        setPhotos(prev => [...prev, url]);
+        successCount++;
+      } catch (err) {
+        console.error(`Falha ao enviar ${file.name}:`, err);
+        firstError ||= err;
+        failCount++;
+      }
     }
+
+    if (failCount > 0) {
+      alert(`${uploadErrorMessage(firstError)} ${successCount} enviadas, ${failCount} falharam.`);
+    }
+    
+    setIsUploading(false);
   };
 
   const removePhoto = (index: number) => {
