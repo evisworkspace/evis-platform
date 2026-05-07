@@ -1391,6 +1391,24 @@ router.get('/workspaces/:id/preview', (req: Request, res: Response) => {
 
 // ─── POST /api/orcamentista/workspaces/:workspaceId/generate-official-budget ───
 router.post('/workspaces/:workspaceId/generate-official-budget', async (req: Request, res: Response) => {
+  const legacyOfficialWriteEnabled =
+    process.env.LEGACY_ORCAMENTISTA_OFFICIAL_WRITE_ENABLED === 'true' &&
+    process.env.NODE_ENV !== 'production';
+
+  if (!legacyOfficialWriteEnabled) {
+    return res.status(410).json({
+      success: false,
+      erro: 'Legacy official budget generation is quarantined. Use the Reader/Verifier/HITL consolidation gate flow.',
+      code: 'legacy_official_budget_generation_quarantined',
+    });
+  }
+
+  console.warn(
+    '[Orçamentista][QUARANTINE BYPASS] Legacy official budget generation enabled by ' +
+      'LEGACY_ORCAMENTISTA_OFFICIAL_WRITE_ENABLED=true outside production. ' +
+      'This path writes orcamentos/orcamento_itens directly and must not be used as the canonical flow.'
+  );
+
   const { workspaceId } = req.params;
   const { opportunity_id, items } = req.body as {
     opportunity_id?: string;

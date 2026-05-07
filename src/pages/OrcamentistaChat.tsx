@@ -43,6 +43,12 @@ const RUNTIME_INICIAL: ProgressoRuntime = {
   consolidadoDisponivel: false,
 };
 
+const LEGACY_OFFICIAL_WRITE_QUARANTINE_MESSAGE =
+  'Geração oficial via chat legado está em quarentena. A consolidação futura deve passar por Reader, Verifier, HITL e Gate.';
+
+const legacyOfficialWriteEnabled =
+  import.meta.env.VITE_LEGACY_ORCAMENTISTA_OFFICIAL_WRITE === 'true';
+
 function criarEtapasIniciais(workspaceSelecionado: boolean): Etapa[] {
   return ETAPAS_BASE.map((etapa, index) => ({
     ...etapa,
@@ -332,6 +338,10 @@ export default function OrcamentistaChat({
   };
 
   const gerarOrcamentoOficial = async () => {
+    if (!legacyOfficialWriteEnabled) {
+      addLog(LEGACY_OFFICIAL_WRITE_QUARANTINE_MESSAGE, 'warning');
+      return;
+    }
     if (!previewApproved || previewItems.length === 0 || !opportunityId) return;
     setIsGeneratingBudget(true);
     addLog('Iniciando gravação do orçamento oficial...', 'info');
@@ -721,8 +731,15 @@ export default function OrcamentistaChat({
             </button>
             <button
               className="oc-btn-gerar-orcamento"
-              disabled={!previewApproved || !opportunityId || previewItems.length === 0 || isGeneratingBudget}
+              disabled={
+                !legacyOfficialWriteEnabled ||
+                !previewApproved ||
+                !opportunityId ||
+                previewItems.length === 0 ||
+                isGeneratingBudget
+              }
               title={
+                !legacyOfficialWriteEnabled ? LEGACY_OFFICIAL_WRITE_QUARANTINE_MESSAGE :
                 !opportunityId ? 'Disponível apenas quando vinculado a uma oportunidade.' :
                 !previewApproved ? 'Disponível após validação da prévia.' :
                 'Gravar orçamento oficial no EVIS'
@@ -735,7 +752,29 @@ export default function OrcamentistaChat({
               {!previewApproved && !isGeneratingBudget && (
                 <span className="oc-btn-helper">Disponível após validação da prévia.</span>
               )}
+              {!legacyOfficialWriteEnabled && !isGeneratingBudget && (
+                <span className="oc-btn-helper">Quarentenado</span>
+              )}
             </button>
+            {!legacyOfficialWriteEnabled && (
+              <div
+                role="status"
+                className="oc-legacy-quarantine-notice"
+                style={{
+                  maxWidth: '360px',
+                  border: '1px solid rgba(230, 161, 31, 0.28)',
+                  borderRadius: '6px',
+                  padding: '8px 10px',
+                  background: 'rgba(230, 161, 31, 0.08)',
+                  color: '#E6A11F',
+                  fontSize: '11px',
+                  lineHeight: 1.35,
+                  fontWeight: 600,
+                }}
+              >
+                {LEGACY_OFFICIAL_WRITE_QUARANTINE_MESSAGE}
+              </div>
+            )}
             <div className="oc-status-dot">
               <div className={`oc-dot ${hitlPendente ? 'amber' : workspaceId ? 'green' : 'gray'}`} />
               <span>
@@ -932,7 +971,9 @@ export default function OrcamentistaChat({
                       {previewApproved ? (
                         <>
                           <CheckCircle2 size={16} style={{ color: '#22c55e' }} />
-                          <span style={{ fontSize: '13px', color: '#22c55e', fontWeight: 500 }}>Prévia aprovada para geração do orçamento oficial</span>
+                          <span style={{ fontSize: '13px', color: '#22c55e', fontWeight: 500 }}>
+                            Prévia aprovada. A geração oficial via chat legado permanece em quarentena.
+                          </span>
                         </>
                       ) : (
                         <>
