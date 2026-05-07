@@ -3336,3 +3336,153 @@ Avisos obrigatorios exibidos:
 #### 11.29.8 Proximo passo recomendado
 
 Usar a ingestao manual do Verifier com outputs reais de motores externos para calibrar schema, severidade, agreement score e criterios de HITL antes de qualquer integracao automatica.
+
+---
+
+### 11.30 Fase 4A.0: Schema Audit for Reader / Verifier / HITL Persistence
+
+> Status: auditoria e documentacao apenas, sem migration, sem alteracao de banco, sem escrita em tabelas.  
+> Escopo: mapear lacunas de schema para persistencia futura rastreavel do fluxo Reader -> Verifier -> HITL.
+
+#### 11.30.1 Objetivo aplicado
+
+Auditar o contrato atual e definir uma arquitetura de persistencia futura para:
+
+- Reader result bruto e normalizado;
+- safety gate e dimensional checks;
+- Verifier result normalizado;
+- comparacao Reader x Verifier;
+- divergencias deduplicadas e score de concordancia;
+- fila HITL e decisoes humanas;
+- contexto validado/pendente/bloqueado;
+- rastreabilidade por oportunidade, orcamento, documento e pagina.
+
+Nenhuma implementacao foi executada nesta fase.
+
+#### 11.30.2 Tabelas existentes encontradas e relacionadas ao tema
+
+Com base em `docs/06_CREATE_OPPORTUNITIES_MVP.sql`, `docs/08_CREATE_PROPOSTAS_MVP.sql`, `src/hooks/*` e `src/types.ts`, as estruturas ja existentes/referenciadas sao:
+
+```text
+contacts
+opportunities
+opportunity_events
+opportunity_files
+propostas
+orcamentos
+orcamento_itens
+obras
+```
+
+Uso atual relevante:
+
+- `opportunities` e ancora de ciclo comercial, com `orcamentista_workspace_id`, `orcamento_id` e `obra_id` opcional;
+- `opportunity_files` guarda anexos por oportunidade (sem pagina estruturada por arquivo);
+- `orcamentos` e `orcamento_itens` sustentam o orcamento oficial/manual;
+- `propostas` persiste snapshot comercial;
+- nao ha tabela persistente especifica para Reader/Verifier/HITL do fluxo manual seguro.
+
+#### 11.30.3 Estruturas de persistencia inexistentes hoje
+
+Nao foi encontrada estrutura relacional dedicada para armazenar, de forma auditavel:
+
+- JSON bruto do Reader (`raw_reader_output`);
+- JSON normalizado do Reader (`normalized_output`);
+- resultado do safety gate (`safety_gate_result`);
+- checagens dimensionais (`dimensional_checks`);
+- JSON normalizado do Verifier (`normalized_verifier_output`);
+- comparacao Reader x Verifier (`comparison_result`);
+- divergencias deduplicadas com severidade e bloqueio;
+- HITLs por origem Reader/Verifier;
+- decisoes humanas de HITL com historico;
+- estado de contexto tecnico (validado/pendente/bloqueado) por fase e por documento/pagina.
+
+#### 11.30.4 Gap principal de rastreabilidade
+
+O fluxo ja existe em memoria/local (tipos e utilitarios em `src/types.ts` e `src/lib/orcamentista/*`), mas sem persistencia canônica para:
+
+- `opportunity_id` + `orcamento_id` + `opportunity_file_id` + `page_number`;
+- lineage entre Reader run, Verifier run, comparacao, HITL e decisao humana;
+- trilha de auditoria para liberar dispatch/consolidacao em fase futura.
+
+#### 11.30.5 Proposta de modelo futuro (sem migration nesta fase)
+
+Tabelas candidatas:
+
+```text
+orc_reader_runs
+orc_reader_outputs
+orc_reader_safety_evaluations
+orc_verifier_runs
+orc_reader_verifier_comparisons
+orc_reader_verifier_divergences
+orc_hitl_issues
+orc_hitl_decisions
+orc_context_snapshots
+```
+
+Campos-base recomendados para todas:
+
+- `id` uuid;
+- `opportunity_id` uuid not null;
+- `orcamento_id` uuid null;
+- `opportunity_file_id` uuid null;
+- `document_id` text null (compatibilidade com contratos atuais);
+- `page_number` int null;
+- `status` text;
+- `payload` jsonb **apenas quando nao houver coluna JSON especifica**;
+- `created_at` timestamptz;
+- `updated_at` timestamptz;
+- `created_by` text null;
+- `trace_id` text null.
+
+Relacoes recomendadas:
+
+- `orc_reader_outputs.reader_run_id -> orc_reader_runs.id`;
+- `orc_reader_safety_evaluations.reader_output_id -> orc_reader_outputs.id`;
+- `orc_verifier_runs.reader_output_id -> orc_reader_outputs.id`;
+- `orc_reader_verifier_comparisons.reader_output_id -> orc_reader_outputs.id`;
+- `orc_reader_verifier_comparisons.verifier_run_id -> orc_verifier_runs.id`;
+- `orc_reader_verifier_divergences.comparison_id -> orc_reader_verifier_comparisons.id`;
+- `orc_hitl_issues.comparison_id -> orc_reader_verifier_comparisons.id` (nullable para outras origens);
+- `orc_hitl_decisions.hitl_issue_id -> orc_hitl_issues.id`.
+
+Regra de lineage para `opportunity_id`:
+
+- `opportunity_id` deve existir como coluna direta em tabelas-raiz (`orc_reader_runs`, `orc_hitl_issues`, `orc_context_snapshots`);
+- nas tabelas derivadas (`orc_verifier_runs`, `orc_reader_verifier_comparisons`, `orc_reader_verifier_divergences`), pode ser coluna direta **ou** obrigatorio por lineage via FK ate `orc_reader_runs`;
+- em ambos os casos, consultas/auditoria devem recuperar `opportunity_id` sem ambiguidade.
+
+#### 11.30.6 Estados minimos sugeridos
+
+- Reader run: `received`, `normalized`, `safety_evaluated`, `blocked`, `ready_for_verifier`;
+- Verifier run: `received`, `normalized`, `compared`, `requires_hitl`, `blocked`, `approved`;
+- Comparison: `pending`, `divergent`, `requires_hitl`, `dispatch_allowed`, `consolidation_blocked`;
+- HITL issue: `pendente`, `em_revisao`, `aprovada_com_ressalva`, `bloqueada`, `documento_solicitado`, `convertida_em_verba`, `ignorada_nesta_fase`, `reanalisar_futuramente`;
+- Context snapshot: `validated`, `pending`, `blocked`, `incomplete`.
+
+#### 11.30.7 Regra inegociavel de escrita em orcamento oficial
+
+Permanece obrigatorio:
+
+- **nao gravar diretamente em `orcamento_itens`** a partir de Reader/Verifier;
+- liberar escrita somente em fase futura, apos gate aprovado + HITL resolvido + aprovacao humana explicita + auditoria rastreavel.
+
+#### 11.30.8 RLS e decisoes humanas pendentes antes de migration
+
+Pontos que exigem decisao humana antes de qualquer SQL:
+
+- estrategia de tenancy/autorizacao (por usuario, equipe ou empresa) para RLS nas novas tabelas;
+- padrao de identificacao de ator humano (`decided_by`) e trilha de auditoria;
+- definicao canonica de `document_id` (texto contratual atual) versus `opportunity_file_id` (uuid real);
+- regra fixa: `orcamento_id` pode ser `NULL` nas fases iniciais de leitura/verificacao e passa a obrigatorio no gate de consolidacao/escrita oficial;
+- politica de retencao/versionamento para payloads JSON brutos.
+
+#### 11.30.9 Confirmacoes desta fase
+
+- Nenhuma migration criada.
+- Nenhuma tabela criada.
+- Nenhuma alteracao de RLS.
+- Nenhum dado gravado no banco.
+- Nenhuma alteracao em Obra/Diario.
+- Nenhuma alteracao de UI/rotas de Obras.
