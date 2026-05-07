@@ -42,6 +42,34 @@ Regras chave mantidas:
 - `dedupe_key` de divergencia deve ser especifica por categoria, campo tecnico, item, fonte/pagina, valores e disciplina quando aplicavel;
 - Reader/Verifier/HITL sem escrita direta em `orcamento_itens`.
 
+## 1.2 Fase 4A.2 - SQL Draft Review Reader / Verifier / HITL
+
+> Status: SQL draft documental criado; nao executado; sem migration aplicada.
+
+Arquivo criado:
+
+- `platform/docs/sql_proposals/ORCAMENTISTA_READER_VERIFIER_HITL_PERSISTENCE_DRAFT.sql`
+
+Escopo do SQL draft:
+
+- `CREATE TABLE IF NOT EXISTS` para as 9 tabelas de persistencia Reader/Verifier/HITL/contexto;
+- `opportunity_id` obrigatorio como coluna direta em todas as tabelas principais;
+- `orcamento_id` nullable nesta fase;
+- tabelas page-scoped com `opportunity_file_id` + `page_number` obrigatorios e `document_id text null`;
+- constraints de status, severidade, score (0..1), textos criticos e coerencia de bloqueio;
+- `dedupe_key` + `unique (comparison_id, dedupe_key)` em divergencias;
+- `orc_hitl_issues.comparison_id` nullable;
+- `orc_hitl_decisions` append-only sem `ON DELETE CASCADE`, com `source_refs_json` e `issue_snapshot_json`;
+- bloco RLS apenas comentado (sem policies definitivas);
+- rollback order comentado em ordem reversa.
+
+Confirmacoes da 4A.2:
+
+- nenhum SQL executado;
+- nenhuma migration aplicada;
+- nenhum banco alterado;
+- nenhuma alteracao em codigo operacional/UI.
+
 ## 2. Tabelas Confirmadas No Schema Oficial
 
 As tabelas abaixo aparecem no schema oficial documentado em `docs/SCHEMA_OFICIAL_V1.sql`:
