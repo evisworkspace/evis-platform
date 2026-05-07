@@ -15,6 +15,33 @@ Registrar oficialmente os gaps entre:
 
 Este documento deve orientar a reconciliacao do Supabase antes de qualquer migration ou tela nova.
 
+## 1.1 Fase 4A.1 - Migration Draft Reader / Verifier / HITL
+
+> Status: proposta tecnica criada, sem execucao SQL e sem migration aplicada.
+
+Foi adicionado o draft tecnico de persistencia:
+
+- `platform/docs/EVIS_READER_VERIFIER_HITL_MIGRATION_DRAFT.md`
+
+Escopo do draft:
+
+- desenho das 9 tabelas de persistencia Reader/Verifier/HITL/contexto;
+- campos, tipos sugeridos, FKs e nullable vs required;
+- indices minimos por `opportunity_id`, `orcamento_id`, `opportunity_file_id`, status e `created_at`;
+- constraints de seguranca e regras de imutabilidade (`raw_output_json` imutavel e decisions append-only);
+- pontos de RLS (sem policy definitiva);
+- ordem de criacao e rollback plan.
+
+Regras chave mantidas:
+
+- `opportunity_id` obrigatorio como coluna direta nas 9 tabelas propostas, mesmo quando derivavel por FK;
+- `orcamento_id` nullable nas fases iniciais e obrigatorio apenas em fase oficial futura;
+- referencia de fonte por `opportunity_file_id + page_number` obrigatoria nas tabelas page-scoped; em tabelas contextuais/globais, esses campos podem ser nullable com `source_type` e source refs suficientes;
+- `orc_hitl_decisions` append-only, sem `ON DELETE CASCADE` a partir de HITL issue;
+- `orc_hitl_issues.comparison_id` nullable para pendencias pre-comparacao;
+- `dedupe_key` de divergencia deve ser especifica por categoria, campo tecnico, item, fonte/pagina, valores e disciplina quando aplicavel;
+- Reader/Verifier/HITL sem escrita direta em `orcamento_itens`.
+
 ## 2. Tabelas Confirmadas No Schema Oficial
 
 As tabelas abaixo aparecem no schema oficial documentado em `docs/SCHEMA_OFICIAL_V1.sql`:
@@ -3424,13 +3451,14 @@ orc_context_snapshots
 Campos-base recomendados para todas:
 
 - `id` uuid;
-- `opportunity_id` uuid not null;
+- `opportunity_id` uuid not null como coluna direta obrigatoria nas 9 tabelas propostas;
 - `orcamento_id` uuid null;
-- `opportunity_file_id` uuid null;
+- `opportunity_file_id` uuid not null nas tabelas page-scoped; nullable apenas em tabelas contextuais/globais com source refs suficientes;
 - `document_id` text null (compatibilidade com contratos atuais);
-- `page_number` int null;
+- `page_number` int not null nas tabelas page-scoped com `check (page_number > 0)`; nullable apenas em tabelas contextuais/globais;
 - `status` text;
-- `payload` jsonb **apenas quando nao houver coluna JSON especifica**;
+- JSONs semanticos conforme a funcao da tabela (`raw_output_json`, `normalized_output_json`, `safety_gate_json`, `dimensional_checks_json`, `verifier_output_json`, `comparison_json`, `dispatch_decision_json`, `context_snapshot_json`), sem `payload` generico como campo principal;
+- `source_type` e `source_id`/`source_ref`/`source_refs_json` obrigatorios nas tabelas contextuais/globais quando `opportunity_file_id/page_number` nao forem suficientes;
 - `created_at` timestamptz;
 - `updated_at` timestamptz;
 - `created_by` text null;
@@ -3445,13 +3473,27 @@ Relacoes recomendadas:
 - `orc_reader_verifier_comparisons.verifier_run_id -> orc_verifier_runs.id`;
 - `orc_reader_verifier_divergences.comparison_id -> orc_reader_verifier_comparisons.id`;
 - `orc_hitl_issues.comparison_id -> orc_reader_verifier_comparisons.id` (nullable para outras origens);
-- `orc_hitl_decisions.hitl_issue_id -> orc_hitl_issues.id`.
+- `orc_hitl_decisions.hitl_issue_id -> orc_hitl_issues.id` com FK `RESTRICT`/`NO ACTION`, sem cascade delete.
 
-Regra de lineage para `opportunity_id`:
+Regra fixa para `opportunity_id`:
 
-- `opportunity_id` deve existir como coluna direta em tabelas-raiz (`orc_reader_runs`, `orc_hitl_issues`, `orc_context_snapshots`);
-- nas tabelas derivadas (`orc_verifier_runs`, `orc_reader_verifier_comparisons`, `orc_reader_verifier_divergences`), pode ser coluna direta **ou** obrigatorio por lineage via FK ate `orc_reader_runs`;
-- em ambos os casos, consultas/auditoria devem recuperar `opportunity_id` sem ambiguidade.
+- `opportunity_id` deve existir como coluna direta obrigatoria em todas as 9 tabelas: `orc_reader_runs`, `orc_reader_outputs`, `orc_reader_safety_evaluations`, `orc_verifier_runs`, `orc_reader_verifier_comparisons`, `orc_reader_verifier_divergences`, `orc_hitl_issues`, `orc_hitl_decisions` e `orc_context_snapshots`.
+- FKs e lineage continuam uteis para integridade, mas nao substituem a coluna direta.
+- A coluna direta e obrigatoria para RLS, auditoria, rastreabilidade operacional e debug.
+
+Regra de fonte por pagina:
+
+- tabelas page-scoped devem preencher `opportunity_file_id` e `page_number`;
+- `page_number` deve ser sempre maior que zero quando preenchido;
+- `document_id` permanece textual, futuro e de compatibilidade, sem FK obrigatoria nesta fase;
+- HITL/context snapshots podem ser contextuais, desde que tenham `source_type` e `source_id`/`source_ref`/`source_refs_json` suficientes.
+
+Regras adicionais de auditoria:
+
+- `orc_hitl_decisions` e append-only; decisoes humanas nao podem ser apagadas por cascade.
+- `orc_hitl_issues.comparison_id` e nullable, pois HITLs podem nascer de baixa confianca do Reader, safety gate, dimensional check, projeto ausente, documento ilegivel, Verifier isolado ou divergencia de intake.
+- `dedupe_key` de divergencia deve combinar categoria, campo tecnico, item afetado, fonte/pagina, valores divergentes e disciplina quando aplicavel; nao usar chave grosseira como apenas `fck` ou `profundidade`.
+- `orc_context_snapshots` deve ser historico append-only, nao copia redundante sem proposito.
 
 #### 11.30.6 Estados minimos sugeridos
 
