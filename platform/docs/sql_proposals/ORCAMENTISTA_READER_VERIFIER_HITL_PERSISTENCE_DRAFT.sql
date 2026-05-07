@@ -168,7 +168,7 @@ CREATE TABLE IF NOT EXISTS public.orc_reader_verifier_divergences (
   reader_value text NULL,
   verifier_value text NULL,
   reason text NOT NULL CHECK (length(trim(reason)) > 0),
-  severity text NOT NULL CHECK (severity IN ('low', 'medium', 'high', 'critical')),
+  severity text NOT NULL CHECK (severity IN ('baixa', 'media', 'alta', 'critica')),
   requires_hitl boolean NOT NULL DEFAULT true,
   blocks_consolidation boolean NOT NULL DEFAULT false,
   dedupe_key text NOT NULL CHECK (length(trim(dedupe_key)) > 0),
@@ -251,7 +251,7 @@ CREATE TABLE IF NOT EXISTS public.orc_hitl_decisions (
   decided_at timestamptz NOT NULL DEFAULT now(),
   dispatch_released boolean NOT NULL DEFAULT false,
   consolidation_released boolean NOT NULL DEFAULT false,
-  source_type text NULL,
+  source_type text NOT NULL DEFAULT 'hitl_issue' CHECK (length(trim(source_type)) > 0),
   source_refs_json jsonb NOT NULL DEFAULT '{}'::jsonb,
   issue_snapshot_json jsonb NOT NULL DEFAULT '{}'::jsonb,
   decision_payload_json jsonb NOT NULL DEFAULT '{}'::jsonb,
@@ -352,6 +352,22 @@ CREATE INDEX IF NOT EXISTS idx_orc_verifier_runs_opp_status_created
   ON public.orc_verifier_runs(opportunity_id, status, created_at);
 CREATE INDEX IF NOT EXISTS idx_orc_divergences_comparison_dedupe
   ON public.orc_reader_verifier_divergences(comparison_id, dedupe_key);
+
+-- indices adicionais — hardening 4A.3
+CREATE INDEX IF NOT EXISTS idx_orc_verifier_runs_reader_run_id
+  ON public.orc_verifier_runs(reader_run_id);
+CREATE INDEX IF NOT EXISTS idx_orc_context_snapshots_reader_run_id
+  ON public.orc_context_snapshots(reader_run_id);
+CREATE INDEX IF NOT EXISTS idx_orc_context_snapshots_reader_output_id
+  ON public.orc_context_snapshots(reader_output_id);
+CREATE INDEX IF NOT EXISTS idx_orc_context_snapshots_verifier_run_id
+  ON public.orc_context_snapshots(verifier_run_id);
+CREATE INDEX IF NOT EXISTS idx_orc_context_snapshots_comparison_id
+  ON public.orc_context_snapshots(comparison_id);
+CREATE INDEX IF NOT EXISTS idx_orc_hitl_issues_severity
+  ON public.orc_hitl_issues(severity);
+CREATE INDEX IF NOT EXISTS idx_orc_hitl_decisions_decided_at
+  ON public.orc_hitl_decisions(decided_at);
 
 -- ============================================================================
 -- IMUTABILIDADE DRAFT (NAO IMPLEMENTAR NESTA FASE)

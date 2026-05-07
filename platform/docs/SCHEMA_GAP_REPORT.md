@@ -70,6 +70,87 @@ Confirmacoes da 4A.2:
 - nenhum banco alterado;
 - nenhuma alteracao em codigo operacional/UI.
 
+## 1.3 Fase 4A.3 - Real Schema Verification + SQL Draft Hardening
+
+> Status: verificacao documental concluida; SQL draft endurecido; sem execucao SQL; sem migration aplicada.
+
+Arquivos criados:
+
+- `platform/docs/EVIS_READER_VERIFIER_HITL_SQL_HARDENING_REVIEW.md`
+
+Arquivos alterados (correcoes documentais):
+
+- `platform/docs/sql_proposals/ORCAMENTISTA_READER_VERIFIER_HITL_PERSISTENCE_DRAFT.sql`
+
+### 1.3.1 Introspeccao
+
+Nao houve acesso direto ao banco real. Schema real inferido via cruzamento documental:
+
+- `docs/06_CREATE_OPPORTUNITIES_MVP.sql` — `contacts`, `opportunities`, `opportunity_events`, `opportunity_files`
+- `docs/08_CREATE_PROPOSTAS_MVP.sql` — `propostas`
+- `docs/SCHEMA_OFICIAL_V1.sql` — `obras` e tabelas de Obra
+- `platform/docs/sql_proposals/ORCAMENTISTA_001_ORCAMENTOS_OBRA_ID_NULLABLE.sql` — confirma existencia de `orcamentos` com `obra_id` nullable (migration aplicada em 2026-05-04)
+
+### 1.3.2 Tabelas base confirmadas
+
+| Tabela | Status |
+|--------|--------|
+| `opportunities` | CONFIRMADA — `06_CREATE_OPPORTUNITIES_MVP.sql` |
+| `opportunity_files` | CONFIRMADA — `06_CREATE_OPPORTUNITIES_MVP.sql` |
+| `orcamentos` | CONFIRMADA (indireta) — ALTER aplicado via ORCAMENTISTA_001 |
+| `propostas` | CONFIRMADA — `08_CREATE_PROPOSTAS_MVP.sql` |
+| `obras` | CONFIRMADA — `SCHEMA_OFICIAL_V1.sql` |
+| `orcamento_itens` | REFERENCIADA em codigo; sem CREATE SQL proprio nos docs |
+
+### 1.3.3 Campos criticos confirmados
+
+- `opportunities.id uuid PK` — confirmado
+- `opportunities.orcamento_id uuid` — sem FK formal; campo avulso
+- `opportunities.proposta_id uuid` — sem FK formal; campo avulso
+- `opportunities.obra_id uuid REFERENCES obras(id) ON DELETE SET NULL` — confirmado
+- `opportunities.orcamentista_workspace_id text` — confirmado
+- `opportunity_files.id uuid PK` — confirmado
+- `opportunity_files.opportunity_id uuid NOT NULL REFERENCES opportunities(id) ON DELETE CASCADE` — confirmado
+
+### 1.3.4 Padrao UUID
+
+`gen_random_uuid()` em todo o repositorio. Sem necessidade de `pgcrypto` explicito no Supabase (PostgreSQL 14+). SQL draft mantem este padrao sem alteracao.
+
+### 1.3.5 Divergencias encontradas
+
+| Campo | Esperado | Real | Impacto |
+|-------|----------|------|---------|
+| `opportunities.orcamento_id` | FK formal | UUID sem FK | Sem impacto no draft |
+| `opportunities.proposta_id` | FK formal | UUID sem FK | Sem impacto no draft |
+| `orcamentos` | CREATE SQL proprio | Confirmado apenas por ALTER | Recomenda-se documentar CREATE completo em fase futura |
+
+Nenhuma divergencia bloqueia o SQL draft desta fase.
+
+### 1.3.6 Correcoes aplicadas no SQL draft
+
+| # | Correcao | Motivo |
+|---|----------|--------|
+| 1 | `severity` em `orc_reader_verifier_divergences` padronizado para portugues (`baixa/media/alta/critica`) | Harmonizar com convencao do projeto EVIS e com `orc_hitl_issues.severity` |
+| 2 | `source_type` em `orc_hitl_decisions` alterado para `NOT NULL DEFAULT 'hitl_issue'` | Garantir auto-descricao de cada linha de decisao sem dependencia de join |
+| 3 | 7 indices adicionais incluidos | Cobrir FKs sem indice em `orc_verifier_runs` e `orc_context_snapshots`; adicionar indice de severidade e de timeline de decisao |
+
+### 1.3.7 Confirmacoes da 4A.3
+
+- nenhum SQL de escrita executado;
+- nenhuma migration aplicada;
+- nenhum banco alterado;
+- nenhum codigo operacional/UI alterado;
+- nenhuma FK para `orcamento_itens`;
+- nenhuma escrita direta em `orcamento_itens`;
+- `opportunity_id` continua obrigatorio nas 9 tabelas;
+- `orcamento_id` continua nullable;
+- `orc_hitl_decisions` continua append-only e sem cascade.
+
+### 1.3.8 Proxima fase recomendada
+
+Fase 4A.P1: Auditoria read-only real do banco Supabase usando somente queries `information_schema` / `pg_catalog`.
+Queries modelo documentadas em `platform/docs/EVIS_READER_VERIFIER_HITL_SQL_HARDENING_REVIEW.md`, secao 13.
+
 ## 2. Tabelas Confirmadas No Schema Oficial
 
 As tabelas abaixo aparecem no schema oficial documentado em `docs/SCHEMA_OFICIAL_V1.sql`:
