@@ -375,9 +375,63 @@ Confirmacoes da 4A.7:
 
 Proxima fase recomendada:
 
-- 4B - aplicar o migration candidate em staging/sandbox somente apos aprovacao explicita do plano 4A.7.
+- 4B.0 - confirmar ambiente staging/sandbox seguro antes de qualquer execucao do migration candidate.
 
-## 1.8 Fase 4A.L - Commercial Feedback Learning Loop
+## 1.8 Fase 4B.0 - Staging/Sandbox Environment Preflight
+
+> Status: preflight documental concluido; 4B.1 bloqueada; sem SQL de escrita; sem migration aplicada; sem banco alterado.
+
+Arquivo criado:
+
+- `platform/docs/EVIS_READER_VERIFIER_HITL_4B0_ENVIRONMENT_PREFLIGHT.md`
+
+Objetivo:
+
+- confirmar se existe ambiente seguro de staging/sandbox/clone descartavel para executar futuramente o migration candidate Reader/Verifier/HITL;
+- evitar aplicacao acidental no Supabase real;
+- registrar variaveis e refs detectados sem expor secrets;
+- decidir se 4B.1 pode avancar.
+
+Resultado do preflight:
+
+- unico project ref Supabase encontrado: `jwutiebpfauwzzltwgbb`;
+- o ref encontrado coincide com o ambiente real usado na introspeccao 4A.4;
+- nenhum project ref separado de staging/sandbox/clone foi identificado;
+- nenhuma confirmacao explicita de "NAO e producao" foi encontrada;
+- nenhum backup/snapshot de ambiente nao-producao foi confirmado;
+- credenciais/variaveis Supabase existem, mas nao foram usadas contra banco remoto nesta fase;
+- nenhuma query read-only remota foi executada porque staging/sandbox nao estava claramente confirmado.
+
+Status dos pre-checks:
+
+- tabelas base em staging/sandbox: pendente;
+- ausencia das 9 tabelas pipeline em staging/sandbox: pendente;
+- `pgcrypto`/`gen_random_uuid()` em staging/sandbox: pendente;
+- RLS/policies em staging/sandbox: pendente;
+- baseline operacional (`opportunities`, `orcamentos`, `orcamento_itens`, `propostas`, `obras`, `diario_obra`): pendente.
+
+Decisao:
+
+- 4B.1 nao esta liberada;
+- antes de aplicar qualquer migration, criar ou confirmar um Supabase staging/sandbox/clone descartavel com project ref proprio, backup/snapshot e autorizacao humana explicita;
+- depois disso, reexecutar os pre-checks read-only da 4B.0 somente contra o ambiente seguro.
+
+Confirmacoes da 4B.0:
+
+- nenhum SQL de escrita executado;
+- nenhuma query remota executada nesta fase;
+- nenhuma migration aplicada;
+- nenhum banco alterado;
+- nenhum Supabase alterado;
+- nenhum dado alterado;
+- nenhum codigo operacional/UI alterado;
+- nenhuma rota criada;
+- nenhum hook criado;
+- nenhuma FK criada;
+- nenhuma escrita em `orcamento_itens`;
+- nenhum commit realizado.
+
+## 1.9 Fase 4A.L - Commercial Feedback Learning Loop
 
 > Status: proposta arquitetural/documental; sem migration; sem SQL; sem banco alterado; sem codigo operacional/UI alterado.
 
