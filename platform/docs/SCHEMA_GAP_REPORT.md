@@ -242,6 +242,53 @@ O SQL draft 4A.3 esta **pronto para migration candidate**:
 - Aplicar em staging antes de producao
 - Definir policies RLS por papel antes de expor via API
 
+## 1.5 Fase 4A.5 - Migration Candidate Draft Reader / Verifier / HITL
+
+> Status: migration candidate documental criado; nao executado; sem migration aplicada; sem banco alterado.
+
+Arquivos criados:
+
+- `platform/docs/sql_proposals/ORCAMENTISTA_READER_VERIFIER_HITL_PERSISTENCE_MIGRATION_CANDIDATE.sql`
+- `platform/docs/EVIS_READER_VERIFIER_HITL_MIGRATION_CANDIDATE_REVIEW.md`
+
+Escopo do candidate:
+
+- `CREATE TABLE IF NOT EXISTS` para as 9 tabelas oficiais do pipeline Reader/Verifier/HITL/contexto;
+- `opportunity_id uuid NOT NULL` mantido nas 9 tabelas;
+- `orcamento_id uuid NULL` mantido nas 9 tabelas;
+- tabelas page-scoped com `opportunity_file_id` + `page_number` obrigatorios;
+- `document_id text NULL`, sem FK obrigatoria;
+- FKs somente para bases confirmadas (`opportunities`, `orcamentos`, `opportunity_files`) e para lineage interno do pipeline;
+- todas as FKs com `ON DELETE RESTRICT`;
+- nenhuma FK para `orcamento_itens`;
+- nenhuma funcao, trigger ou procedure de consolidacao;
+- nenhuma escrita oficial em `orcamento_itens`;
+- checks de status, severidade, scores entre 0 e 1, `page_number > 0`, textos criticos nao vazios e coerencia de bloqueio;
+- indices minimos e indices adicionais definidos no hardening 4A.3;
+- RLS habilitado nas 9 tabelas, sem policies abertas `USING (true)`;
+- policies definitivas pendentes ate decisao de auth/tenant/company;
+- triggers defensivas apenas para imutabilidade de `raw_output_json` e append-only de `orc_hitl_decisions`;
+- rollback comentado em ordem reversa, incluindo triggers e funcoes.
+
+Decisao de vocabulario aplicada:
+
+- `severity` fica em portugues (`baixa`, `media`, `alta`, `critica`);
+- `agreement_band` permanece em ingles (`low`, `medium`, `high`) por ser metrica tecnica;
+- status tecnicos de pipeline permanecem em ingles;
+- `orc_reader_verifier_divergences.status` foi harmonizado para portugues (`aberta`, `aceita`, `descartada`, `resolvida`);
+- status de HITL permanece em portugues.
+
+Confirmacoes da 4A.5:
+
+- nenhum SQL executado;
+- nenhuma migration aplicada;
+- nenhum banco alterado;
+- nenhum codigo operacional/UI alterado;
+- nenhum Supabase remoto alterado;
+- candidate ainda pendente de auditoria externa;
+- candidate ainda pendente de teste controlado em staging/ambiente descartavel;
+- candidate nao deve ser aplicado em producao nesta fase.
+
 ## 2. Tabelas Confirmadas No Schema Oficial
 
 As tabelas abaixo aparecem no schema oficial documentado em `docs/SCHEMA_OFICIAL_V1.sql`:
