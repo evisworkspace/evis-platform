@@ -151,6 +151,97 @@ Nenhuma divergencia bloqueia o SQL draft desta fase.
 Fase 4A.P1: Auditoria read-only real do banco Supabase usando somente queries `information_schema` / `pg_catalog`.
 Queries modelo documentadas em `platform/docs/EVIS_READER_VERIFIER_HITL_SQL_HARDENING_REVIEW.md`, secao 13.
 
+## 1.4 Fase 4A.4 - Real Schema Read-Only Introspection
+
+> Status: introspeccao real concluida via Supabase Management API; sem execucao SQL de escrita; sem migration aplicada.
+
+Arquivo criado:
+
+- `platform/docs/EVIS_REAL_SCHEMA_READONLY_INTROSPECTION_REPORT.md`
+
+### 1.4.1 Metodo de Acesso
+
+Supabase Management API — `POST https://api.supabase.com/v1/projects/jwutiebpfauwzzltwgbb/database/query`
+Queries SELECT-only contra `information_schema` e catalogos `pg_*`.
+
+### 1.4.2 Tabelas reais confirmadas
+
+Total de tabelas no schema public: **25**
+
+Tabelas base para o pipeline confirmadas no banco real:
+
+| Tabela | Status Real |
+|--------|-------------|
+| `contacts` | CONFIRMADA |
+| `opportunities` | CONFIRMADA — ancora principal do pipeline |
+| `opportunity_events` | CONFIRMADA |
+| `opportunity_files` | CONFIRMADA |
+| `orcamentos` | CONFIRMADA |
+| `orcamento_itens` | CONFIRMADA |
+| `propostas` | CONFIRMADA |
+| `obras` | CONFIRMADA |
+
+**As 9 tabelas pipeline do draft NAO existem no banco real** — SQL draft nunca foi aplicado.
+
+### 1.4.3 Campos criticos confirmados (real)
+
+| Campo | Tipo Real | Nullable | FK Real |
+|-------|-----------|----------|---------|
+| `opportunities.id` | `uuid` | NO | PK, DEFAULT gen_random_uuid() |
+| `opportunities.orcamento_id` | `uuid` | YES | SEM FK formal |
+| `opportunities.proposta_id` | `uuid` | YES | SEM FK formal |
+| `opportunities.obra_id` | `uuid` | YES | FK → obras.id ON DELETE SET NULL |
+| `opportunity_files.opportunity_id` | `uuid` | NO | FK → opportunities.id ON DELETE CASCADE |
+| `orcamentos.id` | `uuid` | NO | PK, DEFAULT gen_random_uuid() |
+| `orcamentos.obra_id` | **`text`** | YES | SEM FK — tipo TEXT (nao UUID) |
+| `orcamento_itens.orcamento_id` | `uuid` | NO | FK → orcamentos.id ON DELETE CASCADE |
+
+### 1.4.4 Extensoes confirmadas
+
+- `pgcrypto 1.3` instalado — `gen_random_uuid()` disponivel nativamente ✓
+- `uuid-ossp 1.1` instalado — `uuid_generate_v4()` disponivel (nao usado no projeto)
+
+### 1.4.5 RLS confirmado
+
+- RLS habilitado em todas as 25 tabelas existentes ✓
+- Policies abertas `USING (true)` em: `orcamentos`, `orcamento_itens`, `propostas`, `contacts`, `opportunities`, `opportunity_files`, `opportunity_events` — padrao MVP local aceitavel
+- Nenhuma policy para as 9 tabelas pipeline (ainda nao criadas) — correto
+
+### 1.4.6 Divergencias encontradas (real vs. docs 4A.3)
+
+| # | Campo | Esperado (docs) | Real | Impacto |
+|---|-------|---------|------|---------|
+| 1 | `orcamentos.obra_id` tipo | UUID (inferido incorretamente em 4A.3) | **TEXT NULL** | Sem impacto — draft FK aponta para `orcamentos.id` (uuid) |
+| 2 | `obras` schema | Completo per SCHEMA_OFICIAL_V1 | Simplificado (campos extras: `orcamento_status`) | Sem impacto no draft |
+| 3 | `orcamento_itens.orcamento_id` delete rule | RESTRICT (recomendado para pipeline) | CASCADE real | Sem impacto — tabela existente nao sera modificada pelo draft |
+
+**Nenhuma divergencia bloqueia a migration 4B.**
+
+### 1.4.7 Compatibilidade do SQL Draft 4A.3
+
+O SQL draft 4A.3 esta **pronto para migration candidate**:
+- Todas as FK-alvo existem com tipos corretos
+- `gen_random_uuid()` disponivel
+- Nenhum conflito de nomenclatura
+- 9 tabelas pipeline confirmadamente ausentes (sem conflito de CREATE)
+- RLS pronto para adicao de policies por papel
+
+### 1.4.8 Confirmacoes da 4A.4
+
+- nenhum SQL de escrita executado;
+- nenhuma migration aplicada;
+- nenhum banco alterado;
+- nenhum codigo operacional/UI alterado;
+- apenas queries SELECT contra information_schema e pg_* catalogos.
+
+### 1.4.9 Proxima fase recomendada
+
+**Fase 4B — Migration Real do Schema Reader/Verifier/HITL**
+- Promover SQL draft de DRAFT para migration candidate
+- Remover `-- DRAFT ONLY. DO NOT EXECUTE.` do cabecalho
+- Aplicar em staging antes de producao
+- Definir policies RLS por papel antes de expor via API
+
 ## 2. Tabelas Confirmadas No Schema Oficial
 
 As tabelas abaixo aparecem no schema oficial documentado em `docs/SCHEMA_OFICIAL_V1.sql`:
