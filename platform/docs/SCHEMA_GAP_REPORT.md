@@ -336,7 +336,48 @@ Confirmacoes da 4A.6:
 - candidate ainda pendente de auditoria externa;
 - candidate ainda pendente de teste controlado em staging/ambiente descartavel.
 
-## 1.7 Fase 4A.L - Commercial Feedback Learning Loop
+## 1.7 Fase 4A.7 - Staging/Sandbox Execution Plan
+
+> Status: plano de execucao e teste criado; nao executado; sem migration aplicada; sem banco alterado.
+
+Arquivo criado:
+
+- `platform/docs/EVIS_READER_VERIFIER_HITL_STAGING_SANDBOX_EXECUTION_PLAN.md`
+
+Escopo do plano:
+
+- definir ambiente recomendado para staging/sandbox/descartavel;
+- definir pre-checks obrigatorios antes de qualquer execucao;
+- definir plano de execucao controlada do migration candidate;
+- definir validacoes pos-execucao para tabelas, colunas, FKs, indices, constraints, functions, triggers e RLS;
+- definir testes positivos com `service_role`/admin;
+- definir testes negativos obrigatorios para constraints, imutabilidade, append-only e source suficiente;
+- definir testes de RLS sem policies abertas;
+- definir testes de rollback em ambiente descartavel;
+- definir testes de nao contaminacao de tabelas operacionais;
+- definir criterios objetivos de aprovacao e reprovacao;
+- definir checklist antes de avancar para 4B.
+
+Confirmacoes da 4A.7:
+
+- nenhum SQL executado;
+- nenhuma migration aplicada;
+- nenhum banco alterado;
+- nenhum Supabase remoto alterado;
+- nenhum dado alterado;
+- nenhum codigo operacional/UI alterado;
+- nenhuma rota criada;
+- nenhum hook criado;
+- nenhuma FK para `orcamento_itens` adicionada;
+- nenhuma escrita em `orcamento_itens`;
+- plano pendente de revisao humana antes de qualquer execucao;
+- execucao real segue pendente em ambiente controlado staging/sandbox.
+
+Proxima fase recomendada:
+
+- 4B - aplicar o migration candidate em staging/sandbox somente apos aprovacao explicita do plano 4A.7.
+
+## 1.8 Fase 4A.L - Commercial Feedback Learning Loop
 
 > Status: proposta arquitetural/documental; sem migration; sem SQL; sem banco alterado; sem codigo operacional/UI alterado.
 
