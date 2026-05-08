@@ -289,6 +289,36 @@ Confirmacoes da 4A.5:
 - candidate ainda pendente de teste controlado em staging/ambiente descartavel;
 - candidate nao deve ser aplicado em producao nesta fase.
 
+## 1.6 Fase 4A.L - Commercial Feedback Learning Loop
+
+> Status: proposta arquitetural/documental; sem migration; sem SQL; sem banco alterado; sem codigo operacional/UI alterado.
+
+Arquivo criado:
+
+- `platform/docs/EVIS_COMMERCIAL_FEEDBACK_LEARNING_LOOP.md`
+
+Escopo:
+
+- camada enxuta de aprendizado comercial pos-tratativa;
+- registra resultado, valores de concorrentes, motivos, categoria, insight, alerta e acao recomendada;
+- nao altera orcamento tecnico, proposta ou banco;
+- limite arquitetonico: 1 tabela (`proposal_feedback_events`) por padrao; 2 tabelas (`proposal_feedback_events` + `proposal_learning_insights`) apenas quando insight agregado precisar ser referenciado por mais de uma oportunidade;
+- nenhuma FK para `orcamento_itens`;
+- nenhuma escrita em `orcamento_itens`, `orcamentos` ou `propostas`;
+- secao "Anti-poluicao arquitetural" inviolavel: sem tabela ponte, sem entidade para "categoria", "acao", "fonte", "concorrente" ou "vinculo evento-insight"; tudo em enum, JSON leve ou texto controlado;
+- 13 categorias sugeridas, sujeitas a validacao humana com o time comercial.
+
+Confirmacoes da 4A.L:
+
+- nenhum SQL executado;
+- nenhuma migration criada;
+- nenhuma tabela criada;
+- nenhum banco alterado;
+- nenhum codigo operacional ou UI alterado;
+- nenhum tipo TypeScript adicionado;
+- nenhum hook ou componente criado;
+- apenas documento arquitetural criado.
+
 ## 2. Tabelas Confirmadas No Schema Oficial
 
 As tabelas abaixo aparecem no schema oficial documentado em `docs/SCHEMA_OFICIAL_V1.sql`:
