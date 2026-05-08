@@ -431,7 +431,85 @@ Confirmacoes da 4B.0:
 - nenhuma escrita em `orcamento_itens`;
 - nenhum commit realizado.
 
-## 1.9 Fase 4A.L - Commercial Feedback Learning Loop
+## 1.9 Fase 4B.S - Supabase Staging/Sandbox Setup Plan
+
+> Status: plano documental criado; sem SQL executado; sem migration aplicada; sem banco alterado.
+
+Arquivo criado:
+
+- `platform/docs/EVIS_SUPABASE_STAGING_SANDBOX_SETUP_PLAN.md`
+
+Objetivo:
+
+- definir como criar/configurar um ambiente Supabase staging/sandbox separado para testar a migration candidate Reader/Verifier/HITL;
+- manter 4B.1 bloqueada enquanto nao existir ambiente nao-producao confirmado;
+- evitar uso acidental do project ref real `jwutiebpfauwzzltwgbb`.
+
+Opcoes avaliadas:
+
+- novo projeto Supabase staging (`evis-staging`) — opcao recomendada por separacao forte e menor risco;
+- clone/branch Supabase — aceitavel se houver project ref proprio e identificacao inequivoca;
+- Supabase local/descartavel — util para ensaio auxiliar, mas nao substitui staging remoto para validacao final.
+
+Plano definido:
+
+- criar ou confirmar projeto staging/sandbox com project ref diferente de `jwutiebpfauwzzltwgbb`;
+- registrar URL mascarada e nome do projeto;
+- manter anon key, service role e access token apenas em `.env` local nao commitado;
+- usar variaveis separadas com prefixo sugerido `EVIS_STAGING_`;
+- nunca commitar secrets, dumps, backups ou arquivos `.env.staging.local`;
+- reexecutar 4B.0 read-only somente contra o ambiente seguro.
+
+Schema base minimo exigido antes da 4B.1:
+
+- `contacts`;
+- `opportunities`;
+- `opportunity_events`;
+- `opportunity_files`;
+- `propostas`;
+- `orcamentos`;
+- `orcamento_itens`;
+- `obras`;
+- `diario_obra`.
+
+Fontes documentais para preparar staging:
+
+- `docs/SCHEMA_OFICIAL_V1.sql` para `obras`, `diario_obra` e base operacional de Obra;
+- `docs/06_CREATE_OPPORTUNITIES_MVP.sql` para Oportunidades;
+- `docs/08_CREATE_PROPOSTAS_MVP.sql` para Propostas;
+- `platform/docs/sql_proposals/ORCAMENTISTA_001_ORCAMENTOS_OBRA_ID_NULLABLE.sql` apenas como referencia de nullable de `orcamentos.obra_id`;
+- `platform/docs/EVIS_REAL_SCHEMA_READONLY_INTROSPECTION_REPORT.md` como referencia para reconciliar `orcamentos` e `orcamento_itens`.
+
+Pendencia registrada:
+
+- nao ha `CREATE TABLE` canonico documentado para `orcamentos` e `orcamento_itens` nos arquivos lidos;
+- antes de 4B.1, o staging precisa de script base revisado para essas duas tabelas, coerente com o schema real 4A.4.
+
+Criterios de liberacao para 4B.1:
+
+- project ref staging confirmado e diferente de `jwutiebpfauwzzltwgbb`;
+- confirmacao humana explicita de que nao e producao;
+- backup/snapshot ou descartabilidade confirmada;
+- schema base minimo criado e validado;
+- ausencia das 9 tabelas pipeline confirmada no staging;
+- `pgcrypto`/`gen_random_uuid()` confirmado;
+- RLS/policies e baseline operacional registrados;
+- rollback/teste de rollback preparado.
+
+Confirmacoes da 4B.S:
+
+- nenhum SQL executado;
+- nenhuma migration aplicada;
+- nenhum banco alterado;
+- nenhum Supabase alterado;
+- nenhum dado alterado;
+- nenhum codigo operacional/UI alterado;
+- nenhuma rota criada;
+- nenhum hook criado;
+- nenhum commit realizado;
+- 4B.1 permanece bloqueada ate staging/sandbox seguro ser criado ou confirmado.
+
+## 1.10 Fase 4A.L - Commercial Feedback Learning Loop
 
 > Status: proposta arquitetural/documental; sem migration; sem SQL; sem banco alterado; sem codigo operacional/UI alterado.
 
