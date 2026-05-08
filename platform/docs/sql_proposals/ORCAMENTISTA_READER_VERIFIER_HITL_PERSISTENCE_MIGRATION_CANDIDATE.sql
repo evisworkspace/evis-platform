@@ -1,6 +1,6 @@
 -- MIGRATION CANDIDATE ONLY. DO NOT EXECUTE IN PRODUCTION.
--- Fase 4A.5 - Migration Candidate Draft
--- Este arquivo ainda exige auditoria e teste em ambiente controlado antes de qualquer aplicacao real.
+-- Fase 4A.5/4A.6 - Migration Candidate Security Hardened
+-- Este arquivo exige auditoria e teste controlado antes de qualquer aplicacao real.
 
 -- ============================================================================
 -- EVIS AI - ORCAMENTISTA READER / VERIFIER / HITL PERSISTENCE
@@ -11,7 +11,9 @@
 -- - Sem trigger/procedure/function que escreva em orcamento_itens.
 -- - Sem funcao de consolidacao oficial.
 -- - Sem INSERT/UPDATE/DELETE de dados.
+-- - Sem TRUNCATE de dados.
 -- - RLS habilitado nas 9 tabelas, sem policies abertas USING (true).
+-- - updated_at automatico sera tratado em fase posterior ou via camada de aplicacao.
 --
 -- Preconditions confirmadas pela Fase 4A.4:
 -- - public.opportunities(id) existe como uuid PK.
@@ -411,6 +413,7 @@ CREATE INDEX IF NOT EXISTS idx_orc_hitl_decisions_decided_at
 CREATE OR REPLACE FUNCTION public.fn_orc_reader_outputs_prevent_raw_update()
 RETURNS trigger
 LANGUAGE plpgsql
+SET search_path = public, pg_temp
 AS $$
 BEGIN
   IF OLD.raw_output_json IS DISTINCT FROM NEW.raw_output_json THEN
@@ -429,6 +432,7 @@ CREATE TRIGGER trg_orc_reader_outputs_prevent_raw_update
 CREATE OR REPLACE FUNCTION public.fn_orc_hitl_decisions_append_only()
 RETURNS trigger
 LANGUAGE plpgsql
+SET search_path = public, pg_temp
 AS $$
 BEGIN
   RAISE EXCEPTION 'orc_hitl_decisions is append-only: % is not allowed', TG_OP;
@@ -438,6 +442,11 @@ $$;
 CREATE TRIGGER trg_orc_hitl_decisions_no_update_delete
   BEFORE UPDATE OR DELETE ON public.orc_hitl_decisions
   FOR EACH ROW
+  EXECUTE FUNCTION public.fn_orc_hitl_decisions_append_only();
+
+CREATE TRIGGER trg_orc_hitl_decisions_no_truncate
+  BEFORE TRUNCATE ON public.orc_hitl_decisions
+  FOR EACH STATEMENT
   EXECUTE FUNCTION public.fn_orc_hitl_decisions_append_only();
 
 -- ============================================================================
@@ -469,6 +478,7 @@ ALTER TABLE public.orc_context_snapshots ENABLE ROW LEVEL SECURITY;
 -- ============================================================================
 -- Executar apenas em ambiente controlado e apos revisao.
 --
+-- DROP TRIGGER IF EXISTS trg_orc_hitl_decisions_no_truncate ON public.orc_hitl_decisions;
 -- DROP TRIGGER IF EXISTS trg_orc_hitl_decisions_no_update_delete ON public.orc_hitl_decisions;
 -- DROP FUNCTION IF EXISTS public.fn_orc_hitl_decisions_append_only();
 -- DROP TRIGGER IF EXISTS trg_orc_reader_outputs_prevent_raw_update ON public.orc_reader_outputs;

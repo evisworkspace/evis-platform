@@ -289,7 +289,54 @@ Confirmacoes da 4A.5:
 - candidate ainda pendente de teste controlado em staging/ambiente descartavel;
 - candidate nao deve ser aplicado em producao nesta fase.
 
-## 1.6 Fase 4A.L - Commercial Feedback Learning Loop
+## 1.6 Fase 4A.6 - Migration Candidate Security Hardening
+
+> Status: candidate endurecido documentalmente; nao executado; sem migration aplicada; sem banco alterado.
+
+Arquivo criado:
+
+- `platform/docs/EVIS_READER_VERIFIER_HITL_MIGRATION_CANDIDATE_SECURITY_HARDENING.md`
+
+Arquivo alterado:
+
+- `platform/docs/sql_proposals/ORCAMENTISTA_READER_VERIFIER_HITL_PERSISTENCE_MIGRATION_CANDIDATE.sql`
+
+Escopo do hardening:
+
+- cabecalho ajustado para `Fase 4A.5/4A.6 - Migration Candidate Security Hardened`;
+- nota explicita de que o arquivo exige auditoria e teste controlado antes de qualquer aplicacao real;
+- `SET search_path = public, pg_temp` adicionado nas funcoes defensivas;
+- protecao contra `TRUNCATE` adicionada em `orc_hitl_decisions`;
+- rollback comentado atualizado para incluir a trigger anti-TRUNCATE;
+- decisao de nao adicionar trigger generica de `updated_at` nesta fase.
+
+Decisoes aplicadas:
+
+- `fn_orc_reader_outputs_prevent_raw_update` continua apenas bloqueando alteracao de `raw_output_json`;
+- `fn_orc_hitl_decisions_append_only` continua apenas lancando exception para operacoes proibidas;
+- `orc_hitl_decisions` agora fica protegida contra `UPDATE`, `DELETE` e `TRUNCATE` no candidate;
+- nenhuma funcao escreve em outras tabelas;
+- nenhuma trigger escreve em outras tabelas;
+- `updated_at` automatico fica pendente para fase posterior ou camada de aplicacao.
+
+Confirmacoes da 4A.6:
+
+- nenhum SQL executado;
+- nenhuma migration aplicada;
+- nenhum banco alterado;
+- nenhum Supabase remoto alterado;
+- nenhum dado alterado;
+- nenhum codigo operacional/UI alterado;
+- nenhuma rota criada;
+- nenhum hook criado;
+- nenhuma FK para `orcamento_itens`;
+- nenhuma escrita em `orcamento_itens`;
+- nenhuma policy RLS aberta;
+- RLS segue habilitado no candidate sem policies abertas;
+- candidate ainda pendente de auditoria externa;
+- candidate ainda pendente de teste controlado em staging/ambiente descartavel.
+
+## 1.7 Fase 4A.L - Commercial Feedback Learning Loop
 
 > Status: proposta arquitetural/documental; sem migration; sem SQL; sem banco alterado; sem codigo operacional/UI alterado.
 
