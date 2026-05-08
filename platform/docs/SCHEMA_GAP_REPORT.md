@@ -509,7 +509,32 @@ Confirmacoes da 4B.S:
 - nenhum commit realizado;
 - 4B.1 permanece bloqueada ate staging/sandbox seguro ser criado ou confirmado.
 
-## 1.10 Fase 4A.L - Commercial Feedback Learning Loop
+## 1.10 Fase 4B.S5 - Post-Baseline Read-Only Preflight on Staging
+
+> Status: auditoria read-only concluida; staging validado; sem SQL de escrita; sem migration aplicada; sem banco alterado.
+
+Arquivo criado:
+
+- `platform/docs/EVIS_SUPABASE_STAGING_POST_BASELINE_PREFLIGHT_4BS5.md`
+
+Objetivo:
+
+- confirmar a integridade do baseline aplicado no staging `vtlepoljlqmjwuauygni`;
+- validar a presenca das 17 tabelas base e a ausencia das 9 tabelas pipeline;
+- confirmar colunas UUID e FKs criticas;
+- registrar o estado atual de RLS/Policies sem alteracao.
+
+Confirmacoes da 4B.S5:
+
+- nenhum SQL de escrita executado;
+- nenhuma migration aplicada;
+- nenhum banco alterado;
+- nenhum Supabase remoto alterado;
+- nenhum dado alterado;
+- nenhum codigo operacional/UI alterado;
+- staging considerado **PRONTO** para a Fase 4B.1.
+
+## 1.11 Fase 4A.L - Commercial Feedback Learning Loop
 
 > Status: proposta arquitetural/documental; sem migration; sem SQL; sem banco alterado; sem codigo operacional/UI alterado.
 
