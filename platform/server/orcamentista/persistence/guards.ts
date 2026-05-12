@@ -3,7 +3,7 @@
  * Fase 4C.1: Guards de segurança para proteger o banco oficial.
  */
 
-import { PersistenceResult } from './contracts';
+import type { PersistenceResult } from './contracts';
 
 /**
  * Tabelas permitidas para persistência nesta fase.
@@ -36,6 +36,24 @@ export const PERSISTENCE_BLOCKLIST = [
  * Flag explícita para bloquear consolidação orçamentária oficial.
  */
 export const canWriteConsolidationToBudget = false;
+
+const BUDGET_ITEM_INTENT_KEYS = new Set([
+  'orcamento_itens',
+  'budget_items',
+  'official_budget_items',
+  'items_to_insert',
+  'items_to_update',
+  'items_to_upsert',
+  'items_to_delete'
+]);
+
+const CONSOLIDATION_TRUE_INTENT_KEYS = new Set([
+  'can_write_to_budget',
+  'write_to_budget',
+  'write_budget_items',
+  'consolidate_to_budget',
+  'consolidation_released'
+]);
 
 /**
  * Verifica se o nome da tabela está na allowlist.
@@ -79,15 +97,42 @@ export function assertOpportunityId(payload: { opportunity_id?: string | null })
   return { status: 'success', data: undefined, message: 'OK' };
 }
 
+function hasBlockedConsolidationIntent(value: unknown, seen = new WeakSet<object>()): boolean {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  if (seen.has(value)) {
+    return false;
+  }
+  seen.add(value);
+
+  if (Array.isArray(value)) {
+    return value.some((item) => hasBlockedConsolidationIntent(item, seen));
+  }
+
+  return Object.entries(value as Record<string, unknown>).some(([key, nested]) => {
+    if (BUDGET_ITEM_INTENT_KEYS.has(key)) {
+      return true;
+    }
+
+    if (CONSOLIDATION_TRUE_INTENT_KEYS.has(key) && nested === true) {
+      return true;
+    }
+
+    return hasBlockedConsolidationIntent(nested, seen);
+  });
+}
+
 /**
  * Guard para impedir tentativa de consolidação orçamentária.
  */
-export function assertNoConsolidationIntent(): PersistenceResult<void> {
-  if (!canWriteConsolidationToBudget) {
+export function assertNoConsolidationIntent(payload?: unknown): PersistenceResult<void> {
+  if (!canWriteConsolidationToBudget && hasBlockedConsolidationIntent(payload)) {
     return {
       status: 'blocked',
       reason: 'CONSOLIDATION_BLOCKED',
-      message: 'Consolidação oficial no orçamento está desativada nesta fase.'
+      message: 'Payload com intenção de consolidação oficial no orçamento está bloqueado nesta fase.'
     };
   }
   return { status: 'success', data: undefined, message: 'OK' };
@@ -96,7 +141,10 @@ export function assertNoConsolidationIntent(): PersistenceResult<void> {
 /**
  * Guard mestre para qualquer tentativa de persistência.
  */
-export function validatePersistenceIntent(tableName: string, payload: any): PersistenceResult<void> {
+export function validatePersistenceIntent(
+  tableName: string,
+  payload: { opportunity_id?: string | null } & Record<string, unknown>
+): PersistenceResult<void> {
   // 1. Verificar allowlist
   if (!isTableAllowed(tableName)) {
     return {
@@ -115,7 +163,7 @@ export function validatePersistenceIntent(tableName: string, payload: any): Pers
   if (oppCheck.status !== 'success') return oppCheck;
 
   // 4. Verificar consolidação
-  const consolidationCheck = assertNoConsolidationIntent();
+  const consolidationCheck = assertNoConsolidationIntent(payload);
   if (consolidationCheck.status !== 'success') return consolidationCheck;
 
   return { status: 'success', data: undefined, message: 'Intent validado.' };
