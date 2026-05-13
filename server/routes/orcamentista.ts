@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { runControlledManualOrcamentistaAction } from '../../platform/server/orcamentista/controlledManualAction';
 import { getOrcamentistaPipelineView } from '../../platform/server/orcamentista/pipelineView';
-import { createStagingClientFromEnv } from '../../platform/server/orcamentista/persistence/stagingClient';
+import { createStagingClientFromEnv, downloadOpportunityFile } from '../../platform/server/orcamentista/persistence/stagingClient';
 import { createOrcamentistaPersistenceRepository } from '../../platform/server/orcamentista/persistence/repository';
 import { persistContextSnapshot } from '../../platform/server/orcamentista/persistence/hitlPersistence';
 import type { OrcamentistaPreview, OrcamentistaPreviewItem } from '../../platform/server/orcamentista/contracts';
@@ -220,25 +220,52 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
       });
     }
 
-    const sourceFiles = rawFiles.map((file) => ({
-      id: file.id,
-      nome: file.nome,
-      categoria: file.categoria,
-      mime_type: file.mime_type,
-      tamanho_bytes: file.tamanho_bytes,
-    }));
+    // Sprint 4A: attempt to download each file from Supabase Storage.
+    const MAX_DOWNLOAD_BYTES = 10 * 1024 * 1024; // 10 MiB limit for this sprint
+    const sourceFiles = [] as any[];
 
-    const pendenciasHitl: string[] = [
-      'A análise técnica por IA ainda não está conectada ao backend.',
-      'Os arquivos foram identificados, mas nenhum quantitativo foi extraído.',
-    ];
+    for (const file of rawFiles) {
+      const entry: any = {
+        id: file.id,
+        nome: file.nome,
+        mime_type: file.mime_type,
+        storage_path_present: !!file.storage_path,
+      };
 
-    const hasProjeto = rawFiles.some((file) => (file.categoria ?? '').toLowerCase() === 'projeto');
-    if (!hasProjeto) {
-      pendenciasHitl.push('Anexar pelo menos um arquivo na categoria "projeto" para destravar análise técnica.');
+      if (!file.storage_path) {
+        entry.download_status = 'missing_storage_path';
+        entry.read_status = 'file_content_unavailable';
+        sourceFiles.push(entry);
+        continue;
+      }
+
+      // Try safe download
+      const { buffer, size, error } = await downloadOpportunityFile({
+        storagePath: file.storage_path,
+        maxBytes: MAX_DOWNLOAD_BYTES,
+      });
+
+      if (error) {
+        if (error.includes('exceeds limit')) {
+          entry.download_status = 'skipped_too_large';
+          entry.read_status = 'file_too_large';
+        } else {
+          entry.download_status = 'download_failed';
+          entry.read_status = 'file_content_unavailable';
+        }
+      } else {
+        entry.download_status = 'downloaded';
+        entry.read_status = 'binary_available';
+        entry.downloaded_bytes = size ?? 0;
+        // buffer is intentionally not retained to avoid memory pressure.
+      }
+
+      sourceFiles.push(entry);
     }
 
-    const warnings = ['Nenhum item de orçamento foi gerado automaticamente nesta execução.'];
+    const pendenciasHitl = [
+      'Arquivo físico acessado pelo backend. Extração técnica por IA ainda não executada.',
+    ];
 
     const repository = createOrcamentistaPersistenceRepository(bundle.client);
     const snapshotResult = await persistContextSnapshot(repository, {
@@ -252,10 +279,10 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
         workspace_id: workspaceId,
         analyzed_file_ids: fileIds,
         source_files: sourceFiles,
-        preview_source: 'metadata_only',
+        preview_source: 'file_access_only',
         items: [],
         pendencias_hitl: pendenciasHitl,
-        warnings,
+        warnings: [],
         backend_ai_configured: false,
       },
       created_by: 'orcamentista_analyze_endpoint',

@@ -107,3 +107,46 @@ function tryReadJwtProjectRef(token: string): string | null {
     return null;
   }
 }
+// ------------------------------------------------------------
+/**
+ * Securely download a file from the `opportunity-files` bucket.
+ *
+ * - bucket is fixed to `opportunity-files` (no other bucket allowed)
+ * - only the exact `storagePath` obtained from `opportunity_files` can be used
+ * - optional size limit (`maxBytes`) can be provided to avoid huge downloads
+ * - returns the raw Buffer, its size, or an error description.
+ */
+export async function downloadOpportunityFile(params: {
+  storagePath: string;
+  maxBytes?: number;
+}): Promise<{ buffer?: Buffer; size?: number; error?: string }> {
+  const bucket = 'opportunity-files';
+  if (!params.storagePath) {
+    return { error: 'Missing storage_path' };
+  }
+
+  // Re‑use the environment validation to create a raw client with service‑role access.
+  const env = readAndValidateStagingEnv();
+  const rawClient = createClient(env.url, env.key);
+
+  try {
+    const { data, error } = await rawClient.storage.from(bucket).download(params.storagePath);
+    if (error) {
+      return { error: error.message };
+    }
+    if (!data) {
+      return { error: 'No data returned from storage download' };
+    }
+    // Convert Blob to Buffer (Node.js)
+    const arrayBuffer = await (data as any).arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const size = buffer.length;
+    if (params.maxBytes && size > params.maxBytes) {
+      return { error: `File size ${size} exceeds limit of ${params.maxBytes}` };
+    }
+    return { buffer, size };
+  } catch (e: any) {
+    return { error: e.message };
+  }
+}
+
