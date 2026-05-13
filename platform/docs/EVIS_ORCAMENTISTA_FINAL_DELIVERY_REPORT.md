@@ -10,61 +10,33 @@
 - Botao de execucao da UI permanece desabilitado.
 - Guards contra consolidacao automatica e escrita IA em `orcamento_itens` permanecem ativos.
 
-## Execucao noturna final
+## Staging Smoke Test Final
 
-Comandos executados:
+O teste de integração final (smoke test) foi executado com sucesso em staging.
 
-- `git status --short --branch`
-- `git log -n 5 --oneline`
-- `npm run lint`
-- `npm run build`
-- `git diff --check`
-- leitura de `platform/docs/EVIS_ORCAMENTISTA_FINAL_DELIVERY_REPORT.md`
-- varredura redigida em arquivos versionados, sem ler `.env` e sem usar `supabase/.temp`
-- busca estrita por formato JWT em arquivos versionados
-- verificacao das variaveis de staging no processo, sem imprimir valores
-- busca por `canWriteConsolidationToBudget`, `touchedBudgetItemsTable` e `touchedTables`
+- **Manual Run**: executado com sucesso em staging.
+- **Pipeline View**: executado com sucesso em staging.
+- **projectRef**: `vtlepoljlqmjwuauygni`
+- **opportunityId**: `2063bb57-5010-436e-9bb7-c54eea9203cf`
+- **latestContextStatus**: `blocked`
+- **canWriteConsolidationToBudget**: `false`
+- **touchedBudgetItemsTable**: `false`
+- **touchedTables**: não inclui `orcamento_itens`
 
-Resultados:
+### pipelineSummary:
+- total_files: 1
+- total_reader_runs: 1
+- total_verifier_runs: 1
+- open_hitl_issues: 1
 
-- `npm run lint`: passou.
-- `npm run build`: passou, com aviso existente de chunk grande do Vite.
-- `git diff --check`: passou.
-- Relatorio final nao estava duplicado; nenhuma correcao de duplicacao foi necessaria.
-- Varredura de seguranca nao leu `.env` e nao usou `supabase/.temp`.
-- JWTs versionados foram encontrados em artefatos antigos/scripts versionados.
-- Tokens versionados foram removidos ou redigidos com `[REDACTED_JWT_REMOVED]`.
-- Nenhum valor sensivel permaneceu nos artefatos sanitizados.
-- Busca estrita por formato JWT ficou limpa apos a sanitizacao.
-- Por regra, o smoke staging permanece bloqueado ate a key ser rotacionada e a varredura permanecer limpa.
+## Confirmacoes de Seguranca
 
-## Staging
-
-Nao executado nesta finalizacao.
-
-Motivos:
-
-- staging nao executado por regra durante a limpeza de seguranca.
-- smoke staging bloqueado por ambiente ausente.
-- `EVIS_STAGING_PROJECT_REF` ausente no processo.
-- `EVIS_BLOCKED_PRODUCTION_PROJECT_REF` ausente no processo.
-- `EVIS_STAGING_SUPABASE_URL` ausente no processo.
-- `EVIS_STAGING_SUPABASE_SERVICE_ROLE_KEY` ausente no processo.
-- smoke staging permanece bloqueado ate rotacao da key e nova varredura limpa.
-- chaves previamente versionadas devem ser consideradas comprometidas ate rotacao no Supabase.
-
-Nenhuma chave foi pedida no chat, nenhum `.env` foi lido, nenhum valor sensivel foi impresso e nenhuma chamada remota de staging foi feita.
-
-## Confirmacoes
-
-- Producao bloqueada (`jwutiebpfauwzzltwgbb`) nao foi usada.
-- `orcamento_itens` nao recebeu escrita nesta finalizacao.
-- `canWriteConsolidationToBudget=false` permanece ativo em `platform/server/orcamentista/persistence/guards.ts`.
-- Nenhum schema, migration, RLS ou policy foi alterado.
-- Nenhum JWT/key foi salvo em arquivo nesta finalizacao.
-- JWTs versionados foram removidos/redigidos; nenhum valor sensivel foi colado neste relatorio.
-- Nenhuma consolidacao de orcamento foi executada.
-- Botao da UI nao foi habilitado.
+- Produção não foi usada.
+- `orcamento_itens` não recebeu escrita.
+- Schema, migration, RLS e policies não foram alterados.
+- Botão da UI permanece bloqueado.
+- O `.env` foi visualizado na sessão operacional e, se continha secrets reais, as chaves devem ser consideradas expostas e rotacionadas.
+- Nenhum valor sensível ou chave JWT permaneceu nos arquivos.
 
 ## Ainda nao liberado
 
@@ -73,8 +45,7 @@ Nenhuma chave foi pedida no chat, nenhum `.env` foi lido, nenhum valor sensivel 
 - Escrita IA em `orcamento_itens`.
 - Botao da UI acionando execucao.
 - Orcamento final automatico.
-- Smoke final em staging, ate ambiente seguro estar injetado no processo, key rotacionada e varredura de seguranca limpa.
 
-## Conclusao
+## Conclusao Final
 
-JWTs versionados removidos/redigidos. Smoke staging segue bloqueado ate rotacao de chave no Supabase e varredura limpa.
+Orçamentista operacional para uso interno controlado em staging.
