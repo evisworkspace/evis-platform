@@ -166,7 +166,7 @@ export default function ConfigPage() {
             <div className="text-[13px] text-t1 font-semibold">Anon Key</div>
             <div className="font-mono text-[10px] text-t3 mt-0.5">Chave pública do projeto</div>
           </div>
-          <input name="key" type="password" value={config.key} onChange={handleChange} className="bg-s2 border border-b1 rounded-md text-t1 font-mono text-[11px] px-3 py-2 outline-none w-[300px] focus:border-b3 transition-colors" placeholder="eyJ..." />
+          <input name="key" type="password" value={config.key} onChange={handleChange} className="bg-s2 border border-b1 rounded-md text-t1 font-mono text-[11px] px-3 py-2 outline-none w-[300px] focus:border-b3 transition-colors" placeholder="[REDACTED_JWT_REMOVED]" />
         </div>
 
         <div className="flex items-center justify-between py-2.5">

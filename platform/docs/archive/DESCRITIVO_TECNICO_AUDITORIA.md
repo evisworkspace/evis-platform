@@ -623,10 +623,10 @@ WITH CHECK (obra_id = current_user_id);
 ```env
 # .env (NUNCA commitar)
 VITE_SUPABASE_URL="https://..."
-VITE_SUPABASE_ANON_KEY="eyJhbGc..."  ← Somente ANON (pública)
+[REDACTED_JWT_REMOVED]  ← Somente ANON (pública)
 
 # Supabase Admin Key (SERVIDOR APENAS)
-SUPABASE_SERVICE_ROLE_KEY="eyJhbGc..."  ← Somente servidor
+[REDACTED_JWT_REMOVED]  ← Somente servidor
 ```
 
 ---

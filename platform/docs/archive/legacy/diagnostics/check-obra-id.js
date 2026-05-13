@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const SUPABASE_URL = "https://jwutiebpfauwzzltwgbb.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dXRpZWJwZmF1d3p6bHR3Z2JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MTYzOTIsImV4cCI6MjA5MTM5MjM5Mn0.KtzdQn2j1z4ugGFIyZgFDBfO--38FTBeKLT_RXMkflU";
+const SUPABASE_KEY = "[REDACTED_JWT_REMOVED]";
 
 async function checkUsedObraId() {
   console.log("🔍 Testando com obra_id dos testes: 3c7ade92-5078-4db3-996c-1390a9a2bb27\n");

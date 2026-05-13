@@ -7,7 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const sb = createClient(
   'https://jwutiebpfauwzzltwgbb.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dXRpZWJwZmF1d3p6bHR3Z2JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MTYzOTIsImV4cCI6MjA5MTM5MjM5Mn0.KtzdQn2j1z4ugGFIyZgFDBfO--38FTBeKLT_RXMkflU'
+  '[REDACTED_JWT_REMOVED]'
 );
 
 // ── ALIAS GERADOR SERVIÇOS ─────────────────────────────────────
