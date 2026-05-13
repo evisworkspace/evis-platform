@@ -18,6 +18,7 @@ import OrcamentistaRealReaderSandboxPanel from './OrcamentistaRealReaderSandboxP
 import OrcamentistaMissingProjectFallbackPanel from './OrcamentistaMissingProjectFallbackPanel';
 import OrcamentistaGuidedIntakePanel from './OrcamentistaGuidedIntakePanel';
 import OrcamentistaInternalActionPanel from './OrcamentistaInternalActionPanel';
+import OrcamentistaContextStatePanel from './OrcamentistaContextStatePanel';
 import { buildMockDocumentIntakeFiles } from '../../lib/orcamentista/documentIntakeMock';
 import { mockPipelineSteps, mockAiPreview } from '../../lib/orcamentista/mockPipeline';
 
@@ -334,53 +335,62 @@ export default function OrcamentistaTab() {
             />
             <div className="mt-4 space-y-6">
 
-              {/* E0. Ação interna — Orçamentista IA (4D.2) */}
+              {/* E0. Estado contextual real — read-only */}
+              <OrcamentistaContextStatePanel
+                opportunityId={id}
+                workspaceId={workspaceId}
+                opportunityFiles={opportunityFiles.data ?? []}
+                isLoadingOpportunityFiles={opportunityFiles.isFetching}
+                opportunityFilesError={opportunityFilesError}
+              />
+
+              {/* E1. Ação interna — Orçamentista IA (4D.2) */}
               <OrcamentistaInternalActionPanel opportunityId={id} />
 
-              {/* E1. Intake guiado e contexto técnico */}
+              {/* E2. Intake guiado e contexto técnico */}
               <OrcamentistaGuidedIntakePanel />
 
-              {/* E2. Documentos recebidos / inventário mockado */}
+              {/* E3. Documentos recebidos / inventário mockado */}
               <OrcamentistaDocumentsPanel
                 documents={documentIntakeFiles}
                 isLoadingFiles={opportunityFiles.isFetching}
                 filesError={opportunityFilesError}
               />
 
-              {/* E3. Projetos ausentes / estimativas controladas */}
+              {/* E4. Projetos ausentes / estimativas controladas */}
               <OrcamentistaMissingProjectFallbackPanel />
 
-              {/* E4. Processamento de páginas mockado */}
+              {/* E5. Processamento de páginas mockado */}
               <OrcamentistaPageProcessingPanel />
 
-              {/* E5. Reader + Verifier mockado */}
+              {/* E6. Reader + Verifier mockado */}
               <OrcamentistaReaderVerifierPanel />
 
-              {/* E6. HITL do Orçamentista mockado */}
+              {/* E7. HITL do Orçamentista mockado */}
               <OrcamentistaHitlPanel />
 
-              {/* E7. Dispatch mockado para agentes especialistas */}
+              {/* E8. Dispatch mockado para agentes especialistas */}
               <OrcamentistaAgentDispatchPanel />
 
-              {/* E8. Preview Consolidado mockado */}
+              {/* E9. Preview Consolidado mockado */}
               <OrcamentistaConsolidatedPreviewPanel />
 
-              {/* E9. Gate de consolidação mockado */}
+              {/* E10. Gate de consolidação mockado */}
               <OrcamentistaConsolidationGatePanel />
 
-              {/* E10. Revisão humana do payload simulado */}
+              {/* E11. Revisão humana do payload simulado */}
               <OrcamentistaPayloadReviewPanel />
 
-              {/* E11. Sandbox de primeira leitura real controlada */}
+              {/* E12. Sandbox de primeira leitura real controlada */}
               <OrcamentistaRealReaderSandboxPanel />
 
-              {/* E12. Pipeline IA mockado */}
+              {/* E13. Pipeline IA mockado */}
               <OrcamentistaAiPipelinePanel steps={mockPipelineSteps} />
 
-              {/* E13. Prévia IA mockada (legado) */}
+              {/* E14. Prévia IA mockada (legado) */}
               <OrcamentistaAiPreviewPanel preview={mockAiPreview} />
 
-              {/* E14. Chat do Orçamentista (staging/preview separado) */}
+              {/* E15. Chat do Orçamentista (staging/preview separado) */}
               <div className="rounded-lg border border-white/10 bg-white/5 p-4">
                 <p className="mb-1 font-mono text-[9px] font-bold uppercase tracking-widest text-white/30">
                   Orçamentista IA — Chat de análise

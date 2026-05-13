@@ -10,15 +10,115 @@ import {
   listOrcamentistaWorkspaces,
   listWorkspaceAttachmentFiles,
   saveAttachmentToWorkspace,
+  type OrcamentistaWorkspace,
+  type WorkspaceAttachmentFile,
   type WorkspaceAttachmentCategory,
 } from '../../platform/server/orcamentista/workspaces';
 
 const router = Router();
 
 type OrcamentistaStreamEvent = Record<string, unknown>;
+type WorkspacePreviewStatus = 'available' | 'empty' | 'workspace_missing' | 'workspace_root_missing' | 'error';
+
+type OrcamentistaWorkspaceState = {
+  opportunityId: string | null;
+  workspaceId: string;
+  generated_at: string;
+  workspace: {
+    exists: boolean;
+    nome: string | null;
+    unavailable_reason?: string;
+  };
+  attachments: WorkspaceAttachmentFile[];
+  preview: {
+    status: WorkspacePreviewStatus;
+    data: OrcamentistaPreview | null;
+    warnings: string[];
+  };
+  safety: {
+    canWriteConsolidationToBudget: false;
+    touchedBudgetItemsTable: false;
+    officialBudgetWrite: 'blocked';
+  };
+};
 
 function sendStreamEvent(res: Response, event: OrcamentistaStreamEvent) {
   res.write(`data: ${JSON.stringify(event)}\n\n`);
+}
+
+function buildPreviewFromWorkspace(workspace: OrcamentistaWorkspace): {
+  status: WorkspacePreviewStatus;
+  data: OrcamentistaPreview | null;
+  warnings: string[];
+} {
+  const memoryPath = path.join(workspace.fullPath, '01_MEMORIA_ORCAMENTO.json');
+
+  if (!fs.existsSync(memoryPath)) {
+    const preview: OrcamentistaPreview = {
+      workspace_id: workspace.id,
+      generated_at: new Date().toISOString(),
+      source_file: '01_MEMORIA_ORCAMENTO.json',
+      items: [],
+      warnings: [
+        'Nenhuma memória estruturada encontrada no workspace.',
+        'Preview em modo laboratório; não grava orçamento oficial.',
+      ],
+    };
+
+    return { status: 'empty', data: preview, warnings: preview.warnings };
+  }
+
+  try {
+    const raw = JSON.parse(fs.readFileSync(memoryPath, 'utf-8'));
+    const composicoes = Array.isArray(raw.composicoes_candidatas) ? raw.composicoes_candidatas : [];
+    const warnings: string[] = [];
+
+    const items: OrcamentistaPreviewItem[] = composicoes.map((item: any, index: number) => {
+      const quantidade = Number(item.quantidade ?? 0);
+      const valorUnitario = Number(item.valor_unitario ?? item.custo_unitario ?? 0);
+
+      if (!Number.isFinite(quantidade) || quantidade <= 0) {
+        warnings.push(`Item ${index + 1} sem quantidade numérica confiável.`);
+      }
+
+      if (!Number.isFinite(valorUnitario) || valorUnitario <= 0) {
+        warnings.push(`Item ${index + 1} sem valor unitário confiável.`);
+      }
+
+      return {
+        codigo: item.codigo ?? item.codigo_sinapi ?? null,
+        descricao: item.descricao ?? item.servico ?? `Item candidato ${index + 1}`,
+        unidade: item.unidade ?? 'un',
+        quantidade: Number.isFinite(quantidade) ? quantidade : 0,
+        valor_unitario: Number.isFinite(valorUnitario) ? valorUnitario : 0,
+        valor_total: Number.isFinite(quantidade * valorUnitario) ? quantidade * valorUnitario : 0,
+        categoria: item.categoria ?? null,
+        origem: item.origem ?? 'ia_composicao_lab',
+        confianca: typeof item.confianca === 'number' ? item.confianca : null,
+        observacoes: item.observacoes ?? null,
+      };
+    });
+
+    const preview: OrcamentistaPreview = {
+      workspace_id: workspace.id,
+      generated_at: new Date().toISOString(),
+      source_file: '01_MEMORIA_ORCAMENTO.json',
+      items,
+      warnings,
+    };
+
+    return {
+      status: items.length > 0 ? 'available' : 'empty',
+      data: preview,
+      warnings,
+    };
+  } catch (error: any) {
+    return {
+      status: 'error',
+      data: null,
+      warnings: [`Falha ao ler preview do workspace: ${error.message}`],
+    };
+  }
 }
 
 // POST /api/orcamentista/manual-run
@@ -105,6 +205,77 @@ router.get('/workspaces/:id/attachments', async (req, res) => {
   }
 });
 
+// GET /api/orcamentista/workspaces/:id/state
+router.get('/workspaces/:id/state', async (req, res) => {
+  const workspaceId = req.params.id;
+  const opportunityId = typeof req.query.opportunityId === 'string' ? req.query.opportunityId : null;
+
+  const baseState: Omit<OrcamentistaWorkspaceState, 'workspace' | 'attachments' | 'preview'> = {
+    opportunityId,
+    workspaceId,
+    generated_at: new Date().toISOString(),
+    safety: {
+      canWriteConsolidationToBudget: false,
+      touchedBudgetItemsTable: false,
+      officialBudgetWrite: 'blocked',
+    },
+  };
+
+  try {
+    const workspace = (await listOrcamentistaWorkspaces()).find((item) => item.id === workspaceId);
+
+    if (!workspace) {
+      const data: OrcamentistaWorkspaceState = {
+        ...baseState,
+        workspace: {
+          exists: false,
+          nome: null,
+          unavailable_reason: 'workspace_not_found',
+        },
+        attachments: [],
+        preview: {
+          status: 'workspace_missing',
+          data: null,
+          warnings: ['Workspace local não encontrado para este ID.'],
+        },
+      };
+
+      return res.json({ success: true, data });
+    }
+
+    const attachments = await listWorkspaceAttachmentFiles(workspaceId);
+    const preview = buildPreviewFromWorkspace(workspace);
+    const data: OrcamentistaWorkspaceState = {
+      ...baseState,
+      workspace: {
+        exists: true,
+        nome: workspace.nome,
+      },
+      attachments,
+      preview,
+    };
+
+    return res.json({ success: true, data });
+  } catch (error: any) {
+    const data: OrcamentistaWorkspaceState = {
+      ...baseState,
+      workspace: {
+        exists: false,
+        nome: null,
+        unavailable_reason: error.message,
+      },
+      attachments: [],
+      preview: {
+        status: 'workspace_root_missing',
+        data: null,
+        warnings: ['Não foi possível consultar a pasta local de workspaces.'],
+      },
+    };
+
+    return res.json({ success: true, data });
+  }
+});
+
 // POST /api/orcamentista/workspaces/:id/files
 router.post('/workspaces/:id/files', express.raw({ type: '*/*', limit: '50mb' }), async (req: Request, res: Response) => {
   try {
@@ -154,62 +325,8 @@ router.get('/workspaces/:id/preview', async (req, res) => {
       return res.status(404).json({ success: false, erro: 'Workspace não encontrado.' });
     }
 
-    const memoryPath = path.join(workspace.fullPath, '01_MEMORIA_ORCAMENTO.json');
-
-    if (!fs.existsSync(memoryPath)) {
-      const preview: OrcamentistaPreview = {
-        workspace_id: workspace.id,
-        generated_at: new Date().toISOString(),
-        source_file: '01_MEMORIA_ORCAMENTO.json',
-        items: [],
-        warnings: [
-          'Nenhuma memória estruturada encontrada no workspace.',
-          'Preview em modo laboratório; não grava orçamento oficial.',
-        ],
-      };
-
-      return res.json({ success: true, data: preview });
-    }
-
-    const raw = JSON.parse(fs.readFileSync(memoryPath, 'utf-8'));
-    const composicoes = Array.isArray(raw.composicoes_candidatas) ? raw.composicoes_candidatas : [];
-    const warnings: string[] = [];
-
-    const items: OrcamentistaPreviewItem[] = composicoes.map((item: any, index: number) => {
-      const quantidade = Number(item.quantidade ?? 0);
-      const valorUnitario = Number(item.valor_unitario ?? item.custo_unitario ?? 0);
-
-      if (!Number.isFinite(quantidade) || quantidade <= 0) {
-        warnings.push(`Item ${index + 1} sem quantidade numérica confiável.`);
-      }
-
-      if (!Number.isFinite(valorUnitario) || valorUnitario <= 0) {
-        warnings.push(`Item ${index + 1} sem valor unitário confiável.`);
-      }
-
-      return {
-        codigo: item.codigo ?? item.codigo_sinapi ?? null,
-        descricao: item.descricao ?? item.servico ?? `Item candidato ${index + 1}`,
-        unidade: item.unidade ?? 'un',
-        quantidade: Number.isFinite(quantidade) ? quantidade : 0,
-        valor_unitario: Number.isFinite(valorUnitario) ? valorUnitario : 0,
-        valor_total: Number.isFinite(quantidade * valorUnitario) ? quantidade * valorUnitario : 0,
-        categoria: item.categoria ?? null,
-        origem: item.origem ?? 'ia_composicao_lab',
-        confianca: typeof item.confianca === 'number' ? item.confianca : null,
-        observacoes: item.observacoes ?? null,
-      };
-    });
-
-    const preview: OrcamentistaPreview = {
-      workspace_id: workspace.id,
-      generated_at: new Date().toISOString(),
-      source_file: '01_MEMORIA_ORCAMENTO.json',
-      items,
-      warnings,
-    };
-
-    return res.json({ success: true, data: preview });
+    const preview = buildPreviewFromWorkspace(workspace);
+    return res.json({ success: true, data: preview.data });
   } catch (error: any) {
     console.error('Error building orcamentista preview:', error);
     return res.status(500).json({ success: false, erro: error.message });
