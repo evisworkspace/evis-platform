@@ -11,3 +11,5 @@ export * from './readerPersistence';
 export * from './verifierPersistence';
 export * from './hitlPersistence';
 export * from './readModels';
+export * from './fakePersistenceClient';
+export * from './persistenceLocalValidation';
