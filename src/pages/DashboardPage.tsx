@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Briefcase, Building2, FileText, LayoutDashboard, MessageSquare } from 'lucide-react';
+import { ArrowRight, Briefcase, Building2, FileText, LayoutDashboard } from 'lucide-react';
 
 const cards = [
   {
@@ -7,12 +7,6 @@ const cards = [
     description: 'Entrada comercial para organizar demandas, origens e próximos passos.',
     href: '/oportunidades',
     icon: Briefcase,
-  },
-  {
-    title: 'Orçamentista',
-    description: 'Leitura documental, roteiro técnico e validação HITL. Etapas posteriores em evolução.',
-    href: '/orcamentista',
-    icon: MessageSquare,
   },
   {
     title: 'Propostas',

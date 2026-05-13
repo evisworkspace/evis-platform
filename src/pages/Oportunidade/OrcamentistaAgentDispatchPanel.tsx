@@ -113,15 +113,15 @@ export default function OrcamentistaAgentDispatchPanel() {
         <div>
           <div className="flex items-center gap-2">
             <GitBranch className="h-5 w-5 text-blue-300" />
-            <h2 className="text-sm font-bold text-t1">Dispatch para agentes especialistas</h2>
+            <h2 className="text-sm font-bold text-t1">Dispatch para agentes especialistas — mock</h2>
           </div>
           <p className="mt-1 max-w-3xl text-xs leading-5 text-t3">
-            Encaminhamento mockado das leituras auditadas e decisões HITL para agentes técnicos.
-            Dispatch não gera orçamento oficial, não grava itens e não consolida valores.
+            Encaminhamento visual mockado das leituras auditadas e decisões HITL para agentes
+            técnicos. Ainda não executa agentes reais, não grava itens e não consolida valores.
           </p>
         </div>
         <span className="w-fit rounded border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-blue-200">
-          Fase 2G · Mock local
+          MOCK · Sem execução real
         </span>
       </header>
 

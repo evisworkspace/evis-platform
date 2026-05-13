@@ -2,7 +2,7 @@ import { Lock, ShieldAlert, Terminal, Play, CheckCircle2, Loader2, AlertCircle }
 import { useState, useEffect } from 'react';
 
 // ──────────────────────────────────────────────
-// OrcamentistaInternalActionPanel — Fase 4D.2 UI Funcional
+// OrcamentistaInternalActionPanel — smoke interno controlado
 //
 // Regras:
 // - Read-only do client. Chama API do backend.
@@ -47,7 +47,7 @@ export default function OrcamentistaInternalActionPanel({ opportunityId }: Props
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`http://localhost:3001/api/orcamentista/pipeline-view?opportunityId=${opportunityId}`);
+      const res = await fetch(`/api/orcamentista/pipeline-view?opportunityId=${opportunityId}`);
       const json = await res.json();
       if (res.ok && json.status === 'success') {
         setView(json.data);
@@ -74,7 +74,7 @@ export default function OrcamentistaInternalActionPanel({ opportunityId }: Props
     setError(null);
     setSuccess(null);
     try {
-      const res = await fetch(`http://localhost:3001/api/orcamentista/manual-run`, {
+      const res = await fetch('/api/orcamentista/manual-run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -86,14 +86,14 @@ export default function OrcamentistaInternalActionPanel({ opportunityId }: Props
       const json = await res.json();
 
       if (res.ok && json.status === 'success') {
-        setSuccess('Execução concluída com sucesso!');
+        setSuccess('Smoke interno concluído com sucesso.');
         await fetchPipelineView();
       } else {
-        setError(json.message || 'Erro ao executar Orçamentista');
+        setError(json.message || 'Erro ao executar smoke interno');
       }
     } catch (err: any) {
       console.error(err);
-      setError('Falha de rede ao executar Orçamentista');
+      setError('Falha de rede ao executar smoke interno');
     } finally {
       setRunning(false);
     }
@@ -111,16 +111,16 @@ export default function OrcamentistaInternalActionPanel({ opportunityId }: Props
           <div className="flex items-center gap-2">
             <Terminal size={18} className="text-purple-400" />
             <h3 className="text-base font-bold text-t1">
-              Ação interna — Orçamentista IA
+              Smoke interno — pipeline Orçamentista
             </h3>
           </div>
           <p className="mt-1 text-sm text-t3">
-            Aciona o pipeline server-side de análise para o Staging. Os dados gerados aqui são apenas prévias e não afetam o orçamento oficial.
+            Aciona um fluxo controlado e sintético para testar persistência Reader/Verifier/HITL. Não processa os arquivos reais da oportunidade e não afeta o orçamento oficial.
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
           <span className="rounded-full border border-purple-500/40 bg-purple-500/15 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-purple-300">
-            STAGING · USO INTERNO
+            STAGING · SMOKE INTERNO
           </span>
           {view?.latestContextStatus && (
             <span className={`rounded-full px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest border ${
@@ -192,17 +192,17 @@ export default function OrcamentistaInternalActionPanel({ opportunityId }: Props
           {running ? (
             <>
               <Loader2 size={16} className="animate-spin" />
-              <span>Executando Pipeline...</span>
+              <span>Executando smoke...</span>
             </>
           ) : (
             <>
               <Play size={16} fill="currentColor" />
-              <span>Rodar Orçamentista IA</span>
+              <span>Rodar smoke interno do pipeline</span>
             </>
           )}
         </button>
         <p className="text-center text-[11px] text-t4">
-          A execução é realizada exclusivamente server-side via API controlada.
+          Smoke server-side controlado. Não é execução real completa do Orçamentista IA.
         </p>
       </div>
     </div>

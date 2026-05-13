@@ -105,16 +105,16 @@ export default function OrcamentistaConsolidationGatePanel() {
         <div>
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-emerald-300" />
-            <h2 className="text-sm font-bold text-t1">Gate de consolidação</h2>
+            <h2 className="text-sm font-bold text-t1">Gate de consolidação — mock visual</h2>
           </div>
           <p className="mt-1 max-w-3xl text-xs leading-5 text-t3">
-            Validação final antes de transformar preview em itens oficiais. Nesta fase,
-            apenas payload simulado para revisão humana.
+            Preview visual de validação final. Usa payload mockado/simulado, ainda não está
+            conectado ao pipeline real e não transforma preview em itens oficiais.
           </p>
         </div>
         <div className="flex flex-col items-start gap-2 sm:items-end">
           <span className="w-fit rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-emerald-200">
-            Fase 2I · Payload simulado
+            MOCK · Payload simulado
           </span>
           <span className={`w-fit rounded border px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest ${statusClass(gate.status)}`}>
             {getConsolidationGateStatusLabel(gate.status)}

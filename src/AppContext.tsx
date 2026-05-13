@@ -44,11 +44,11 @@ const defaultConfig: Config = {
   url: (import.meta as any).env.VITE_SUPABASE_URL || '',
   key: (import.meta as any).env.VITE_SUPABASE_ANON_KEY || '',
   obraId: (import.meta as any).env.VITE_OBRA_ID || '', // Vazio = sem obra ativa
-  gemini: (import.meta as any).env.VITE_GEMINI_API_KEY || '',
+  gemini: '',
   model: 'gemini-1.5-flash',
-  imgbbKey: (import.meta as any).env.VITE_IMGBB_API_KEY || '',
+  imgbbKey: '',
   ollama: 'http://localhost:11434/api/generate',
-  minimax: (import.meta as any).env.VITE_OPENROUTER_API_KEY || '',
+  minimax: '',
   mcpServer: 'https://mcp.context7.com/mcp'
 };
 

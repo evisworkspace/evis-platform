@@ -159,16 +159,15 @@ export default function OrcamentistaHitlPanel() {
         <div>
           <div className="flex items-center gap-2">
             <ClipboardCheck className="h-5 w-5 text-amber-300" />
-            <h2 className="text-sm font-bold text-t1">HITL Orçamentista</h2>
+            <h2 className="text-sm font-bold text-t1">HITL Orçamentista — mock local</h2>
           </div>
           <p className="mt-1 max-w-3xl text-xs leading-5 text-t3">
-            Validação humana pré-orçamento para divergências, pendências e bloqueios antes de
-            qualquer dispatch futuro para agentes especialistas. Este HITL é separado do Diário de
-            Obra e altera apenas estado local mockado.
+            Preview de validação humana pré-orçamento com dados mockados. Este HITL é separado do
+            Diário de Obra, ainda não está conectado ao banco e altera apenas estado local.
           </p>
         </div>
         <span className="w-fit rounded border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-amber-200">
-          Fase 2F · Mock local
+          MOCK · Estado local
         </span>
       </header>
 

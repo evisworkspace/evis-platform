@@ -69,20 +69,13 @@ export async function sbFetch(path: string, opts: SbFetchOptions = {}, cfg: Conf
 
 export type GeminiPart = { text: string } | { inline_data: { mime_type: string, data: string } };
 
-export async function geminiCall(parts: (string | GeminiPart)[], temp = 0.2, maxTokens = 2048, cfg: Config) {
-  if (!cfg.gemini) throw new Error('API Key Gemini não configurada.');
-  const model = cfg.model || 'gemini-1.5-flash';
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${cfg.gemini}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: parts.map(p => typeof p === 'string' ? { text: p } : p) }],
-      generationConfig: { temperature: temp, maxOutputTokens: maxTokens }
-    })
-  });
-  const data = await res.json();
-  if (data.error) throw new Error(data.error.message);
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+export async function geminiCall(
+  _parts: (string | GeminiPart)[],
+  _temp = 0.2,
+  _maxTokens = 2048,
+  _cfg: Config
+): Promise<string> {
+  throw new Error('Gemini client-side bloqueado por segurança. Use um endpoint backend com HITL.');
 }
 
 export async function ollamaCall(prompt: string, temp = 0.2, _maxTokens = 2048, cfg: Config): Promise<string> {
@@ -102,53 +95,16 @@ export async function ollamaCall(prompt: string, temp = 0.2, _maxTokens = 2048, 
   return data.response || '';
 }
 
-export async function minimaxCall(prompt: string, temp = 0.2, maxTokens = 2048, cfg: Config): Promise<string> {
-  // Se cfg.minimax for uma URL de proxy/local, usa ela. Senão tenta OpenRouter.
-  const apiKey = cfg.minimax || (import.meta as any).env.VITE_OPENROUTER_API_KEY || '';
-  if (!apiKey) throw new Error('Minimax/OpenRouter Key não configurada.');
-
-  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-      'HTTP-Referer': 'https://evis-app.vercel.app',
-      'X-Title': 'EVIS Diário de Obra'
-    },
-    body: JSON.stringify({
-      model: 'minimax/minimax-m1',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: temp,
-      max_tokens: maxTokens,
-      stream: false
-    })
-  });
-  const data = await res.json();
-  if (data.error) throw new Error(typeof data.error === 'string' ? data.error : data.error.message);
-  return data.choices?.[0]?.message?.content || '';
+export async function minimaxCall(_prompt: string, _temp = 0.2, _maxTokens = 2048, _cfg: Config): Promise<string> {
+  throw new Error('OpenRouter/Minimax client-side bloqueado por segurança. Use um endpoint backend com HITL.');
 }
 
 export async function claudeCall(prompt: string, temp = 0.2, maxTokens = 4096, cfg: Config): Promise<string> {
-  const apiKey = (import.meta as any).env.VITE_ANTHROPIC_API_KEY || '';
-  if (!apiKey) throw new Error('Anthropic API Key não configurada.');
-
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01'
-    },
-    body: JSON.stringify({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: maxTokens,
-      messages: [{ role: 'user', content: prompt }],
-      temperature: temp
-    })
-  });
-  const data = await res.json();
-  if (data.error) throw new Error(data.error.message);
-  return data.content[0].text || '';
+  void prompt;
+  void temp;
+  void maxTokens;
+  void cfg;
+  throw new Error('Claude client-side bloqueado por segurança. Use um endpoint backend com HITL.');
 }
 
 export async function aiCall(prompt: string, temp = 0.2, maxTokens = 2048, cfg: Config, provider?: 'gemini' | 'ollama' | 'minimax' | 'claude'): Promise<string> {

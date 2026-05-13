@@ -98,16 +98,15 @@ export default function OrcamentistaReaderVerifierPanel() {
         <div>
           <div className="flex items-center gap-2">
             <GitCompareArrows className="h-5 w-5 text-purple-300" />
-            <h2 className="text-sm font-bold text-t1">Reader + Verifier</h2>
+            <h2 className="text-sm font-bold text-t1">Reader + Verifier — mock visual</h2>
           </div>
           <p className="mt-1 max-w-3xl text-xs leading-5 text-t3">
-            Leitura primária e validação independente antes dos agentes especialistas. Esta camada
-            transforma páginas renderizadas em evidências auditáveis; não gera orçamento, não grava
-            itens oficiais e não consolida prévia.
+            Preview visual com dados mockados. Ainda não está conectado ao read model/API real do
+            pipeline; não gera orçamento, não grava itens oficiais e não consolida prévia.
           </p>
         </div>
         <span className="w-fit rounded border border-purple-500/30 bg-purple-500/10 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-purple-200">
-          Fase 2E · Mock
+          MOCK · Não conectado
         </span>
       </header>
 

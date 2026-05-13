@@ -688,11 +688,13 @@ export default function OrcamentistaChat({
         <div className="oc-header-center">
           <FileText size={16} className="oc-header-icon" />
           <div>
-            <h1 className="oc-header-title">Orçamentista IA</h1>
+            <h1 className="oc-header-title">
+              {isOpportunityLinked ? 'Orçamentista IA' : 'Orçamentista IA — laboratório'}
+            </h1>
             <p className="oc-header-sub">
               {isOpportunityLinked
                 ? "Motor técnico-comercial vinculado à oportunidade"
-                : "Motor técnico-comercial para leitura de projetos, quantitativos e custos"}
+                : "Área de laboratório. O fluxo produtivo oficial fica dentro da oportunidade."}
             </p>
           </div>
         </div>
@@ -706,7 +708,7 @@ export default function OrcamentistaChat({
             }}
           >
             <option value="">
-              {isOpportunityLinked ? 'Workspace da oportunidade...' : 'Selecione a Obra...'}
+              {isOpportunityLinked ? 'Workspace da oportunidade...' : 'Selecione workspace de laboratório...'}
             </option>
             {linkedWorkspaceId && !hasLinkedWorkspaceOption && (
               <option value={linkedWorkspaceId}>
@@ -799,11 +801,11 @@ export default function OrcamentistaChat({
             {mensagens.length === 0 ? (
               <div className="oc-empty-state">
                 <Bot size={32} />
-                <h2>{isOpportunityLinked ? 'Oportunidade vinculada' : 'Motor Técnico pronto'}</h2>
+                <h2>{isOpportunityLinked ? 'Oportunidade vinculada' : 'Laboratório do motor técnico'}</h2>
                 <p>
                   {isOpportunityLinked
                     ? 'Alimente o motor com arquivos de projeto para iniciar o orçamento desta oportunidade.'
-                    : 'Selecione uma obra e alimente o motor com os arquivos de projeto.'}
+                    : 'O Orçamentista produtivo começa em uma oportunidade. Esta rota standalone não é o fluxo principal.'}
                 </p>
 
                 <div className="oc-fluxo-info">

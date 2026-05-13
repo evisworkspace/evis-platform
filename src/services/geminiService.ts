@@ -1,13 +1,12 @@
 import { GoogleGenAI } from "@google/genai";
 import { logger } from "./logger";
 
-// Uses the VITE_ prefix so Vite exposes this to the browser
-const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY || "";
+const apiKey = "";
 const ai = new GoogleGenAI({ apiKey });
 
 export async function analyzeDailyLog(content: string, tasks: string[]) {
   if (!apiKey) {
-    logger.error("VITE_GEMINI_API_KEY não configurada.");
+    logger.error("Chave Gemini client-side não configurada.");
     return null;
   }
 

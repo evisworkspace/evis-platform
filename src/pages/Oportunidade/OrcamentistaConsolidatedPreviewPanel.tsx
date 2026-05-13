@@ -20,15 +20,15 @@ export function OrcamentistaConsolidatedPreviewPanel() {
             <div>
               <CardTitle className="flex items-center gap-2 text-indigo-900">
                 <Layers className="h-5 w-5 text-indigo-600" />
-                Preview Consolidado
+                Preview Consolidado — mock visual
               </CardTitle>
               <CardDescription className="text-indigo-700 mt-1">
-                Prévia técnica-orçamentária gerada a partir dos outputs dos agentes. Ainda não é orçamento oficial.
+                Prévia técnica-orçamentária com dados mockados de agentes. Ainda não está conectada ao pipeline real e não é orçamento oficial.
               </CardDescription>
             </div>
             <div className="flex flex-col items-end gap-2">
               <Badge variant="outline" className="bg-indigo-100 text-indigo-800 border-indigo-200">
-                Fase 2H (Mock)
+                MOCK · Não conectado
               </Badge>
               <Badge className={preview.can_consolidate ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
                 {getConsolidatedPreviewStatusLabel(preview.status)}
