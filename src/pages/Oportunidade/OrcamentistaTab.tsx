@@ -17,6 +17,7 @@ import OrcamentistaPayloadReviewPanel from './OrcamentistaPayloadReviewPanel';
 import OrcamentistaRealReaderSandboxPanel from './OrcamentistaRealReaderSandboxPanel';
 import OrcamentistaMissingProjectFallbackPanel from './OrcamentistaMissingProjectFallbackPanel';
 import OrcamentistaGuidedIntakePanel from './OrcamentistaGuidedIntakePanel';
+import OrcamentistaInternalActionPanel from './OrcamentistaInternalActionPanel';
 import { buildMockDocumentIntakeFiles } from '../../lib/orcamentista/documentIntakeMock';
 import { mockPipelineSteps, mockAiPreview } from '../../lib/orcamentista/mockPipeline';
 
@@ -332,6 +333,9 @@ export default function OrcamentistaTab() {
               badgeVariant="purple"
             />
             <div className="mt-4 space-y-6">
+
+              {/* E0. Ação interna — Orçamentista IA (4D.2) */}
+              <OrcamentistaInternalActionPanel opportunityId={id} pipelineView={null} />
 
               {/* E1. Intake guiado e contexto técnico */}
               <OrcamentistaGuidedIntakePanel />
