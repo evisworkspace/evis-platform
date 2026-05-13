@@ -4,6 +4,8 @@ import path from 'path';
 import { runControlledManualOrcamentistaAction } from '../../platform/server/orcamentista/controlledManualAction';
 import { getOrcamentistaPipelineView } from '../../platform/server/orcamentista/pipelineView';
 import { createStagingClientFromEnv } from '../../platform/server/orcamentista/persistence/stagingClient';
+import { createOrcamentistaPersistenceRepository } from '../../platform/server/orcamentista/persistence/repository';
+import { persistContextSnapshot } from '../../platform/server/orcamentista/persistence/hitlPersistence';
 import type { OrcamentistaPreview, OrcamentistaPreviewItem } from '../../platform/server/orcamentista/contracts';
 import {
   createOrcamentistaWorkspace,
@@ -120,6 +122,185 @@ function buildPreviewFromWorkspace(workspace: OrcamentistaWorkspace): {
     };
   }
 }
+
+// ──────────────────────────────────────────────────────────────────────────────
+// POST /api/orcamentista/opportunities/:opportunityId/analyze
+//
+// MVP — Sprint 3. Análise inicial de arquivos reais para orçamento.
+//
+// Garantias:
+// - Não escreve em orcamento_itens (bloqueada no stagingClient).
+// - Não escreve orçamento oficial. Não escreve proposta.
+// - Não chama provider IA. Retorna estado controlado quando IA não conectada.
+// - Persiste somente em orc_context_snapshots (já existente na allowlist).
+// - Sem mock. Sem item fabricado. Sem quantidade estimada.
+// ──────────────────────────────────────────────────────────────────────────────
+type AnalyzeRequestBody = {
+  fileIds?: unknown;
+  workspaceId?: unknown;
+};
+
+type AnalyzeFileRow = {
+  id: string;
+  opportunity_id: string;
+  nome: string | null;
+  categoria: string | null;
+  mime_type: string | null;
+  tamanho_bytes: number | null;
+  storage_path: string | null;
+  url: string | null;
+};
+
+router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: Response) => {
+  const opportunityId = req.params.opportunityId;
+  const body = (req.body ?? {}) as AnalyzeRequestBody;
+
+  if (!opportunityId || typeof opportunityId !== 'string') {
+    return res.status(400).json({
+      success: false,
+      status: 'validation_error',
+      erro: 'opportunityId é obrigatório.',
+    });
+  }
+
+  const fileIds = Array.isArray(body.fileIds)
+    ? body.fileIds.filter((value): value is string => typeof value === 'string' && value.length > 0)
+    : [];
+  const workspaceId =
+    typeof body.workspaceId === 'string' && body.workspaceId.length > 0
+      ? body.workspaceId
+      : `opp_${opportunityId}`;
+
+  if (fileIds.length === 0) {
+    return res.status(400).json({
+      success: false,
+      status: 'validation_error',
+      erro: 'Selecione ao menos um arquivo para análise.',
+    });
+  }
+
+  try {
+    const bundle = createStagingClientFromEnv();
+
+    const filesBuilder = bundle.client.from('opportunity_files') as unknown as {
+      select: (columns: string) => {
+        eq: (column: string, value: unknown) => {
+          in: (column: string, values: string[]) => Promise<{
+            data: AnalyzeFileRow[] | null;
+            error: { message?: string } | null;
+          }>;
+        };
+      };
+    };
+
+    const filesQuery = await filesBuilder
+      .select('id, opportunity_id, nome, categoria, mime_type, tamanho_bytes, storage_path, url')
+      .eq('opportunity_id', opportunityId)
+      .in('id', fileIds);
+
+    const filesError = filesQuery.error;
+    if (filesError) {
+      return res.status(500).json({
+        success: false,
+        status: 'persistence_error',
+        erro: filesError.message ?? 'Falha ao ler opportunity_files.',
+      });
+    }
+
+    const rawFiles = (filesQuery.data ?? []) as AnalyzeFileRow[];
+    const foundIds = new Set(rawFiles.map((file) => file.id));
+    const missingIds = fileIds.filter((id) => !foundIds.has(id));
+
+    if (missingIds.length > 0) {
+      return res.status(400).json({
+        success: false,
+        status: 'validation_error',
+        erro: 'Um ou mais fileIds não pertencem à oportunidade informada.',
+        missingFileIds: missingIds,
+      });
+    }
+
+    const sourceFiles = rawFiles.map((file) => ({
+      id: file.id,
+      nome: file.nome,
+      categoria: file.categoria,
+      mime_type: file.mime_type,
+      tamanho_bytes: file.tamanho_bytes,
+    }));
+
+    const pendenciasHitl: string[] = [
+      'A análise técnica por IA ainda não está conectada ao backend.',
+      'Os arquivos foram identificados, mas nenhum quantitativo foi extraído.',
+    ];
+
+    const hasProjeto = rawFiles.some((file) => (file.categoria ?? '').toLowerCase() === 'projeto');
+    if (!hasProjeto) {
+      pendenciasHitl.push('Anexar pelo menos um arquivo na categoria "projeto" para destravar análise técnica.');
+    }
+
+    const warnings = ['Nenhum item de orçamento foi gerado automaticamente nesta execução.'];
+
+    const repository = createOrcamentistaPersistenceRepository(bundle.client);
+    const snapshotResult = await persistContextSnapshot(repository, {
+      opportunity_id: opportunityId,
+      source_type: 'orcamentista_analyze_v0',
+      source_ref: workspaceId,
+      phase: 'analyze_initial',
+      context_status: 'blocked',
+      context_snapshot_json: {
+        marker: 'orcamentista_analyze_v0',
+        workspace_id: workspaceId,
+        analyzed_file_ids: fileIds,
+        source_files: sourceFiles,
+        preview_source: 'metadata_only',
+        items: [],
+        pendencias_hitl: pendenciasHitl,
+        warnings,
+        backend_ai_configured: false,
+      },
+      created_by: 'orcamentista_analyze_endpoint',
+    });
+
+    if (snapshotResult.status !== 'success') {
+      return res.status(500).json({
+        success: false,
+        status: snapshotResult.status,
+        erro: snapshotResult.message,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      status: 'backend_ai_not_configured',
+      data: {
+        opportunity_id: opportunityId,
+        workspace_id: workspaceId,
+        generated_at: new Date().toISOString(),
+        preview_source: 'metadata_only',
+        source_files: sourceFiles,
+        items: [] as OrcamentistaPreviewItem[],
+        warnings,
+        pendencias_hitl: pendenciasHitl,
+        safety: {
+          officialBudgetWrite: 'blocked' as const,
+          canWriteConsolidationToBudget: false as const,
+          touchedBudgetItemsTable: false as const,
+        },
+        snapshot: {
+          id: snapshotResult.data.id,
+          context_status: 'blocked' as const,
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error('Error in orcamentista analyze endpoint:', error);
+    return res.status(500).json({
+      success: false,
+      status: 'persistence_error',
+      erro: error?.message ?? 'Internal server error',
+    });
+  }
+});
 
 // POST /api/orcamentista/manual-run
 router.post('/manual-run', async (req, res) => {

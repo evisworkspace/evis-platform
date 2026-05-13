@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import OrcamentistaChat from '../OrcamentistaChat';
 import { useAppContext } from '../../AppContext';
@@ -100,6 +101,7 @@ function SectionDivider({
 export default function OrcamentistaTab() {
   const { id = '' } = useParams();
   const { config } = useAppContext();
+  const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   const {
     opportunity,
     orcamento,
@@ -117,6 +119,17 @@ export default function OrcamentistaTab() {
     removerItemManual,
   } = useOportunidadeOrcamento(id, config);
   const opportunityFiles = useOpportunityFiles(id, config);
+
+  // Limpa a seleção quando a oportunidade muda.
+  useEffect(() => {
+    setSelectedFileIds([]);
+  }, [id]);
+
+  // Remove da seleção qualquer fileId que deixou de existir no resultado real.
+  useEffect(() => {
+    const availableIds = new Set((opportunityFiles.data ?? []).map((file) => file.id));
+    setSelectedFileIds((current) => current.filter((fileId) => availableIds.has(fileId)));
+  }, [opportunityFiles.data]);
 
   // ── Sem ID ──────────────────────────────────
   if (!id) {
@@ -335,17 +348,24 @@ export default function OrcamentistaTab() {
             />
             <div className="mt-4 space-y-6">
 
-              {/* E0. Estado contextual real — read-only */}
+              {/* E0. Estado contextual real — read-only com seleção de arquivos */}
               <OrcamentistaContextStatePanel
                 opportunityId={id}
                 workspaceId={workspaceId}
                 opportunityFiles={opportunityFiles.data ?? []}
                 isLoadingOpportunityFiles={opportunityFiles.isFetching}
                 opportunityFilesError={opportunityFilesError}
+                selectedFileIds={selectedFileIds}
+                onSelectionChange={setSelectedFileIds}
               />
 
-              {/* E1. Ação interna — Orçamentista IA (4D.2) */}
-              <OrcamentistaInternalActionPanel opportunityId={id} />
+              {/* E1. Ação principal — Analisar arquivos para orçamento */}
+              <OrcamentistaInternalActionPanel
+                opportunityId={id}
+                workspaceId={workspaceId}
+                selectedFileIds={selectedFileIds}
+                totalFilesAvailable={opportunityFiles.data?.length ?? 0}
+              />
 
               {/* E2. Intake guiado e contexto técnico */}
               <OrcamentistaGuidedIntakePanel />
