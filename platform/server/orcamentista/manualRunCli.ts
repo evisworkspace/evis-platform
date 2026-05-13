@@ -1,5 +1,6 @@
 import { pathToFileURL } from 'node:url';
-import { runOrcamentistaManualRun, type OrcamentistaManualRunInput } from './orcamentistaManualRun';
+import { runControlledManualOrcamentistaAction } from './controlledManualAction';
+import type { OrcamentistaManualRunInput } from './orcamentistaManualRun';
 
 type CliOptions = OrcamentistaManualRunInput & {
   confirmStagingWrite: boolean;
@@ -18,7 +19,7 @@ async function main(): Promise<void> {
     throw new Error('Refusing to run without --confirm-staging-write.');
   }
 
-  const result = await runOrcamentistaManualRun(options);
+  const result = await runControlledManualOrcamentistaAction(options);
 
   if (result.status !== 'success') {
     console.log(JSON.stringify({
@@ -31,6 +32,7 @@ async function main(): Promise<void> {
 
   console.log(JSON.stringify({
     status: result.status,
+    action: result.data.action,
     projectRef: result.data.projectRef,
     marker: result.data.marker,
     opportunityId: result.data.opportunityId,
@@ -41,7 +43,7 @@ async function main(): Promise<void> {
     hitlIssueId: result.data.hitlIssueId,
     finalContextSnapshotId: result.data.finalContextSnapshotId,
     pipelineSummary: result.data.pipelineSummary,
-    latestContextStatus: result.data.latestContextSnapshot?.context_status ?? null,
+    latestContextStatus: result.data.latestContextStatus,
     canWriteConsolidationToBudget: result.data.canWriteConsolidationToBudget,
     touchedTables: result.data.touchedTables,
     touchedBudgetItemsTable: result.data.touchedBudgetItemsTable
