@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import diarioRoutes from './routes/diario';
+import orcamentistaRoutes from './routes/orcamentista';
 
 dotenv.config();
 
@@ -13,6 +14,7 @@ app.use(express.json());
 
 // Rotas
 app.use('/api/diario', diarioRoutes);
+app.use('/api/orcamentista', orcamentistaRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

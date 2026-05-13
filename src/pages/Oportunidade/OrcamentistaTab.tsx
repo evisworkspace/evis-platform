@@ -335,7 +335,7 @@ export default function OrcamentistaTab() {
             <div className="mt-4 space-y-6">
 
               {/* E0. Ação interna — Orçamentista IA (4D.2) */}
-              <OrcamentistaInternalActionPanel opportunityId={id} pipelineView={null} />
+              <OrcamentistaInternalActionPanel opportunityId={id} />
 
               {/* E1. Intake guiado e contexto técnico */}
               <OrcamentistaGuidedIntakePanel />

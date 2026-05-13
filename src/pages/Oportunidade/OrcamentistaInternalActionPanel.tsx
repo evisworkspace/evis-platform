@@ -1,18 +1,14 @@
-import { Lock, ShieldAlert, Terminal } from 'lucide-react';
+import { Lock, ShieldAlert, Terminal, Play, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 // ──────────────────────────────────────────────
-// OrcamentistaInternalActionPanel — Fase 4D.2
-//
-// Painel interno minimo para acompanhar a acao manual controlada
-// do Orcamentista IA em staging.
+// OrcamentistaInternalActionPanel — Fase 4D.2 UI Funcional
 //
 // Regras:
-// - Read-only. Nao executa chamada remota a partir do client.
-// - Nao usa service_role. Nao usa supabase/.temp.
-// - Botao "Rodar Orcamentista IA" fica desabilitado nesta fase.
-//   Execucao ocorre via CLI server-side (manualRunCli / pipelineViewCli).
-// - orcamento_itens permanece bloqueado.
-// - canWriteConsolidationToBudget permanece false.
+// - Read-only do client. Chama API do backend.
+// - Nao usa service_role no client. Nao usa supabase/.temp.
+// - orcamento_itens permanece bloqueado no backend.
+// - canWriteConsolidationToBudget permanece false no backend.
 // ──────────────────────────────────────────────
 
 export type OrcamentistaInternalActionPipelineView = {
@@ -27,100 +23,186 @@ export type OrcamentistaInternalActionPipelineView = {
 
 interface Props {
   opportunityId: string;
-  pipelineView?: OrcamentistaInternalActionPipelineView | null;
 }
 
 function MetricCell({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-      <div className="font-mono text-[9px] font-bold uppercase tracking-widest text-white/40">
+    <div className="flex flex-col justify-between rounded-lg border border-purple-500/20 bg-purple-500/5 px-4 py-3 transition-colors hover:border-purple-500/40">
+      <div className="font-mono text-[10px] font-bold uppercase tracking-widest text-purple-300/60">
         {label}
       </div>
-      <div className="mt-0.5 text-sm font-semibold text-white/80">{value}</div>
+      <div className="mt-1 text-lg font-semibold text-purple-100">{value}</div>
     </div>
   );
 }
 
-export default function OrcamentistaInternalActionPanel({ opportunityId, pipelineView }: Props) {
-  const view = pipelineView ?? null;
+export default function OrcamentistaInternalActionPanel({ opportunityId }: Props) {
+  const [view, setView] = useState<OrcamentistaInternalActionPipelineView | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
-  const fmtCount = (value: number | null) =>
+  const fetchPipelineView = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`http://localhost:3001/api/orcamentista/pipeline-view?opportunityId=${opportunityId}`);
+      const json = await res.json();
+      if (res.ok && json.status === 'success') {
+        setView(json.data);
+      } else {
+        // Ignora erros de "not found" ou pipeline não iniciado, pois a view pode ser nula inicialmente
+        if (json.status !== 'not_found' && json.status !== 'validation_error') {
+          setError(json.message || 'Erro ao carregar Pipeline View');
+        }
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError('Falha de rede ao carregar Pipeline View');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPipelineView();
+  }, [opportunityId]);
+
+  const handleRun = async () => {
+    setRunning(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const res = await fetch(`http://localhost:3001/api/orcamentista/manual-run`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          opportunityId,
+          mode: 'manual_test',
+          marker: 'UI_MANUAL_RUN'
+        })
+      });
+      const json = await res.json();
+
+      if (res.ok && json.status === 'success') {
+        setSuccess('Execução concluída com sucesso!');
+        await fetchPipelineView();
+      } else {
+        setError(json.message || 'Erro ao executar Orçamentista');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError('Falha de rede ao executar Orçamentista');
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  const fmtCount = (value: number | null | undefined) =>
     typeof value === 'number' ? String(value) : '—';
-  const fmtStatus = (value: string | null) =>
+  const fmtStatus = (value: string | null | undefined) =>
     value && value.length > 0 ? value : '—';
 
   return (
-    <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-5 space-y-4">
-      <div className="flex items-start justify-between gap-3">
+    <div className="rounded-xl border border-b1 bg-s1 p-6 space-y-6 shadow-sm">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <Terminal size={14} className="text-purple-400" />
-            <span className="text-sm font-bold text-purple-300">
+            <Terminal size={18} className="text-purple-400" />
+            <h3 className="text-base font-bold text-t1">
               Ação interna — Orçamentista IA
-            </span>
+            </h3>
           </div>
-          <p className="mt-0.5 text-xs text-white/40">
-            Status do pipeline staging desta oportunidade. Leitura apenas.
+          <p className="mt-1 text-sm text-t3">
+            Aciona o pipeline server-side de análise para o Staging. Os dados gerados aqui são apenas prévias e não afetam o orçamento oficial.
           </p>
         </div>
-        <span className="rounded border border-purple-500/40 bg-purple-500/15 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-purple-300">
-          STAGING · USO INTERNO
-        </span>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-        <MetricCell label="Arquivos" value={fmtCount(view?.total_files ?? null)} />
-        <MetricCell label="Reader runs" value={fmtCount(view?.total_reader_runs ?? null)} />
-        <MetricCell label="Verifier runs" value={fmtCount(view?.total_verifier_runs ?? null)} />
-        <MetricCell label="HITL em aberto" value={fmtCount(view?.open_hitl_issues ?? null)} />
-        <MetricCell label="Context status" value={fmtStatus(view?.latestContextStatus ?? null)} />
-        <MetricCell label="Oportunidade" value={opportunityId.slice(0, 8) || '—'} />
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2">
-          <Lock size={12} className="mt-0.5 shrink-0 text-amber-400" />
-          <p className="text-[11px] leading-snug text-amber-300">
-            Consolidação automática em orçamento bloqueada nesta fase.
-            <span className="ml-1 font-mono text-[10px] text-amber-300/70">
-              canWriteConsolidationToBudget=false
+        <div className="flex flex-col items-end gap-2">
+          <span className="rounded-full border border-purple-500/40 bg-purple-500/15 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-purple-300">
+            STAGING · USO INTERNO
+          </span>
+          {view?.latestContextStatus && (
+            <span className={`rounded-full px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest border ${
+              view.latestContextStatus === 'blocked'
+                ? 'border-amber-500/30 bg-amber-500/10 text-amber-400'
+                : 'border-green-500/30 bg-green-500/10 text-green-400'
+            }`}>
+              GATE: {view.latestContextStatus}
             </span>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-5">
+        <MetricCell label="Arquivos" value={fmtCount(view?.total_files)} />
+        <MetricCell label="Reader runs" value={fmtCount(view?.total_reader_runs)} />
+        <MetricCell label="Verifier runs" value={fmtCount(view?.total_verifier_runs)} />
+        <MetricCell label="HITL em aberto" value={fmtCount(view?.open_hitl_issues)} />
+        <MetricCell label="Context status" value={fmtStatus(view?.latestContextStatus)} />
+      </div>
+
+      <div className="flex flex-col gap-3 md:flex-row md:items-stretch">
+        <div className="flex flex-1 flex-col justify-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <Lock size={14} className="text-amber-400" />
+            <p className="text-xs font-medium text-amber-300">
+              Consolidação automática no orçamento oficial: <span className="font-bold">BLOQUEADA</span>
+            </p>
+          </div>
+          <p className="pl-6 font-mono text-[10px] text-amber-300/60">
+            canWriteConsolidationToBudget = false
           </p>
         </div>
-        <div className="flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2">
-          <ShieldAlert size={12} className="mt-0.5 shrink-0 text-red-400" />
-          <p className="text-[11px] leading-snug text-red-300">
-            Escrita em orcamento_itens bloqueada no client staging guard.
-            <span className="ml-1 font-mono text-[10px] text-red-300/70">
-              touchedBudgetItemsTable=false
-            </span>
+
+        <div className="flex flex-1 flex-col justify-center gap-2 rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <ShieldAlert size={14} className="text-red-400" />
+            <p className="text-xs font-medium text-red-300">
+              Proteção ativa na tabela <span className="font-mono bg-red-500/20 px-1 py-0.5 rounded text-[10px]">orcamento_itens</span>
+            </p>
+          </div>
+          <p className="pl-6 font-mono text-[10px] text-red-300/60">
+            Produção não acessada · touchedBudgetItemsTable = false
           </p>
         </div>
       </div>
 
-      <div className="space-y-2">
+      {error && (
+        <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
+          <AlertCircle size={16} />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {success && (
+        <div className="flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
+          <CheckCircle2 size={16} />
+          <span>{success}</span>
+        </div>
+      )}
+
+      <div className="flex flex-col items-center gap-3 border-t border-b1 pt-6">
         <button
           type="button"
-          disabled
-          aria-disabled
-          title="Execução disponível apenas via CLI/server-side nesta fase."
-          className="w-full cursor-not-allowed rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white/40"
+          onClick={handleRun}
+          disabled={running || loading}
+          className="flex w-full max-w-sm items-center justify-center gap-2 rounded-lg bg-purple-600 px-6 py-3 text-sm font-bold text-white transition-all hover:bg-purple-500 focus:ring-4 focus:ring-purple-500/30 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Rodar Orçamentista IA
+          {running ? (
+            <>
+              <Loader2 size={16} className="animate-spin" />
+              <span>Executando Pipeline...</span>
+            </>
+          ) : (
+            <>
+              <Play size={16} fill="currentColor" />
+              <span>Rodar Orçamentista IA</span>
+            </>
+          )}
         </button>
-        <p className="text-center text-[11px] text-white/40">
-          Execução disponível apenas via CLI/server-side nesta fase.
-        </p>
-      </div>
-
-      <div className="rounded-lg border border-white/5 bg-white/3 px-3 py-2">
-        <p className="font-mono text-[9px] font-bold uppercase tracking-widest text-white/30">
-          Como executar
-        </p>
-        <p className="mt-1 text-[11px] leading-snug text-white/40">
-          Manual Run e Pipeline View rodam apenas server-side em staging, com variáveis de ambiente
-          seguras já injetadas na sessão e service_role rotacionada. Service role nunca trafega
-          pelo browser.
+        <p className="text-center text-[11px] text-t4">
+          A execução é realizada exclusivamente server-side via API controlada.
         </p>
       </div>
     </div>
