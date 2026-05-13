@@ -10,3 +10,4 @@ export * from './repository';
 export * from './readerPersistence';
 export * from './verifierPersistence';
 export * from './hitlPersistence';
+export * from './readModels';
