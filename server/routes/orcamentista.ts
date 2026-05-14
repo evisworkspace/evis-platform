@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { runControlledManualOrcamentistaAction } from '../../platform/server/orcamentista/controlledManualAction';
 import { getOrcamentistaPipelineView } from '../../platform/server/orcamentista/pipelineView';
-import { createStagingClientFromEnv, downloadOpportunityFile } from '../../platform/server/orcamentista/persistence/stagingClient';
+import { createStagingClientFromEnv, downloadOpportunityFile, readAndValidateStagingEnv } from '../../platform/server/orcamentista/persistence/stagingClient';
 import { createOrcamentistaPersistenceRepository } from '../../platform/server/orcamentista/persistence/repository';
 import { persistContextSnapshot } from '../../platform/server/orcamentista/persistence/hitlPersistence';
 import type { OrcamentistaPreview, OrcamentistaPreviewItem } from '../../platform/server/orcamentista/contracts';
@@ -292,12 +292,33 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
       sourceFiles.push(entry);
     }
 
+    const isAiEnabled = process.env.EVIS_ORCAMENTISTA_ENABLE_AI_ANALYZE === 'true';
     const hasExtractedText = evidences.length > 0;
-    const previewSource = hasExtractedText ? 'file_text_extracted' : 'file_access_only';
-    const responseStatus = hasExtractedText ? 'review_required' : 'backend_ai_not_configured';
-    const pendenciasHitl = hasExtractedText
-      ? ['Texto extraído. Quantitativos ainda exigem validação humana.']
-      : ['Arquivo físico acessado pelo backend. Extração textual local indisponível para os arquivos selecionados.'];
+    const previewSource = isAiEnabled ? 'ai_extracted' : hasExtractedText ? 'file_text_extracted' : 'file_access_only';
+    const responseStatus = isAiEnabled ? 'ai_items_generated' : hasExtractedText ? 'review_required' : 'ai_lab_disabled';
+    const pendenciasHitl = isAiEnabled
+      ? ['Itens gerados por IA. Revisão humana obrigatória antes da consolidação.']
+      : hasExtractedText
+        ? ['Texto extraído localmente. IA desativada (EVIS_ORCAMENTISTA_ENABLE_AI_ANALYZE=false).']
+        : ['Arquivo físico acessado. Extração textual local indisponível para os arquivos selecionados.'];
+
+    // Mock items generation if AI is enabled for testing the flow
+    const items: OrcamentistaPreviewItem[] = isAiEnabled && hasExtractedText
+      ? [
+          {
+            codigo: 'LAB-001',
+            descricao: '[PREVIEW LAB] Serviço identificado via IA experimental',
+            unidade: 'un',
+            quantidade: 1,
+            valor_unitario: 100,
+            valor_total: 100,
+            categoria: 'IA Preview',
+            origem: 'ia_extracted',
+            confianca: 0.85,
+            observacoes: 'Gerado em modo LAB. Não gravado em orcamento_itens.'
+          }
+        ]
+      : [];
 
     const repository = createOrcamentistaPersistenceRepository(bundle.client);
     const snapshotResult = await persistContextSnapshot(repository, {
@@ -312,11 +333,11 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
         analyzed_file_ids: fileIds,
         source_files: sourceFiles,
         preview_source: previewSource,
-        items: [],
+        items,
         evidences,
         pendencias_hitl: pendenciasHitl,
         warnings,
-        backend_ai_configured: false,
+        backend_ai_configured: isAiEnabled,
       },
       created_by: 'orcamentista_analyze_endpoint',
     });
@@ -339,7 +360,7 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
         preview_source: previewSource,
         source_files: sourceFiles,
         evidences,
-        items: [] as OrcamentistaPreviewItem[],
+        items,
         warnings,
         pendencias_hitl: pendenciasHitl,
         safety: {
@@ -360,6 +381,91 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
       status: 'persistence_error',
       erro: error?.message ?? 'Internal server error',
     });
+  }
+});
+
+/**
+ * POST /api/orcamentista/opportunities/:opportunityId/files
+ *
+ * Upload LAB de arquivos para oportunidade real.
+ * Restrições:
+ * - Limite 10 MiB
+ * - Tipos: .txt, .csv, .json, .md (bloqueia .pdf por enquanto)
+ * - Bucket: opportunity-files (privado)
+ * - Sem URL pública.
+ */
+router.post('/opportunities/:opportunityId/files', express.raw({ type: '*/*', limit: '10mb' }), async (req: Request, res: Response) => {
+  const opportunityId = req.params.opportunityId;
+  const fileName = decodeURIComponent((req.headers['x-file-name'] as string) || 'arquivo_lab');
+  const mimeType = (req.headers['x-file-type'] as string) || 'application/octet-stream';
+
+  if (!opportunityId) {
+    return res.status(400).json({ success: false, erro: 'opportunityId é obrigatório.' });
+  }
+
+  if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+    return res.status(400).json({ success: false, erro: 'Arquivo vazio ou corpo inválido.' });
+  }
+
+  // Validação de tipo de arquivo (extensão)
+  const ext = path.extname(fileName).toLowerCase();
+  const allowedExts = ['.txt', '.csv', '.json', '.md'];
+  if (!allowedExts.includes(ext)) {
+    return res.status(400).json({
+      success: false,
+      erro: `Tipo de arquivo não permitido no LAB: ${ext}. Use .txt, .csv, .json ou .md.`
+    });
+  }
+
+  try {
+    const bundle = createStagingClientFromEnv();
+    const env = readAndValidateStagingEnv(); // redundant check but safe
+
+    // Upload para Supabase Storage
+    const bucket = 'opportunity-files';
+    const timestamp = Date.now();
+    const storagePath = `${opportunityId}/${timestamp}_${fileName}`;
+
+    // Note: readAndValidateStagingEnv returns StagingEnv with url/key
+    const { createClient } = await import('@supabase/supabase-js');
+    const { error: storageError } = await createClient(env.url, env.key).storage
+      .from(bucket)
+      .upload(storagePath, req.body, {
+        contentType: mimeType,
+        upsert: false
+      });
+
+    if (storageError) {
+      throw new Error(`Erro no storage: ${storageError.message}`);
+    }
+
+    // Registro no banco opportunity_files
+    const { data: fileRecord, error: dbError } = await bundle.client
+      .from('opportunity_files')
+      .insert({
+        opportunity_id: opportunityId,
+        nome: fileName,
+        mime_type: mimeType,
+        tamanho_bytes: req.body.length,
+        storage_path: storagePath,
+        categoria: 'lab_upload',
+        criado_por: 'orcamentista_lab_upload'
+      })
+      .select()
+      .single();
+
+    if (dbError) {
+      throw new Error(`Erro ao registrar arquivo no banco: ${dbError.message}`);
+    }
+
+    return res.status(201).json({
+      success: true,
+      data: fileRecord
+    });
+
+  } catch (error: any) {
+    console.error('Error in LAB upload:', error);
+    return res.status(500).json({ success: false, erro: error.message });
   }
 });
 

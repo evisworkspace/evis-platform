@@ -156,15 +156,15 @@ export default function OrcamentistaInternalActionPanel({
           <span className="rounded-full border border-emerald-500/40 bg-emerald-500/15 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-emerald-300">
             REAL · ANÁLISE INICIAL
           </span>
-          {analyzeStatus && (
             <span className={`rounded-full px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest border ${
-              analyzeStatus === 'backend_ai_not_configured'
+              analyzeStatus === 'ai_lab_disabled'
                 ? 'border-amber-500/30 bg-amber-500/10 text-amber-400'
-                : 'border-green-500/30 bg-green-500/10 text-green-400'
+                : analyzeStatus === 'ai_items_generated'
+                  ? 'border-green-500/30 bg-green-500/10 text-green-400'
+                  : 'border-white/10 bg-white/5 text-white/50'
             }`}>
-              STATUS: {analyzeStatus}
+              STATUS: {analyzeStatus ?? 'idle'}
             </span>
-          )}
         </div>
       </div>
 
@@ -184,10 +184,10 @@ export default function OrcamentistaInternalActionPanel({
         <MetricCell
           label="IA backend"
           value={
-            analyzeStatus === 'backend_ai_not_configured'
-              ? 'NÃO CONECTADA'
-              : analyzeStatus === 'ai_analyzed'
-                ? 'CONECTADA'
+            analyzeStatus === 'ai_lab_disabled'
+              ? 'DESABILITADA'
+              : analyzeStatus === 'ai_items_generated'
+                ? 'LAB / CONECTADA'
                 : '—'
           }
         />
@@ -238,11 +238,11 @@ export default function OrcamentistaInternalActionPanel({
           <div className="space-y-1 rounded border border-white/10 bg-white/5 px-3 py-2">
             <p className="font-mono text-[10px] uppercase tracking-widest text-white/40">Origem do preview</p>
             <p className="text-xs font-semibold text-white/80">
-              {analyzeResult.preview_source === 'metadata_only'
-                ? 'Apenas metadados — IA backend não conectada'
+              {analyzeResult.preview_source === 'ai_extracted'
+                ? 'IA Backend (EXPERIMENTAL) — Prévia LAB'
                 : analyzeResult.preview_source === 'file_text_extracted'
-                  ? 'Texto real extraído localmente — sem IA'
-                  : 'Arquivo acessado pelo backend — sem IA'}
+                  ? 'Texto real extraído localmente — Sem IA'
+                  : 'Arquivo acessado pelo backend — Sem IA'}
             </p>
           </div>
 

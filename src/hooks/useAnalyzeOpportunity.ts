@@ -10,7 +10,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 // ──────────────────────────────────────────────
 
 export type AnalyzeStatus =
-  | 'backend_ai_not_configured'
+  | 'ai_lab_disabled'
+  | 'ai_items_generated'
   | 'review_required'
   | 'ai_analyzed'
   | 'validation_error'

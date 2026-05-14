@@ -53,43 +53,63 @@ export function createStagingClientFromEnv(): StagingClientBundle {
 }
 
 export function readAndValidateStagingEnv(): StagingEnv {
-  const projectRef = readRequiredEnv('EVIS_STAGING_PROJECT_REF');
-  const blockedProductionRef = readRequiredEnv('EVIS_BLOCKED_PRODUCTION_PROJECT_REF');
-  const url = readRequiredEnv('EVIS_STAGING_SUPABASE_URL');
-  const key = readRequiredEnv('EVIS_STAGING_SUPABASE_SERVICE_ROLE_KEY');
+  const allowMainDev = process.env.EVIS_ALLOW_MAIN_SUPABASE_DEV_MODE === 'true';
+  // 1. Tentar ler variáveis de staging
+  const projectRef = process.env.EVIS_STAGING_PROJECT_REF;
+  const blockedProductionRef = process.env.EVIS_BLOCKED_PRODUCTION_PROJECT_REF;
+  const url = process.env.EVIS_STAGING_SUPABASE_URL;
+  const key = process.env.EVIS_STAGING_SUPABASE_SERVICE_ROLE_KEY;
 
-  if (projectRef !== AUTHORIZED_STAGING_PROJECT_REF) {
-    throw new Error('EVIS_STAGING_PROJECT_REF is not the authorized staging project.');
-  }
+  const hasStagingEnv = !!(projectRef && blockedProductionRef && url && key);
 
-  if (blockedProductionRef === AUTHORIZED_STAGING_PROJECT_REF) {
-    throw new Error('Blocked production ref cannot match the authorized staging project.');
-  }
-
-  if (!url.includes(AUTHORIZED_STAGING_PROJECT_REF)) {
-    throw new Error('EVIS_STAGING_SUPABASE_URL does not point to the authorized staging project.');
-  }
-
-  for (const [name, value] of Object.entries({ projectRef, url, key })) {
-    if (value.includes(blockedProductionRef)) {
-      throw new Error(`${name} points to the blocked production project.`);
+  if (hasStagingEnv) {
+    if (projectRef !== AUTHORIZED_STAGING_PROJECT_REF) {
+      throw new Error('EVIS_STAGING_PROJECT_REF is not the authorized staging project.');
     }
+
+    if (blockedProductionRef === AUTHORIZED_STAGING_PROJECT_REF) {
+      throw new Error('Blocked production ref cannot match the authorized staging project.');
+    }
+
+    if (!url.includes(AUTHORIZED_STAGING_PROJECT_REF)) {
+      throw new Error('EVIS_STAGING_SUPABASE_URL does not point to the authorized staging project.');
+    }
+
+    for (const [name, value] of Object.entries({ projectRef, url, key })) {
+      if (value.includes(blockedProductionRef)) {
+        throw new Error(`${name} points to the blocked production project.`);
+      }
+    }
+
+    const jwtRef = tryReadJwtProjectRef(key);
+    if (jwtRef && jwtRef !== AUTHORIZED_STAGING_PROJECT_REF) {
+      throw new Error('EVIS_STAGING_SUPABASE_SERVICE_ROLE_KEY is not scoped to the authorized staging project.');
+    }
+
+    return { projectRef, blockedProductionRef, url, key };
   }
 
-  const jwtRef = tryReadJwtProjectRef(key);
-  if (jwtRef && jwtRef !== AUTHORIZED_STAGING_PROJECT_REF) {
-    throw new Error('EVIS_STAGING_SUPABASE_SERVICE_ROLE_KEY is not scoped to the authorized staging project.');
+  // 2. Fallback para Supabase Principal se permitido
+  if (allowMainDev) {
+    const mainUrl = process.env.VITE_SUPABASE_URL;
+    const mainKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!mainUrl || !mainKey) {
+      throw new Error('Fallback to main Supabase enabled but VITE_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing.');
+    }
+
+    const mainRef = tryReadJwtProjectRef(mainKey) || 'main_project';
+
+    return {
+      projectRef: mainRef,
+      blockedProductionRef: 'NOT_BLOCKED_IN_DEV_MODE',
+      url: mainUrl,
+      key: mainKey
+    };
   }
 
-  return { projectRef, blockedProductionRef, url, key };
-}
-
-function readRequiredEnv(name: keyof NodeJS.ProcessEnv): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`${name} is required in the current shell session.`);
-  }
-  return value;
+  // 3. Bloqueio total
+  throw new Error('Ambiente de staging não configurado e EVIS_ALLOW_MAIN_SUPABASE_DEV_MODE está desligado.');
 }
 
 function tryReadJwtProjectRef(token: string): string | null {

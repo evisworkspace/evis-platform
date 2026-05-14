@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, Database, FileText, FolderOpen, Loader2, Lock } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Database, FileText, FolderOpen, Loader2, Lock, Upload } from 'lucide-react';
 import type { OpportunityFile } from '../../types';
 import {
   useOrcamentistaWorkspaceState,
@@ -151,9 +151,21 @@ export default function OrcamentistaContextStatePanel({
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
-          <div className="mb-3 flex items-center gap-2">
-            <FileText size={14} className="text-blue-300" />
-            <p className="text-xs font-bold uppercase tracking-widest text-white/50">Arquivos reais em opportunity_files</p>
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <FileText size={14} className="text-blue-300" />
+              <p className="text-xs font-bold uppercase tracking-widest text-white/50">Arquivos reais em opportunity_files</p>
+            </div>
+            <button
+              className="flex items-center gap-1.5 rounded border border-blue-500/30 bg-blue-500/10 px-2 py-1 text-[10px] font-bold text-blue-300 transition-colors hover:bg-blue-500/20"
+              title="Upload experimental"
+            >
+              <Upload size={10} />
+              UPLOAD LAB
+            </button>
+          </div>
+          <div className="mb-3 rounded border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-[10px] leading-4 text-amber-200/70">
+            Upload experimental para teste do Orçamentista. Não usar como fluxo oficial de produção.
           </div>
           {isLoadingOpportunityFiles ? (
             <p className="flex items-center gap-2 text-xs text-white/40">
