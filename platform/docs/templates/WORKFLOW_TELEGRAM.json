@@ -22,7 +22,7 @@
       "typeVersion": 2,
       "position": [500, 300],
       "parameters": {
-        "jsCode": "const BOT_TOKEN = '8723896780:AAFISWZwETo8fbK9srUzuZyh2e7OipRlr7g';\n\nconst msg = $('Telegram Trigger').first().json.message;\nconst fileId = msg.voice?.file_id || msg.audio?.file_id;\nconst mimeType = msg.voice?.mime_type || msg.audio?.mime_type || 'audio/ogg';\nconst telegramUser = msg.from?.first_name || 'Usuário';\n\nif (!fileId) throw new Error('Nenhum file_id encontrado na mensagem');\n\n// 1. Obter file_path\nconst infoRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`);\nconst infoJson = await infoRes.json();\nif (!infoJson.ok) throw new Error('getFile falhou: ' + JSON.stringify(infoJson));\nconst filePath = infoJson.result.file_path;\n\n// 2. Baixar o binário\nconst fileRes = await fetch(`https://api.telegram.org/file/bot${BOT_TOKEN}/${filePath}`);\nif (!fileRes.ok) throw new Error('Download falhou: ' + fileRes.status);\nconst arrayBuffer = await fileRes.arrayBuffer();\nconst base64Audio = Buffer.from(arrayBuffer).toString('base64');\n\nreturn [{ json: { base64Audio, mimeType, telegram_user: telegramUser } }];"
+        "jsCode": "const BOT_TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN';\n\nconst msg = $('Telegram Trigger').first().json.message;\nconst fileId = msg.voice?.file_id || msg.audio?.file_id;\nconst mimeType = msg.voice?.mime_type || msg.audio?.mime_type || 'audio/ogg';\nconst telegramUser = msg.from?.first_name || 'Usuário';\n\nif (!fileId) throw new Error('Nenhum file_id encontrado na mensagem');\n\n// 1. Obter file_path\nconst infoRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`);\nconst infoJson = await infoRes.json();\nif (!infoJson.ok) throw new Error('getFile falhou: ' + JSON.stringify(infoJson));\nconst filePath = infoJson.result.file_path;\n\n// 2. Baixar o binário\nconst fileRes = await fetch(`https://api.telegram.org/file/bot${BOT_TOKEN}/${filePath}`);\nif (!fileRes.ok) throw new Error('Download falhou: ' + fileRes.status);\nconst arrayBuffer = await fileRes.arrayBuffer();\nconst base64Audio = Buffer.from(arrayBuffer).toString('base64');\n\nreturn [{ json: { base64Audio, mimeType, telegram_user: telegramUser } }];"
       }
     },
     {
@@ -33,7 +33,7 @@
       "position": [750, 300],
       "parameters": {
         "method": "POST",
-        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyB8PP3Xzyvz-V_3khv-9Xxu-X-xYkMSvxk",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=YOUR_GEMINI_API_KEY",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
