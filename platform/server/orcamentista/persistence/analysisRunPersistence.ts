@@ -76,6 +76,8 @@ export type AnalysisRunFileReadInput = {
     | 'file_too_large'
     | 'text_extracted'
     | 'text_empty'
+    | 'pdf_text_extracted'
+    | 'pdf_image_detected'
     | 'pdf_parser_unavailable'
     | 'unsupported_file_type'
     | null;

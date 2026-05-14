@@ -280,7 +280,7 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
         entry.downloaded_bytes = size ?? 0;
 
         if (buffer) {
-          const extraction = extractTextEvidenceFromFile({
+          const extraction = await extractTextEvidenceFromFile({
             fileId: file.id,
             fileName: file.nome,
             mimeType: file.mime_type,
@@ -306,11 +306,16 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
     }
 
     const hasExtractedText = evidences.length > 0;
+    const hasPdfImages = sourceFiles.some(
+      (sf) => sf.read_status === 'pdf_image_detected',
+    );
     const previewSource = hasExtractedText ? 'file_text_extracted' : 'file_access_only';
     const responseStatus = hasExtractedText ? 'review_required' : 'backend_ai_not_configured';
     const pendenciasHitl = hasExtractedText
       ? ['Texto extraído. Quantitativos ainda exigem validação humana.']
-      : ['Arquivo físico acessado pelo backend. Extração textual local indisponível para os arquivos selecionados.'];
+      : hasPdfImages
+        ? ['PDF sem camada de texto detectado (scan/desenho técnico). Habilite EVIS_ORCAMENTISTA_ENABLE_AI_ANALYZE para leitura multimodal.']
+        : ['Arquivo físico acessado pelo backend. Extração textual local indisponível para os arquivos selecionados.'];
 
     // ─────────────────────────────────────────────────────────────────────
     // ETAPA 2 — Persistência run-scoped defensiva (orc_analysis_runs &c).
