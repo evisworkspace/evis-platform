@@ -17,6 +17,10 @@ import {
   type AnalysisRunEvidenceInput,
 } from '../../platform/server/orcamentista/persistence/analysisRunPersistence';
 import {
+  persistHitlDecision,
+  validateHitlDecisionInput,
+} from '../../platform/server/orcamentista/persistence/hitlDecisionPersistence';
+import {
   createOrcamentistaWorkspace,
   listOrcamentistaWorkspaces,
   listWorkspaceAttachmentFiles,
@@ -696,6 +700,147 @@ router.post('/chat/stream', (req, res) => {
   });
 
   res.end();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ETAPA 3 — HITL real sobre preview_items
+//
+// Regra central:
+//   Arquivo gera evidência → evidência justifica item →
+//   item precisa de decisão humana → só aprovado vira oficial.
+//
+// NESTAS ROTAS o item aprovado NÃO vira orcamento_itens.
+// O commit oficial é responsabilidade da Etapa 4 (endpoint separado, com flag).
+// ─────────────────────────────────────────────────────────────────────────────
+
+// GET /api/orcamentista/analysis-runs/:runId/preview-items
+// Lista os preview_items de um run para a UI HITL. Defensivo:
+// se schema 003 não existir, retorna lista vazia + schema_status='schema_not_ready'.
+router.get('/analysis-runs/:runId/preview-items', async (req: Request, res: Response) => {
+  const runId = req.params.runId;
+  if (!runId || typeof runId !== 'string') {
+    return res.status(400).json({ success: false, erro: 'runId é obrigatório.' });
+  }
+
+  try {
+    const bundle = createStagingClientFromEnv();
+    const query = await (bundle.client.from('orc_preview_items') as any)
+      .select(
+        'id, analysis_run_id, opportunity_id, codigo, description, unit, quantity, unit_price, total_price, categoria, origem, confidence, status, source_evidence_ids, observacoes, created_at, updated_at',
+      )
+      .eq('analysis_run_id', runId)
+      .order('created_at', { ascending: true });
+
+    if (query.error) {
+      const code = query.error.code;
+      const msg = `${query.error.message ?? ''} ${query.error.details ?? ''}`.toLowerCase();
+      const schemaMissing =
+        code === '42P01' ||
+        code === 'PGRST205' ||
+        msg.includes('could not find the table') ||
+        (msg.includes('relation') && msg.includes('does not exist'));
+
+      if (schemaMissing) {
+        return res.json({
+          success: true,
+          schema_status: 'schema_not_ready',
+          missing_table: 'orc_preview_items',
+          data: [],
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        erro: query.error.message ?? 'Falha ao listar preview_items.',
+      });
+    }
+
+    return res.json({
+      success: true,
+      schema_status: 'ready',
+      data: query.data ?? [],
+    });
+  } catch (error: any) {
+    console.error('Error listing preview items:', error);
+    return res.status(500).json({ success: false, erro: error?.message ?? 'Internal error' });
+  }
+});
+
+// POST /api/orcamentista/preview-items/:id/decision
+// Persiste decisão humana sobre preview_item.
+// Body: { decision: approve|edit|reject|request_review, edited_payload?, reason?, decided_by? }
+router.post('/preview-items/:id/decision', async (req: Request, res: Response) => {
+  const previewItemId = req.params.id;
+  const body = (req.body ?? {}) as Record<string, unknown>;
+
+  const validation = validateHitlDecisionInput({
+    previewItemId,
+    decision: body.decision as any,
+    editedPayload:
+      body.editedPayload != null
+        ? (body.editedPayload as Record<string, unknown>)
+        : (body.edited_payload as Record<string, unknown> | undefined) ?? null,
+    reason: body.reason as string | null | undefined,
+    decidedBy: (body.decidedBy ?? body.decided_by) as string | undefined,
+  });
+
+  if (!validation.ok) {
+    return res.status(400).json({
+      success: false,
+      status: 'validation_error',
+      erro: validation.message,
+      field: validation.field,
+    });
+  }
+
+  try {
+    const bundle = createStagingClientFromEnv();
+    const result = await persistHitlDecision(bundle.client, validation.data);
+
+    if (result.status === 'schema_not_ready') {
+      return res.status(200).json({
+        success: true,
+        status: 'schema_not_ready',
+        missing_table: result.missingTable,
+        message: result.message,
+      });
+    }
+
+    if (result.status === 'not_found') {
+      return res.status(404).json({ success: false, status: 'not_found', erro: result.message });
+    }
+
+    if (result.status === 'validation_error') {
+      return res.status(400).json({ success: false, status: 'validation_error', erro: result.message });
+    }
+
+    if (result.status === 'persistence_error') {
+      return res.status(500).json({
+        success: false,
+        status: 'persistence_error',
+        stage: result.stage,
+        erro: result.message,
+      });
+    }
+
+    return res.json({
+      success: true,
+      status: 'success',
+      data: {
+        decision_id: result.decisionId,
+        preview_item_id: validation.data.previewItemId,
+        preview_item_status_after: result.previewItemStatusAfter,
+        safety: {
+          officialBudgetWrite: 'blocked' as const,
+          canWriteConsolidationToBudget: false as const,
+          touchedBudgetItemsTable: false as const,
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error('Error persisting HITL decision:', error);
+    return res.status(500).json({ success: false, erro: error?.message ?? 'Internal error' });
+  }
 });
 
 // POST /api/orcamentista/workspaces/:workspaceId/generate-official-budget

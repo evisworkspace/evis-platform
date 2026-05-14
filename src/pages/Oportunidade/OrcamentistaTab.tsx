@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ChevronRight, FlaskConical } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import OrcamentistaChat from '../OrcamentistaChat';
 import { useAppContext } from '../../AppContext';
 import { useOportunidadeOrcamento } from '../../hooks/useOportunidadeOrcamento';
 import { useOpportunityFiles } from '../../hooks/useOportunidades';
+import { analyzeKeys, type AnalyzeResponse } from '../../hooks/useAnalyzeOpportunity';
+import OrcamentistaPreviewItemsHitlPanel from './OrcamentistaPreviewItemsHitlPanel';
 import OrcamentistaManualItemsPanel from './OrcamentistaManualItemsPanel';
 import OrcamentistaContextStatePanel from './OrcamentistaContextStatePanel';
 import OrcamentistaInternalActionPanel from './OrcamentistaInternalActionPanel';
@@ -190,6 +193,21 @@ export default function OrcamentistaTab() {
 
   const workspaceId = opportunity.orcamentista_workspace_id || `opp_${id}`;
   const totalItens   = itens.reduce((acc, item) => acc + item.valor_total, 0);
+
+  // Etapa 3: lê o resultado mais recente de /analyze a partir do cache react-query.
+  // useAnalyzeOpportunity.onSuccess semeia o cache com a mesma key.
+  // Aqui só assinamos para extrair run_id e schema_status sem refazer a chamada.
+  const { data: cachedAnalyze } = useQuery<AnalyzeResponse>({
+    queryKey: analyzeKeys.result(id),
+    queryFn: () => Promise.reject(new Error('cache-only')),
+    enabled: false,
+    staleTime: Infinity,
+    retry: false,
+  });
+  const analysisRunBlock = cachedAnalyze?.data.analysis_run ?? null;
+  const currentRunId =
+    analysisRunBlock?.schema_status === 'ready' ? analysisRunBlock.run_id : null;
+  const schemaStatusFromAnalyze = analysisRunBlock?.schema_status ?? null;
   const temProposta  = !!opportunity.proposta_id;
   const isBlocked    = createResult?.status === 'blocked';
   const isCreatedOk  = createResult?.status === 'created';
@@ -311,49 +329,77 @@ export default function OrcamentistaTab() {
 
             {/* 3. Evidências extraídas */}
             <section className="space-y-4">
-              <SectionDivider label="3. Evidências extraídas" badge="EM CONSTRUÇÃO" badgeVariant="amber" />
-              <StagePlaceholder
-                badge="ETAPA 2"
-                title="Persistência de evidências em construção"
-                description="A análise atual já extrai evidências reais dos arquivos suportados (.txt/.csv/.json/.md), mas o resultado ainda não é persistido em tabela dedicada. Esta seção será preenchida pela tabela orc_evidences assim que a Etapa 2 (persistência) for aplicada."
+              <SectionDivider
+                label="3. Evidências extraídas"
+                badge={
+                  schemaStatusFromAnalyze === 'ready'
+                    ? 'PERSISTIDAS'
+                    : schemaStatusFromAnalyze === 'schema_not_ready'
+                      ? 'AGUARDANDO SCHEMA'
+                      : 'AGUARDANDO ANÁLISE'
+                }
+                badgeVariant={schemaStatusFromAnalyze === 'ready' ? 'green' : 'amber'}
               />
+              {schemaStatusFromAnalyze === 'ready' &&
+              analysisRunBlock?.schema_status === 'ready' ? (
+                <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-4 text-sm text-green-300">
+                  <p className="font-semibold">Evidências persistidas neste run</p>
+                  <p className="mt-1 text-xs">
+                    {analysisRunBlock.counts.evidences} evidência(s) ·{' '}
+                    {analysisRunBlock.counts.fileReads} leitura(s) de arquivo ·{' '}
+                    {analysisRunBlock.counts.previewItems} item(ns) preliminar(es).
+                    Cada evidência traz origem rastreável (arquivo + trecho).
+                  </p>
+                </div>
+              ) : (
+                <StagePlaceholder
+                  badge={
+                    schemaStatusFromAnalyze === 'schema_not_ready' ? 'SCHEMA' : 'PRÓXIMA ANÁLISE'
+                  }
+                  title={
+                    schemaStatusFromAnalyze === 'schema_not_ready'
+                      ? 'Migration 003 ainda não aplicada'
+                      : 'Dispare uma análise para extrair evidências'
+                  }
+                  description={
+                    schemaStatusFromAnalyze === 'schema_not_ready'
+                      ? 'O endpoint /analyze já gera evidências em memória e tenta persistir, mas o schema run-scoped (orc_analysis_runs/file_reads/evidences/preview_items) ainda não está aplicado em staging. Por ora, evidências são respondidas inline na análise.'
+                      : 'A análise extrai evidências de arquivos .txt/.csv/.json/.md. Quando o schema estiver aplicado, cada evidência ficará persistida com origem rastreável.'
+                  }
+                />
+              )}
             </section>
 
-            {/* 4. Itens preliminares */}
+            {/* 4-6. Itens preliminares + Pendências HITL + Aprovação humana
+                 Painel único: revisão humana real sobre orc_preview_items. */}
             <section className="space-y-4">
-              <SectionDivider label="4. Itens preliminares" badge="EM CONSTRUÇÃO" badgeVariant="amber" />
-              <StagePlaceholder
-                badge="ETAPA 2"
-                title="Preview de itens ainda não persistido"
-                description="Quando a IA LAB estiver habilitada (EVIS_ORCAMENTISTA_ENABLE_AI_ANALYZE=true) e a persistência aplicada, esta seção listará orc_preview_items com origem, evidência vinculada e nível de confiança. Hoje a resposta da análise é honesta: zero itens fabricados."
+              <SectionDivider
+                label="4. Itens preliminares e revisão humana"
+                badge={
+                  schemaStatusFromAnalyze === 'ready'
+                    ? 'HITL ATIVO'
+                    : schemaStatusFromAnalyze === 'schema_not_ready'
+                      ? 'AGUARDANDO SCHEMA'
+                      : 'AGUARDANDO ANÁLISE'
+                }
+                badgeVariant={schemaStatusFromAnalyze === 'ready' ? 'green' : 'amber'}
               />
+              <OrcamentistaPreviewItemsHitlPanel
+                runId={currentRunId}
+                schemaStatusFromAnalyze={schemaStatusFromAnalyze}
+              />
+              <p className="text-xs text-t4">
+                Decisões disponíveis: aprovar · pedir revisão · rejeitar · editar (descrição,
+                quantidade, valor unitário). Aprovação aqui <strong>não</strong> grava no orçamento
+                oficial — o commit dedicado entra na Etapa 4.
+              </p>
             </section>
 
-            {/* 5. Pendências HITL */}
-            <section className="space-y-4">
-              <SectionDivider label="5. Pendências HITL" badge="EM CONSTRUÇÃO" badgeVariant="amber" />
-              <StagePlaceholder
-                badge="ETAPA 3"
-                title="Revisão humana ainda não conectada"
-                description="As pendências reais (pendencias_hitl) já são retornadas pelo endpoint /analyze, mas a tabela orc_hitl_decisions e a UI de aprovação/edição/rejeição entram na Etapa 3."
-              />
-            </section>
-
-            {/* 6. Aprovação humana */}
-            <section className="space-y-4">
-              <SectionDivider label="6. Aprovação humana" badge="EM CONSTRUÇÃO" badgeVariant="amber" />
-              <StagePlaceholder
-                badge="ETAPA 3"
-                title="Ação de aprovar/editar/rejeitar pendente"
-                description="Decisão humana sobre cada item preliminar será persistida em orc_hitl_decisions na Etapa 3. Nenhum item pode ir para o orçamento oficial antes desta etapa."
-              />
-            </section>
-
-            {/* 7. Commit oficial — Itens manuais (real) */}
+            {/* 5. Commit oficial — Itens manuais (real) */}
             {orcamento && (
               <section className="space-y-4">
                 <SectionDivider
-                  label="7. Commit oficial — itens do orçamento"
+                  label="5. Commit oficial — itens do orçamento"
                   badge="GRAVADO NO BANCO"
                   badgeVariant="green"
                 />
@@ -372,10 +418,10 @@ export default function OrcamentistaTab() {
               </section>
             )}
 
-            {/* 8. Proposta */}
+            {/* 6. Proposta */}
             <section className="space-y-4">
               <SectionDivider
-                label="8. Proposta comercial"
+                label="6. Proposta comercial"
                 badge={temProposta ? 'RASCUNHO' : 'NÃO GERADA'}
                 badgeVariant={temProposta ? 'amber' : 'neutral'}
               />
