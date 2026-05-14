@@ -11,6 +11,7 @@ import {
   extractTextEvidenceFromFile,
   type FileTextEvidence,
 } from '../../platform/server/orcamentista/fileTextExtraction';
+import { extractItemsWithAi } from '../../platform/server/orcamentista/aiItemExtractor';
 import {
   persistAnalysisRun,
   type AnalysisRunFileReadInput,
@@ -305,17 +306,34 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
       sourceFiles.push(entry);
     }
 
+    // ── Etapa B: extração IA de itens preliminares (gated por flag) ──────────
+    const aiResult = await extractItemsWithAi(evidences);
+    const aiPreviewItems =
+      aiResult.status === 'success' ? aiResult.items : [];
+    const aiWarnings: string[] = [];
+    if (aiResult.status === 'ai_error' || aiResult.status === 'parse_error') {
+      aiWarnings.push(`IA: ${aiResult.message}`);
+    }
+
     const hasExtractedText = evidences.length > 0;
     const hasPdfImages = sourceFiles.some(
       (sf) => sf.read_status === 'pdf_image_detected',
     );
-    const previewSource = hasExtractedText ? 'file_text_extracted' : 'file_access_only';
-    const responseStatus = hasExtractedText ? 'review_required' : 'backend_ai_not_configured';
-    const pendenciasHitl = hasExtractedText
-      ? ['Texto extraído. Quantitativos ainda exigem validação humana.']
-      : hasPdfImages
-        ? ['PDF sem camada de texto detectado (scan/desenho técnico). Habilite EVIS_ORCAMENTISTA_ENABLE_AI_ANALYZE para leitura multimodal.']
-        : ['Arquivo físico acessado pelo backend. Extração textual local indisponível para os arquivos selecionados.'];
+    const hasAiItems = aiPreviewItems.length > 0;
+    const previewSource = hasAiItems
+      ? 'ai_extracted'
+      : hasExtractedText
+        ? 'file_text_extracted'
+        : 'file_access_only';
+    const responseStatus =
+      hasAiItems || hasExtractedText ? 'review_required' : 'backend_ai_not_configured';
+    const pendenciasHitl = hasAiItems
+      ? [`${aiPreviewItems.length} item(ns) preliminar(es) gerado(s) pela IA. Revisar no painel HITL antes do commit oficial.`]
+      : hasExtractedText
+        ? ['Texto extraído. IA de análise desabilitada — quantitativos exigem validação humana.']
+        : hasPdfImages
+          ? ['PDF sem camada de texto detectado (scan/desenho técnico). Habilite EVIS_ORCAMENTISTA_ENABLE_AI_ANALYZE para leitura multimodal.']
+          : ['Arquivo físico acessado pelo backend. Extração textual local indisponível para os arquivos selecionados.'];
 
     // ─────────────────────────────────────────────────────────────────────
     // ETAPA 2 — Persistência run-scoped defensiva (orc_analysis_runs &c).
@@ -351,12 +369,13 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
       confidence: null,
     }));
 
+    const allWarnings = [...warnings, ...aiWarnings];
     const analysisRunPersistResult = await persistAnalysisRun(bundle.client, {
       opportunityId,
       workspaceId,
       status: responseStatus,
       previewSource,
-      warnings,
+      warnings: allWarnings,
       pendenciasHitl,
       safetyFlags: {
         officialBudgetWrite: 'blocked',
@@ -365,7 +384,7 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
       },
       fileReads: fileReadsForPersist,
       evidences: evidencesForPersist,
-      previewItems: [],
+      previewItems: aiPreviewItems,
     });
 
     const repository = createOrcamentistaPersistenceRepository(bundle.client);
@@ -428,8 +447,13 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
         source_files: sourceFiles,
         evidences,
         items: [] as OrcamentistaPreviewItem[],
-        warnings,
+        warnings: allWarnings,
         pendencias_hitl: pendenciasHitl,
+        ai_extraction: {
+          status: aiResult.status,
+          items_generated: aiPreviewItems.length,
+          model: aiResult.status === 'success' ? aiResult.model : null,
+        },
         safety: {
           officialBudgetWrite: 'blocked' as const,
           canWriteConsolidationToBudget: false as const,
