@@ -4,7 +4,10 @@ import OrcamentistaChat from '../OrcamentistaChat';
 import { useAppContext } from '../../AppContext';
 import { useOportunidadeOrcamento } from '../../hooks/useOportunidadeOrcamento';
 import { useOpportunityFiles } from '../../hooks/useOportunidades';
+import { useAnalyzeOpportunity, type AnalyzeData, analyzeKeys } from '../../hooks/useAnalyzeOpportunity';
+import { useQueryClient } from '@tanstack/react-query';
 import OrcamentistaManualItemsPanel from './OrcamentistaManualItemsPanel';
+import OrcamentistaAiReviewPanel from './OrcamentistaAiReviewPanel';
 import OrcamentistaAiPipelinePanel from './OrcamentistaAiPipelinePanel';
 import OrcamentistaAiPreviewPanel from './OrcamentistaAiPreviewPanel';
 import OrcamentistaDocumentsPanel from './OrcamentistaDocumentsPanel';
@@ -24,21 +27,52 @@ import { buildMockDocumentIntakeFiles } from '../../lib/orcamentista/documentInt
 import { mockPipelineSteps, mockAiPreview } from '../../lib/orcamentista/mockPipeline';
 
 // ──────────────────────────────────────────────
-// OrcamentistaTab — Fase 1F
+// OrcamentistaTab — MVP (cockpit operacional)
 //
-// Blocos visuais:
-//  A. Cabeçalho operacional + status pills
-//  B. Orçamento oficial (estado vazio ou dados)
-//  C. Itens oficiais — OrcamentistaManualItemsPanel
-//  D. Proposta (rascunho ou CTA)
-//  E. Workspace IA — prévia não consolidada
+// Jornada principal:
+//   A. Cabeçalho + Stepper de progresso
+//   B. Arquivos da oportunidade + CTA Analisar
+//   C. Resultado IA (Preview + HITL inline)
+//   D. Orçamento oficial (itens persistidos)
+//   E. Proposta
+//   F. Lab colapsado
 //
 // Regras:
-//  - Sem criação automática ao abrir.
 //  - "OFICIAL" = gravado em orcamento_itens no banco.
-//  - "PRÉVIA IA" = workspace staging, nunca consolidado automaticamente.
-//  - Nunca usa obra_id = opp_<id> como vínculo de orcamento.
+//  - "PRÉVIA IA" = staging, nunca consolidado automaticamente.
+//  - Mocks não aparecem na jornada principal.
+//  - Chat fica no Lab colapsado.
 // ──────────────────────────────────────────────
+
+// Stepper de progresso
+function Stepper({ step }: { step: number }) {
+  const steps = ['Arquivos', 'Análise IA', 'Revisão', 'Orçamento'];
+  return (
+    <div className="flex items-center gap-1 py-2">
+      {steps.map((label, i) => {
+        const isActive = i === step;
+        const isDone = i < step;
+        return (
+          <div key={label} className="flex items-center gap-1">
+            <div className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-widest transition-colors ${
+              isDone
+                ? 'border border-green-500/30 bg-green-500/10 text-green-400'
+                : isActive
+                  ? 'border border-brand-blue/40 bg-brand-blue/10 text-brand-blue'
+                  : 'border border-b1 bg-s2/50 text-t4'
+            }`}>
+              <span>{isDone ? '✓' : i + 1}</span>
+              <span>{label}</span>
+            </div>
+            {i < steps.length - 1 && (
+              <div className={`h-px w-4 ${isDone ? 'bg-green-500/40' : 'bg-b1'}`} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 // ── Pill de status ────────────────────────────
 function StatusPill({
@@ -133,6 +167,9 @@ export default function OrcamentistaTab() {
     removerItemManual,
   } = useOportunidadeOrcamento(id, config);
   const opportunityFiles = useOpportunityFiles(id, config);
+  const analyzeMutation = useAnalyzeOpportunity(id);
+  const tanstackQc = useQueryClient();
+  const cachedAnalyzeResult = tanstackQc.getQueryData<{ data: AnalyzeData }>(analyzeKeys.result(id));
 
   // Limpa a seleção quando a oportunidade muda.
   useEffect(() => {
@@ -204,6 +241,19 @@ export default function OrcamentistaTab() {
     orcamentoId: orcamento?.id ?? opportunity.orcamento_id,
     opportunityFiles: opportunityFiles.data ?? [],
   });
+
+  // Determine stepper position
+  const analyzeResult = cachedAnalyzeResult?.data ?? (analyzeMutation.data?.data ?? null);
+  const hasAiItems = (analyzeResult?.items?.length ?? 0) > 0;
+  
+  let stepperStep = 0;
+  if (itens.length > 0) {
+    stepperStep = 3;
+  } else if (hasAiItems) {
+    stepperStep = 2;
+  } else if (selectedFileIds.length > 0 || analyzeMutation.isPending) {
+    stepperStep = 1;
+  }
   const opportunityFilesError =
     opportunityFiles.error instanceof Error
       ? opportunityFiles.error.message
@@ -233,9 +283,10 @@ export default function OrcamentistaTab() {
               <StatusPill label="Orçamento"      value="VINCULADO"                            variant="green"   />
               <StatusPill label="Itens oficiais" value={`${itens.length} item${itens.length !== 1 ? 'ns' : ''}`} variant={itens.length > 0 ? 'blue' : 'neutral'} />
               <StatusPill label="Proposta"       value={temProposta ? 'RASCUNHO' : 'Não gerada'} variant={temProposta ? 'amber' : 'neutral'} />
-              <StatusPill label="Workspace IA"   value="PRÉVIA"                               variant="purple"  />
             </div>
           )}
+
+          {hasOrcamento && <Stepper step={itens.length > 0 ? 3 : stepperStep} />}
         </header>
 
         {/* ── B. SEM ORÇAMENTO: estado vazio ── */}
@@ -292,77 +343,12 @@ export default function OrcamentistaTab() {
           </section>
         )}
 
-        {/* ── C. ITENS OFICIAIS DO ORÇAMENTO ── */}
-        {hasOrcamento && orcamento && (
-          <section>
-            <SectionDivider
-              label="Orçamento oficial"
-              badge="GRAVADO NO BANCO"
-              badgeVariant="green"
-            />
-            <div className="mt-4">
-              <OrcamentistaManualItemsPanel
-                orcamento={orcamento}
-                itens={itens}
-                criarItemManual={criarItemManual}
-                atualizarItemManual={atualizarItemManual}
-                removerItemManual={removerItemManual}
-              />
-            </div>
-          </section>
-        )}
-
-        {/* ── D. PROPOSTA ── */}
+        {/* ── ESTEIRA REAL (somente com orçamento vinculado) ── */}
         {hasOrcamento && (
-          <section>
-            <SectionDivider
-              label="Proposta comercial"
-              badge={temProposta ? 'RASCUNHO' : 'NÃO GERADA'}
-              badgeVariant={temProposta ? 'amber' : 'neutral'}
-            />
-            <div className="mt-4 rounded-lg border border-b1 bg-s1 p-5">
-              {temProposta ? (
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-semibold text-t1">Proposta em rascunho</p>
-                    <p className="mt-0.5 text-xs text-t3">
-                      Gerada a partir do orçamento oficial ·{' '}
-                      {itens.length} item(ns) ·{' '}
-                      {totalItens.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} base
-                    </p>
-                  </div>
-                  <Link
-                    to={`/propostas?id=${opportunity.proposta_id}`}
-                    className="shrink-0 rounded-lg border border-brand-amber/30 bg-brand-amber/10 px-4 py-2 text-xs font-bold uppercase tracking-wider text-brand-amber transition-colors hover:bg-brand-amber/20"
-                  >
-                    Abrir proposta →
-                  </Link>
-                </div>
-              ) : (
-                <div>
-                  <p className="text-sm font-medium text-t1">Nenhuma proposta gerada ainda.</p>
-                  <p className="mt-1 text-xs text-t3">
-                    {itens.length === 0
-                      ? 'Adicione pelo menos um item ao orçamento antes de gerar a proposta.'
-                      : 'Orçamento com itens. Gere a proposta pela página da oportunidade → "Gerar proposta comercial".'}
-                  </p>
-                </div>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* ── E. WORKSPACE IA — PRÉVIA NÃO CONSOLIDADA ── */}
-        {hasOrcamento && (
-          <section>
-            <SectionDivider
-              label="Workspace IA"
-              badge="PRÉVIA — NÃO CONSOLIDADA"
-              badgeVariant="purple"
-            />
-            <div className="mt-4 space-y-6">
-
-              {/* E0. Estado contextual real — read-only com seleção de arquivos */}
+          <>
+            {/* 1. Arquivos da oportunidade */}
+            <section className="space-y-4">
+              <SectionDivider label="1. Arquivos da oportunidade" badge="ENTRADA" badgeVariant="blue" />
               <OrcamentistaContextStatePanel
                 opportunityId={id}
                 workspaceId={workspaceId}
@@ -372,117 +358,208 @@ export default function OrcamentistaTab() {
                 selectedFileIds={selectedFileIds}
                 onSelectionChange={setSelectedFileIds}
               />
+            </section>
 
-              {/* E1. Ação principal — Analisar arquivos para orçamento */}
+            {/* 2. Diagnóstico + Análise técnica */}
+            <section className="space-y-4">
+              <SectionDivider label="2. Diagnóstico e análise técnica" badge="AÇÃO" badgeVariant="green" />
               <OrcamentistaInternalActionPanel
                 opportunityId={id}
                 workspaceId={workspaceId}
                 selectedFileIds={selectedFileIds}
                 totalFilesAvailable={opportunityFiles.data?.length ?? 0}
               />
+            </section>
 
-            </div>
-          </section>
-        )}
+            {/* C. Resultado IA — Preview + HITL inline */}
+            {analyzeResult && analyzeResult.items.length > 0 && (
+              <section className="space-y-4">
+                <SectionDivider label="Resultado IA — Revisão humana" badge="PREVIEW" badgeVariant="blue" />
+                <OrcamentistaAiReviewPanel
+                  items={analyzeResult.items}
+                  resumo={(analyzeResult as any).resumo ?? null}
+                  warnings={analyzeResult.warnings}
+                  analyzedAt={analyzeResult.generated_at}
+                  analyzedFileCount={analyzeResult.source_files?.length ?? 0}
+                  criarItemManual={criarItemManual}
+                />
+              </section>
+            )}
 
-        {/* ── F. LABORATÓRIO — PAINÉIS MOCKADOS E PROTÓTIPOS ── */}
-        {hasOrcamento && (
-          <section>
-            <details className="group rounded-xl border border-purple-500/30 bg-purple-500/5">
-              <summary className="flex cursor-pointer list-none flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <div className="font-mono text-[10px] font-bold uppercase tracking-widest text-purple-300">
-                    Laboratório do Orçamentista IA
-                  </div>
-                  <h2 className="mt-1 text-lg font-extrabold text-t1">Simulações e componentes não conectados</h2>
-                  <p className="mt-1 max-w-3xl text-xs leading-5 text-t3">
-                    Esta área contém simulações, validações locais, protótipos e componentes ainda
-                    não conectados ao fluxo oficial do orçamento. Nada aqui grava itens oficiais,
-                    gera proposta ou altera o banco como orçamento IA.
+            {/* Mensagem quando análise concluiu sem itens */}
+            {analyzeResult && analyzeResult.items.length === 0 && (
+              <section className="space-y-4">
+                <SectionDivider label="Resultado IA" badge="SEM ITENS" />
+                <div className="rounded-lg border border-b1 bg-s1 p-5">
+                  <p className="text-sm font-medium text-t1">Nenhum item identificado pela IA.</p>
+                  <p className="mt-1 text-xs text-t3">
+                    {analyzeResult.pendencias_hitl?.[0] ?? 'Tente com outros arquivos ou adicione itens manualmente abaixo.'}
                   </p>
+                  {analyzeResult.warnings.length > 0 && (
+                    <div className="mt-3 space-y-1">
+                      {analyzeResult.warnings.map((w, i) => (
+                        <p key={i} className="text-[11px] text-amber-400">⚠ {w}</p>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <span className="w-fit rounded border border-purple-500/40 bg-purple-500/15 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-purple-200">
-                  Abrir laboratório
-                </span>
-              </summary>
+              </section>
+            )}
 
-              <div className="space-y-6 border-t border-purple-500/20 p-5">
-                <LabPanel title="Documentos — real separado de inventário mock">
-                  <OrcamentistaDocumentsPanel
-                    documents={documentIntakeFiles}
-                    opportunityFiles={opportunityFiles.data ?? []}
-                    isLoadingFiles={opportunityFiles.isFetching}
-                    filesError={opportunityFilesError}
-                  />
-                </LabPanel>
+            {/* Orçamento oficial — Itens */}
+            {orcamento && (
+              <section className="space-y-4">
+                <SectionDivider
+                  label="Orçamento oficial — itens do orçamento"
+                  badge="GRAVADO NO BANCO"
+                  badgeVariant="green"
+                />
+                <OrcamentistaManualItemsPanel
+                  orcamento={orcamento}
+                  itens={itens}
+                  criarItemManual={criarItemManual}
+                  atualizarItemManual={atualizarItemManual}
+                  removerItemManual={removerItemManual}
+                />
+              </section>
+            )}
 
-                <LabPanel title="Intake guiado e contexto técnico">
-                  <OrcamentistaGuidedIntakePanel />
-                </LabPanel>
-
-                <LabPanel title="Projetos ausentes e fallback estimativo">
-                  <OrcamentistaMissingProjectFallbackPanel />
-                </LabPanel>
-
-                <LabPanel title="Processamento de páginas">
-                  <OrcamentistaPageProcessingPanel />
-                </LabPanel>
-
-                <LabPanel title="Reader + Verifier">
-                  <OrcamentistaReaderVerifierPanel />
-                </LabPanel>
-
-                <LabPanel title="HITL do Orçamentista">
-                  <OrcamentistaHitlPanel />
-                </LabPanel>
-
-                <LabPanel title="Dispatch para agentes especialistas">
-                  <OrcamentistaAgentDispatchPanel />
-                </LabPanel>
-
-                <LabPanel title="Preview consolidado">
-                  <OrcamentistaConsolidatedPreviewPanel />
-                </LabPanel>
-
-                <LabPanel title="Gate de consolidação">
-                  <OrcamentistaConsolidationGatePanel />
-                </LabPanel>
-
-                <LabPanel title="Revisão humana do payload">
-                  <OrcamentistaPayloadReviewPanel />
-                </LabPanel>
-
-                <LabPanel title="Sandbox de primeira leitura real controlada">
-                  <OrcamentistaRealReaderSandboxPanel />
-                </LabPanel>
-
-                <LabPanel title="Pipeline IA legado">
-                  <OrcamentistaAiPipelinePanel steps={mockPipelineSteps} />
-                </LabPanel>
-
-                <LabPanel title="Prévia IA legada">
-                  <OrcamentistaAiPreviewPanel preview={mockAiPreview} />
-                </LabPanel>
-
-                <LabPanel title="Chat de análise livre">
-                  <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-                    <p className="mb-1 font-mono text-[9px] font-bold uppercase tracking-widest text-white/30">
-                      Orçamentista IA — Chat de análise
-                    </p>
-                    <p className="mb-4 text-xs text-white/40">
-                      Ambiente de análise livre/lab. Dados do chat são staging — não alimentam o
-                      orçamento oficial nem a proposta automaticamente.
-                    </p>
-                    <OrcamentistaChat
-                      opportunityId={id}
-                      workspaceId={workspaceId}
-                      backTo={`/oportunidades/${id}`}
-                    />
+            {/* Proposta */}
+            <section className="space-y-4">
+              <SectionDivider
+                label="Proposta comercial"
+                badge={temProposta ? 'RASCUNHO' : 'NÃO GERADA'}
+                badgeVariant={temProposta ? 'amber' : 'neutral'}
+              />
+              <div className="rounded-lg border border-b1 bg-s1 p-5">
+                {temProposta ? (
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-semibold text-t1">Proposta em rascunho</p>
+                      <p className="mt-0.5 text-xs text-t3">
+                        Gerada a partir do orçamento oficial ·{' '}
+                        {itens.length} item(ns) ·{' '}
+                        {totalItens.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} base
+                      </p>
+                    </div>
+                    <Link
+                      to={`/propostas?id=${opportunity.proposta_id}`}
+                      className="shrink-0 rounded-lg border border-brand-amber/30 bg-brand-amber/10 px-4 py-2 text-xs font-bold uppercase tracking-wider text-brand-amber transition-colors hover:bg-brand-amber/20"
+                    >
+                      Abrir proposta →
+                    </Link>
                   </div>
-                </LabPanel>
+                ) : (
+                  <div>
+                    <p className="text-sm font-medium text-t1">Nenhuma proposta gerada ainda.</p>
+                    <p className="mt-1 text-xs text-t3">
+                      {itens.length === 0
+                        ? 'Adicione pelo menos um item ao orçamento antes de gerar a proposta.'
+                        : 'Orçamento com itens. Gere a proposta pela página da oportunidade → "Gerar proposta comercial".'}
+                    </p>
+                  </div>
+                )}
               </div>
-            </details>
-          </section>
+            </section>
+
+            {/* LABORATÓRIO — PAINÉIS MOCKADOS E PROTÓTIPOS */}
+            <section>
+              <details className="group rounded-xl border border-purple-500/30 bg-purple-500/5">
+                <summary className="flex cursor-pointer list-none flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <div className="font-mono text-[10px] font-bold uppercase tracking-widest text-purple-300">
+                      Laboratório do Orçamentista IA
+                    </div>
+                    <h2 className="mt-1 text-lg font-extrabold text-t1">Simulações e componentes não conectados</h2>
+                    <p className="mt-1 max-w-3xl text-xs leading-5 text-t3">
+                      Esta área contém simulações, validações locais, protótipos e componentes ainda
+                      não conectados ao fluxo oficial do orçamento. Nada aqui grava itens oficiais,
+                      gera proposta ou altera o banco como orçamento IA.
+                    </p>
+                  </div>
+                  <span className="w-fit rounded border border-purple-500/40 bg-purple-500/15 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-purple-200">
+                    Abrir laboratório
+                  </span>
+                </summary>
+
+                <div className="space-y-6 border-t border-purple-500/20 p-5">
+                  <LabPanel title="Documentos — real separado de inventário mock">
+                    <OrcamentistaDocumentsPanel
+                      documents={documentIntakeFiles}
+                      opportunityFiles={opportunityFiles.data ?? []}
+                      isLoadingFiles={opportunityFiles.isFetching}
+                      filesError={opportunityFilesError}
+                    />
+                  </LabPanel>
+
+                  <LabPanel title="Intake guiado e contexto técnico">
+                    <OrcamentistaGuidedIntakePanel />
+                  </LabPanel>
+
+                  <LabPanel title="Projetos ausentes e fallback estimativo">
+                    <OrcamentistaMissingProjectFallbackPanel />
+                  </LabPanel>
+
+                  <LabPanel title="Processamento de páginas">
+                    <OrcamentistaPageProcessingPanel />
+                  </LabPanel>
+
+                  <LabPanel title="Reader + Verifier">
+                    <OrcamentistaReaderVerifierPanel />
+                  </LabPanel>
+
+                  <LabPanel title="HITL do Orçamentista">
+                    <OrcamentistaHitlPanel />
+                  </LabPanel>
+
+                  <LabPanel title="Dispatch para agentes especialistas">
+                    <OrcamentistaAgentDispatchPanel />
+                  </LabPanel>
+
+                  <LabPanel title="Preview consolidado">
+                    <OrcamentistaConsolidatedPreviewPanel />
+                  </LabPanel>
+
+                  <LabPanel title="Gate de consolidação">
+                    <OrcamentistaConsolidationGatePanel />
+                  </LabPanel>
+
+                  <LabPanel title="Revisão humana do payload">
+                    <OrcamentistaPayloadReviewPanel />
+                  </LabPanel>
+
+                  <LabPanel title="Sandbox de primeira leitura real controlada">
+                    <OrcamentistaRealReaderSandboxPanel />
+                  </LabPanel>
+
+                  <LabPanel title="Pipeline IA legado">
+                    <OrcamentistaAiPipelinePanel steps={mockPipelineSteps} />
+                  </LabPanel>
+
+                  <LabPanel title="Prévia IA legada">
+                    <OrcamentistaAiPreviewPanel preview={mockAiPreview} />
+                  </LabPanel>
+
+                  <LabPanel title="Chat de análise livre">
+                    <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+                      <p className="mb-1 font-mono text-[9px] font-bold uppercase tracking-widest text-white/30">
+                        Orçamentista IA — Chat de análise
+                      </p>
+                      <p className="mb-4 text-xs text-white/40">
+                        Ambiente de análise livre/lab. Dados do chat são staging — não alimentam o
+                        orçamento oficial nem a proposta automaticamente.
+                      </p>
+                      <OrcamentistaChat
+                        opportunityId={id}
+                        workspaceId={workspaceId}
+                        backTo={`/oportunidades/${id}`}
+                      />
+                    </div>
+                  </LabPanel>
+                </div>
+              </details>
+            </section>
+          </>
         )}
 
       </div>

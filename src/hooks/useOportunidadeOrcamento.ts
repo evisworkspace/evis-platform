@@ -242,7 +242,7 @@ export function useOportunidadeOrcamento(opportunityId: string, config: Config) 
           quantidade: payload.quantidade,
           valor_unitario: payload.valor_unitario,
           valor_total: payload.quantidade * payload.valor_unitario,
-          origem: 'manual' as const,
+          origem: payload.origem ?? 'manual',
           ...(payload.codigo ? { codigo: payload.codigo } : {}),
           // obra_id: intencionalmente omitido
         };

@@ -108,6 +108,7 @@ export interface OrcamentistaPreviewItem {
   origem: string | null;
   confianca: number | null;
   observacoes: string | null;
+  evidencia?: string | null;
 }
 
 export interface OrcamentistaPreview {

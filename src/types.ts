@@ -203,6 +203,7 @@ export type CreateManualBudgetItemInput = {
   quantidade: number;
   valor_unitario: number;
   codigo?: string;
+  origem?: string;
 };
 
 /** Campos que podem ser atualizados em um item manual existente. */

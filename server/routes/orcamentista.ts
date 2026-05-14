@@ -1,5 +1,6 @@
 import express, { Router, type Request, type Response } from 'express';
 import fs from 'fs';
+import { analyzeWithGemini } from '../services/geminiOrcamentista';
 import path from 'path';
 import { runControlledManualOrcamentistaAction } from '../../platform/server/orcamentista/controlledManualAction';
 import { getOrcamentistaPipelineView } from '../../platform/server/orcamentista/pipelineView';
@@ -130,14 +131,14 @@ function buildPreviewFromWorkspace(workspace: OrcamentistaWorkspace): {
 // ──────────────────────────────────────────────────────────────────────────────
 // POST /api/orcamentista/opportunities/:opportunityId/analyze
 //
-// MVP — Sprint 3. Análise inicial de arquivos reais para orçamento.
+// MVP — Sprint 7. Análise real de arquivos com Gemini.
 //
 // Garantias:
-// - Não escreve em orcamento_itens (bloqueada no stagingClient).
+// - Não escreve em orcamento_itens (persistência é feita pelo frontend via HITL).
 // - Não escreve orçamento oficial. Não escreve proposta.
-// - Não chama provider IA. Retorna estado controlado quando IA não conectada.
+// - Chama Gemini quando EVIS_ORCAMENTISTA_ENABLE_AI_ANALYZE=true.
 // - Persiste somente em orc_context_snapshots (já existente na allowlist).
-// - Sem mock. Sem item fabricado. Sem quantidade estimada.
+// - Itens retornados são PREVIEW — nenhum é persistido sem aprovação humana.
 // ──────────────────────────────────────────────────────────────────────────────
 type AnalyzeRequestBody = {
   fileIds?: unknown;
@@ -294,31 +295,75 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
 
     const isAiEnabled = process.env.EVIS_ORCAMENTISTA_ENABLE_AI_ANALYZE === 'true';
     const hasExtractedText = evidences.length > 0;
-    const previewSource = isAiEnabled ? 'ai_extracted' : hasExtractedText ? 'file_text_extracted' : 'file_access_only';
-    const responseStatus = isAiEnabled ? 'ai_items_generated' : hasExtractedText ? 'review_required' : 'ai_lab_disabled';
-    const pendenciasHitl = isAiEnabled
-      ? ['Itens gerados por IA. Revisão humana obrigatória antes da consolidação.']
-      : hasExtractedText
-        ? ['Texto extraído localmente. IA desativada (EVIS_ORCAMENTISTA_ENABLE_AI_ANALYZE=false).']
-        : ['Arquivo físico acessado. Extração textual local indisponível para os arquivos selecionados.'];
 
-    // Mock items generation if AI is enabled for testing the flow
-    const items: OrcamentistaPreviewItem[] = isAiEnabled && hasExtractedText
-      ? [
-          {
-            codigo: 'LAB-001',
-            descricao: '[PREVIEW LAB] Serviço identificado via IA experimental',
-            unidade: 'un',
-            quantidade: 1,
-            valor_unitario: 100,
-            valor_total: 100,
-            categoria: 'IA Preview',
-            origem: 'ia_extracted',
-            confianca: 0.85,
-            observacoes: 'Gerado em modo LAB. Não gravado em orcamento_itens.'
-          }
-        ]
-      : [];
+    // Build extracted text from evidences for Gemini prompt
+    const extractedTextForAi = evidences
+      .map((ev) => `[${ev.fileName ?? 'arquivo'}]\n${ev.content}`)
+      .join('\n\n---\n\n');
+
+    // Fetch opportunity title for prompt context
+    let opportunityTitle = `Oportunidade ${opportunityId}`;
+    try {
+      const oppQuery = await (bundle.client.from('opportunities') as any)
+        .select('titulo')
+        .eq('id', opportunityId)
+        .single();
+      if (oppQuery.data?.titulo) {
+        opportunityTitle = oppQuery.data.titulo;
+      }
+    } catch { /* fallback title is fine */ }
+
+    const fileNames = rawFiles.map((f) => f.nome ?? f.id);
+
+    // Call Gemini or fallback
+    let items: OrcamentistaPreviewItem[] = [];
+    let geminiWarnings: string[] = [];
+    let geminiResumo: string | null = null;
+    let previewSource: string;
+    let responseStatus: string;
+
+    if (isAiEnabled && hasExtractedText) {
+      const geminiResult = await analyzeWithGemini(extractedTextForAi, opportunityTitle, fileNames);
+      geminiWarnings = geminiResult.warnings;
+      geminiResumo = geminiResult.resumo;
+
+      if (geminiResult.ok && geminiResult.items.length > 0) {
+        items = geminiResult.items.map((gi) => ({
+          codigo: null,
+          descricao: gi.descricao,
+          unidade: gi.unidade,
+          quantidade: gi.quantidade,
+          valor_unitario: gi.valor_unitario,
+          valor_total: gi.quantidade * gi.valor_unitario,
+          categoria: gi.categoria,
+          origem: 'ia_gemini',
+          confianca: gi.confianca,
+          observacoes: gi.observacoes,
+          evidencia: gi.evidencia,
+        }));
+        previewSource = 'ai_extracted';
+        responseStatus = 'ai_items_generated';
+      } else {
+        previewSource = 'file_text_extracted';
+        responseStatus = 'review_required';
+      }
+    } else if (hasExtractedText) {
+      previewSource = 'file_text_extracted';
+      responseStatus = 'review_required';
+    } else {
+      previewSource = 'file_access_only';
+      responseStatus = 'ai_lab_disabled';
+    }
+
+    const pendenciasHitl = items.length > 0
+      ? ['Itens gerados por IA. Revisão humana obrigatória antes da consolidação.']
+      : isAiEnabled && hasExtractedText
+        ? ['IA ativada mas nenhum item identificado. Verifique os arquivos ou adicione itens manualmente.']
+        : hasExtractedText
+          ? ['Texto extraído localmente. IA desativada (EVIS_ORCAMENTISTA_ENABLE_AI_ANALYZE=false).']
+          : ['Arquivo físico acessado. Extração textual local indisponível para os arquivos selecionados.'];
+
+    warnings.push(...geminiWarnings);
 
     const repository = createOrcamentistaPersistenceRepository(bundle.client);
     const snapshotResult = await persistContextSnapshot(repository, {
