@@ -12,6 +12,7 @@ import {
   type FileTextEvidence,
 } from '../../platform/server/orcamentista/fileTextExtraction';
 import { extractItemsWithAi } from '../../platform/server/orcamentista/aiItemExtractor';
+import { embedEvidences } from '../../platform/server/orcamentista/persistence/embeddingPersistence';
 import {
   persistAnalysisRun,
   type AnalysisRunFileReadInput,
@@ -386,6 +387,29 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
       evidences: evidencesForPersist,
       previewItems: aiPreviewItems,
     });
+
+    // ── Etapa C: embed evidences into pgvector (gated by EVIS_ORCAMENTISTA_ENABLE_RAG) ──
+    if (
+      analysisRunPersistResult.status === 'success' &&
+      evidences.length > 0
+    ) {
+      // Fetch the inserted evidence IDs from the run to correlate with excerpts.
+      const evQuery = await (bundle.client.from('orc_evidences') as any)
+        .select('id, content_excerpt')
+        .eq('analysis_run_id', analysisRunPersistResult.runId)
+        .order('created_at', { ascending: true });
+
+      if (!evQuery.error && Array.isArray(evQuery.data)) {
+        const { client: rawClient } = createRawStagingClientFromEnv();
+        await embedEvidences(rawClient, {
+          evidences: (evQuery.data as Array<{ id: string; content_excerpt: string }>).map((r) => ({
+            id: r.id,
+            contentExcerpt: r.content_excerpt ?? '',
+          })),
+        });
+        // Fire-and-forget: embed errors don't block the /analyze response.
+      }
+    }
 
     const repository = createOrcamentistaPersistenceRepository(bundle.client);
     const snapshotResult = await persistContextSnapshot(repository, {
