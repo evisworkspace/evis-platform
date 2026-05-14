@@ -8,6 +8,10 @@ import { createOrcamentistaPersistenceRepository } from '../../platform/server/o
 import { persistContextSnapshot } from '../../platform/server/orcamentista/persistence/hitlPersistence';
 import type { OrcamentistaPreview, OrcamentistaPreviewItem } from '../../platform/server/orcamentista/contracts';
 import {
+  extractTextEvidenceFromFile,
+  type FileTextEvidence,
+} from '../../platform/server/orcamentista/fileTextExtraction';
+import {
   createOrcamentistaWorkspace,
   listOrcamentistaWorkspaces,
   listWorkspaceAttachmentFiles,
@@ -220,9 +224,14 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
       });
     }
 
-    // Sprint 4A: attempt to download each file from Supabase Storage.
-    const MAX_DOWNLOAD_BYTES = 10 * 1024 * 1024; // 10 MiB limit for this sprint
+    // Sprint 4A/4B: download from Supabase Storage, then extract only safe text formats.
+    const MAX_DOWNLOAD_BYTES = 10 * 1024 * 1024; // 10 MiB limit for this sprint
+    const MAX_EXTRACTED_CHARS = 20_000;
+    const MAX_EVIDENCES_PER_FILE = 3;
+    const MAX_EVIDENCE_CHARS = 800;
     const sourceFiles = [] as any[];
+    const evidences: FileTextEvidence[] = [];
+    const warnings: string[] = [];
 
     for (const file of rawFiles) {
       const entry: any = {
@@ -255,17 +264,40 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
         }
       } else {
         entry.download_status = 'downloaded';
-        entry.read_status = 'binary_available';
         entry.downloaded_bytes = size ?? 0;
-        // buffer is intentionally not retained to avoid memory pressure.
+
+        if (buffer) {
+          const extraction = extractTextEvidenceFromFile({
+            fileId: file.id,
+            fileName: file.nome,
+            mimeType: file.mime_type,
+            buffer,
+            maxExtractedChars: MAX_EXTRACTED_CHARS,
+            maxEvidences: MAX_EVIDENCES_PER_FILE,
+            maxEvidenceChars: MAX_EVIDENCE_CHARS,
+          });
+
+          entry.read_status = extraction.read_status;
+          entry.extracted_chars = extraction.extracted_chars;
+          evidences.push(...extraction.evidences);
+
+          if (extraction.warning) {
+            warnings.push(`${file.nome ?? file.id}: ${extraction.warning}`);
+          }
+        } else {
+          entry.read_status = 'file_content_unavailable';
+        }
       }
 
       sourceFiles.push(entry);
     }
 
-    const pendenciasHitl = [
-      'Arquivo físico acessado pelo backend. Extração técnica por IA ainda não executada.',
-    ];
+    const hasExtractedText = evidences.length > 0;
+    const previewSource = hasExtractedText ? 'file_text_extracted' : 'file_access_only';
+    const responseStatus = hasExtractedText ? 'review_required' : 'backend_ai_not_configured';
+    const pendenciasHitl = hasExtractedText
+      ? ['Texto extraído. Quantitativos ainda exigem validação humana.']
+      : ['Arquivo físico acessado pelo backend. Extração textual local indisponível para os arquivos selecionados.'];
 
     const repository = createOrcamentistaPersistenceRepository(bundle.client);
     const snapshotResult = await persistContextSnapshot(repository, {
@@ -279,10 +311,11 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
         workspace_id: workspaceId,
         analyzed_file_ids: fileIds,
         source_files: sourceFiles,
-        preview_source: 'file_access_only',
+        preview_source: previewSource,
         items: [],
+        evidences,
         pendencias_hitl: pendenciasHitl,
-        warnings: [],
+        warnings,
         backend_ai_configured: false,
       },
       created_by: 'orcamentista_analyze_endpoint',
@@ -298,13 +331,14 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
 
     return res.status(200).json({
       success: true,
-      status: 'backend_ai_not_configured',
+      status: responseStatus,
       data: {
         opportunity_id: opportunityId,
         workspace_id: workspaceId,
         generated_at: new Date().toISOString(),
-        preview_source: 'metadata_only',
+        preview_source: previewSource,
         source_files: sourceFiles,
+        evidences,
         items: [] as OrcamentistaPreviewItem[],
         warnings,
         pendencias_hitl: pendenciasHitl,

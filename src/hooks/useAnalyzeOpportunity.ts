@@ -11,16 +11,40 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export type AnalyzeStatus =
   | 'backend_ai_not_configured'
+  | 'review_required'
   | 'ai_analyzed'
   | 'validation_error'
   | 'persistence_error';
 
+export type AnalyzeReadStatus =
+  | 'file_content_unavailable'
+  | 'file_too_large'
+  | 'text_extracted'
+  | 'text_empty'
+  | 'pdf_parser_unavailable'
+  | 'unsupported_file_type';
+
 export type AnalyzeSourceFile = {
   id: string;
   nome: string | null;
-  categoria: string | null;
   mime_type: string | null;
-  tamanho_bytes: number | null;
+  storage_path_present?: boolean;
+  download_status?:
+    | 'missing_storage_path'
+    | 'skipped_too_large'
+    | 'download_failed'
+    | 'downloaded';
+  read_status?: AnalyzeReadStatus;
+  downloaded_bytes?: number;
+  extracted_chars?: number;
+};
+
+export type AnalyzeEvidence = {
+  fileId: string;
+  fileName: string | null;
+  type: 'text_excerpt';
+  content: string;
+  page: null;
 };
 
 export type AnalyzePreviewItem = {
@@ -40,8 +64,9 @@ export type AnalyzeData = {
   opportunity_id: string;
   workspace_id: string;
   generated_at: string;
-  preview_source: 'metadata_only' | 'ai_extracted';
+  preview_source: 'metadata_only' | 'file_access_only' | 'file_text_extracted' | 'ai_extracted';
   source_files: AnalyzeSourceFile[];
+  evidences: AnalyzeEvidence[];
   items: AnalyzePreviewItem[];
   warnings: string[];
   pendencias_hitl: string[];
