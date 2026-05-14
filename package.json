@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "server": "tsx watch server/index.ts"
+    "server": "tsx watch server/index.ts",
+    "antigravity:fix": "powershell -ExecutionPolicy Bypass -File scripts/fix-antigravity-worktree-config.ps1",
+    "antigravity:check": "git config --get extensions.worktreeConfig"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",
