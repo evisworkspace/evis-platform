@@ -8,7 +8,11 @@ import {
   PlayCircle,
   ShieldAlert,
 } from 'lucide-react';
-import { OrcamentistaDocumentIntakeFile, OrcamentistaDocumentReadinessStatus } from '../../types';
+import {
+  OrcamentistaDocumentIntakeFile,
+  OrcamentistaDocumentReadinessStatus,
+  type OpportunityFile,
+} from '../../types';
 import {
   canDispatchToAgents,
   canRunReader,
@@ -20,6 +24,7 @@ import { PDF_READER_THRESHOLDS } from '../../lib/orcamentista/pdfReaderContract'
 
 type Props = {
   documents: OrcamentistaDocumentIntakeFile[];
+  opportunityFiles?: OpportunityFile[];
   isLoadingFiles?: boolean;
   filesError?: string | null;
 };
@@ -45,6 +50,13 @@ function formatBytes(value: number) {
   }
 
   return `${size.toLocaleString('pt-BR', { maximumFractionDigits: unitIndex === 0 ? 0 : 1 })} ${units[unitIndex]}`;
+}
+
+function formatDate(value: string | null | undefined) {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return date.toLocaleDateString('pt-BR');
 }
 
 function confidenceClass(value: number) {
@@ -179,6 +191,7 @@ function DocumentAlerts({ document }: { document: OrcamentistaDocumentIntakeFile
 
 export default function OrcamentistaDocumentsPanel({
   documents,
+  opportunityFiles = [],
   isLoadingFiles = false,
   filesError = null,
 }: Props) {
@@ -193,22 +206,97 @@ export default function OrcamentistaDocumentsPanel({
             <h2 className="text-sm font-bold text-blue-200">Documentos da oportunidade</h2>
           </div>
           <p className="mt-1 max-w-3xl text-xs leading-5 text-white/50">
-            Arquivos recebidos para análise. Ainda não são orçamento. Arquivo recebido não é
-            leitura validada, inventário mockado não é orçamento oficial, e a análise IA real será
-            habilitada em fase futura.
+            Zona A lista somente registros reais de opportunity_files. Zona B concentra o
+            laboratório de inventário mockado, fechado por padrão, para não parecer leitura real de PDF.
           </p>
         </div>
 
         <div className="flex flex-col items-start gap-1 sm:items-end">
           <span className="rounded border border-blue-500/40 bg-blue-500/15 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-blue-200">
-            Document Intake mockado
+            REAL + LAB ISOLADO
           </span>
           <span className="font-mono text-[8px] uppercase tracking-widest text-white/25">
-            sem OCR · sem PDF real · sem IA real
+            sem OCR · sem PDF real · sem IA real nesta área
           </span>
         </div>
       </div>
 
+      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
+        <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-emerald-200">
+              Zona A — arquivos reais
+            </p>
+            <p className="mt-1 text-[11px] text-white/45">
+              Dados vindos de opportunity_files. Não há leitura por página, disciplina detectada ou confiança nesta zona.
+            </p>
+          </div>
+          <span className="w-fit rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-emerald-200">
+            READ-ONLY
+          </span>
+        </div>
+
+        {isLoadingFiles ? (
+          <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/40">
+            <Loader2 size={14} className="animate-spin text-blue-300" />
+            Consultando registros existentes em opportunity_files.
+          </div>
+        ) : filesError ? (
+          <div className="flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-xs leading-5 text-red-300">
+            <ShieldAlert size={14} className="mt-0.5 shrink-0" />
+            <span>Não foi possível listar opportunity_files agora. Detalhe técnico: {filesError}</span>
+          </div>
+        ) : opportunityFiles.length > 0 ? (
+          <div className="overflow-x-auto rounded-lg border border-white/10">
+            <table className="w-full min-w-[760px] text-xs">
+              <thead className="bg-white/[0.03]">
+                <tr className="border-b border-white/10">
+                  <th className="px-3 py-2 text-left font-mono text-[9px] font-bold uppercase tracking-widest text-white/30">Arquivo</th>
+                  <th className="px-3 py-2 text-left font-mono text-[9px] font-bold uppercase tracking-widest text-white/30">Tipo</th>
+                  <th className="px-3 py-2 text-left font-mono text-[9px] font-bold uppercase tracking-widest text-white/30">Tamanho</th>
+                  <th className="px-3 py-2 text-left font-mono text-[9px] font-bold uppercase tracking-widest text-white/30">Oportunidade</th>
+                  <th className="px-3 py-2 text-left font-mono text-[9px] font-bold uppercase tracking-widest text-white/30">Criado em</th>
+                </tr>
+              </thead>
+              <tbody>
+                {opportunityFiles.map((file) => (
+                  <tr key={file.id} className="border-b border-white/5 last:border-0">
+                    <td className="px-3 py-2">
+                      <p className="font-semibold text-white/80">{file.nome}</p>
+                      <p className="mt-1 font-mono text-[9px] text-white/30">{file.categoria ?? 'sem categoria'}</p>
+                    </td>
+                    <td className="px-3 py-2 font-mono text-[10px] text-white/45">{file.mime_type ?? '-'}</td>
+                    <td className="px-3 py-2 font-mono text-[10px] text-white/45">{formatBytes(file.tamanho_bytes ?? 0)}</td>
+                    <td className="px-3 py-2 font-mono text-[10px] text-white/45">{file.opportunity_id}</td>
+                    <td className="px-3 py-2 font-mono text-[10px] text-white/45">{formatDate(file.created_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/40">
+            Nenhum arquivo real registrado em opportunity_files para esta oportunidade.
+          </div>
+        )}
+      </div>
+
+      <details className="group rounded-lg border border-amber-500/25 bg-amber-500/5">
+        <summary className="flex cursor-pointer list-none flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-amber-200">
+              Zona B — laboratório de inventário mockado
+            </p>
+            <p className="mt-1 text-[11px] leading-5 text-white/45">
+              Páginas, disciplinas, confiança, riscos e readiness abaixo vêm de mock local. Não são leitura real de PDF.
+            </p>
+          </div>
+          <span className="w-fit rounded border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-amber-200">
+            Abrir laboratório de leitura
+          </span>
+        </summary>
+
+        <div className="space-y-4 border-t border-amber-500/20 p-4">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <div className="rounded-lg border border-white/10 bg-white/5 px-4 py-3">
           <p className="font-mono text-[9px] font-bold uppercase tracking-widest text-white/30">
@@ -270,23 +358,6 @@ export default function OrcamentistaDocumentsPanel({
           </div>
         </div>
       </div>
-
-      {isLoadingFiles && (
-        <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/40">
-          <Loader2 size={14} className="animate-spin text-blue-300" />
-          Consultando registros existentes em opportunity_files para leitura somente.
-        </div>
-      )}
-
-      {filesError && (
-        <div className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs leading-5 text-amber-300">
-          <ShieldAlert size={14} className="mt-0.5 shrink-0" />
-          <span>
-            Não foi possível listar opportunity_files agora. O painel segue com inventário mockado
-            local, sem persistência e sem upload real. Detalhe técnico: {filesError}
-          </span>
-        </div>
-      )}
 
       <div className="space-y-3">
         {documents.map((document) => {
@@ -446,6 +517,8 @@ export default function OrcamentistaDocumentsPanel({
           em Diário de Obra. Consolidação futura permanece bloqueada até Reader, Verifier e HITL.
         </span>
       </div>
+        </div>
+      </details>
     </div>
   );
 }

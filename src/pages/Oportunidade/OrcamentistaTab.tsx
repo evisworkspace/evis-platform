@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import OrcamentistaChat from '../OrcamentistaChat';
 import { useAppContext } from '../../AppContext';
@@ -95,6 +95,20 @@ function SectionDivider({
       </div>
       <div className="h-px flex-1 bg-b1" />
     </div>
+  );
+}
+
+function LabPanel({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="space-y-3 rounded-lg border border-purple-500/20 bg-purple-500/5 p-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <h3 className="text-sm font-bold text-purple-100">{title}</h3>
+        <span className="w-fit rounded border border-purple-500/40 bg-purple-500/15 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-purple-200">
+          MOCK / LAB — não grava dados
+        </span>
+      </div>
+      {children}
+    </section>
   );
 }
 
@@ -367,66 +381,107 @@ export default function OrcamentistaTab() {
                 totalFilesAvailable={opportunityFiles.data?.length ?? 0}
               />
 
-              {/* E2. Intake guiado e contexto técnico */}
-              <OrcamentistaGuidedIntakePanel />
-
-              {/* E3. Documentos recebidos / inventário mockado */}
-              <OrcamentistaDocumentsPanel
-                documents={documentIntakeFiles}
-                isLoadingFiles={opportunityFiles.isFetching}
-                filesError={opportunityFilesError}
-              />
-
-              {/* E4. Projetos ausentes / estimativas controladas */}
-              <OrcamentistaMissingProjectFallbackPanel />
-
-              {/* E5. Processamento de páginas mockado */}
-              <OrcamentistaPageProcessingPanel />
-
-              {/* E6. Reader + Verifier mockado */}
-              <OrcamentistaReaderVerifierPanel />
-
-              {/* E7. HITL do Orçamentista mockado */}
-              <OrcamentistaHitlPanel />
-
-              {/* E8. Dispatch mockado para agentes especialistas */}
-              <OrcamentistaAgentDispatchPanel />
-
-              {/* E9. Preview Consolidado mockado */}
-              <OrcamentistaConsolidatedPreviewPanel />
-
-              {/* E10. Gate de consolidação mockado */}
-              <OrcamentistaConsolidationGatePanel />
-
-              {/* E11. Revisão humana do payload simulado */}
-              <OrcamentistaPayloadReviewPanel />
-
-              {/* E12. Sandbox de primeira leitura real controlada */}
-              <OrcamentistaRealReaderSandboxPanel />
-
-              {/* E13. Pipeline IA mockado */}
-              <OrcamentistaAiPipelinePanel steps={mockPipelineSteps} />
-
-              {/* E14. Prévia IA mockada (legado) */}
-              <OrcamentistaAiPreviewPanel preview={mockAiPreview} />
-
-              {/* E15. Chat do Orçamentista (staging/preview separado) */}
-              <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-                <p className="mb-1 font-mono text-[9px] font-bold uppercase tracking-widest text-white/30">
-                  Orçamentista IA — Chat de análise
-                </p>
-                <p className="mb-4 text-xs text-white/40">
-                  Ambiente de análise livre. Dados do chat são staging — não alimentam o
-                  orçamento oficial nem a proposta automaticamente.
-                </p>
-                <OrcamentistaChat
-                  opportunityId={id}
-                  workspaceId={workspaceId}
-                  backTo={`/oportunidades/${id}`}
-                />
-              </div>
-
             </div>
+          </section>
+        )}
+
+        {/* ── F. LABORATÓRIO — PAINÉIS MOCKADOS E PROTÓTIPOS ── */}
+        {hasOrcamento && (
+          <section>
+            <details className="group rounded-xl border border-purple-500/30 bg-purple-500/5">
+              <summary className="flex cursor-pointer list-none flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="font-mono text-[10px] font-bold uppercase tracking-widest text-purple-300">
+                    Laboratório do Orçamentista IA
+                  </div>
+                  <h2 className="mt-1 text-lg font-extrabold text-t1">Simulações e componentes não conectados</h2>
+                  <p className="mt-1 max-w-3xl text-xs leading-5 text-t3">
+                    Esta área contém simulações, validações locais, protótipos e componentes ainda
+                    não conectados ao fluxo oficial do orçamento. Nada aqui grava itens oficiais,
+                    gera proposta ou altera o banco como orçamento IA.
+                  </p>
+                </div>
+                <span className="w-fit rounded border border-purple-500/40 bg-purple-500/15 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-purple-200">
+                  Abrir laboratório
+                </span>
+              </summary>
+
+              <div className="space-y-6 border-t border-purple-500/20 p-5">
+                <LabPanel title="Documentos — real separado de inventário mock">
+                  <OrcamentistaDocumentsPanel
+                    documents={documentIntakeFiles}
+                    opportunityFiles={opportunityFiles.data ?? []}
+                    isLoadingFiles={opportunityFiles.isFetching}
+                    filesError={opportunityFilesError}
+                  />
+                </LabPanel>
+
+                <LabPanel title="Intake guiado e contexto técnico">
+                  <OrcamentistaGuidedIntakePanel />
+                </LabPanel>
+
+                <LabPanel title="Projetos ausentes e fallback estimativo">
+                  <OrcamentistaMissingProjectFallbackPanel />
+                </LabPanel>
+
+                <LabPanel title="Processamento de páginas">
+                  <OrcamentistaPageProcessingPanel />
+                </LabPanel>
+
+                <LabPanel title="Reader + Verifier">
+                  <OrcamentistaReaderVerifierPanel />
+                </LabPanel>
+
+                <LabPanel title="HITL do Orçamentista">
+                  <OrcamentistaHitlPanel />
+                </LabPanel>
+
+                <LabPanel title="Dispatch para agentes especialistas">
+                  <OrcamentistaAgentDispatchPanel />
+                </LabPanel>
+
+                <LabPanel title="Preview consolidado">
+                  <OrcamentistaConsolidatedPreviewPanel />
+                </LabPanel>
+
+                <LabPanel title="Gate de consolidação">
+                  <OrcamentistaConsolidationGatePanel />
+                </LabPanel>
+
+                <LabPanel title="Revisão humana do payload">
+                  <OrcamentistaPayloadReviewPanel />
+                </LabPanel>
+
+                <LabPanel title="Sandbox de primeira leitura real controlada">
+                  <OrcamentistaRealReaderSandboxPanel />
+                </LabPanel>
+
+                <LabPanel title="Pipeline IA legado">
+                  <OrcamentistaAiPipelinePanel steps={mockPipelineSteps} />
+                </LabPanel>
+
+                <LabPanel title="Prévia IA legada">
+                  <OrcamentistaAiPreviewPanel preview={mockAiPreview} />
+                </LabPanel>
+
+                <LabPanel title="Chat de análise livre">
+                  <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+                    <p className="mb-1 font-mono text-[9px] font-bold uppercase tracking-widest text-white/30">
+                      Orçamentista IA — Chat de análise
+                    </p>
+                    <p className="mb-4 text-xs text-white/40">
+                      Ambiente de análise livre/lab. Dados do chat são staging — não alimentam o
+                      orçamento oficial nem a proposta automaticamente.
+                    </p>
+                    <OrcamentistaChat
+                      opportunityId={id}
+                      workspaceId={workspaceId}
+                      backTo={`/oportunidades/${id}`}
+                    />
+                  </div>
+                </LabPanel>
+              </div>
+            </details>
           </section>
         )}
 
