@@ -12,6 +12,11 @@ import {
   type FileTextEvidence,
 } from '../../platform/server/orcamentista/fileTextExtraction';
 import {
+  persistAnalysisRun,
+  type AnalysisRunFileReadInput,
+  type AnalysisRunEvidenceInput,
+} from '../../platform/server/orcamentista/persistence/analysisRunPersistence';
+import {
   createOrcamentistaWorkspace,
   listOrcamentistaWorkspaces,
   listWorkspaceAttachmentFiles,
@@ -299,6 +304,57 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
       ? ['Texto extraído. Quantitativos ainda exigem validação humana.']
       : ['Arquivo físico acessado pelo backend. Extração textual local indisponível para os arquivos selecionados.'];
 
+    // ─────────────────────────────────────────────────────────────────────
+    // ETAPA 2 — Persistência run-scoped defensiva (orc_analysis_runs &c).
+    //
+    // Regra central:
+    //   Arquivo gera evidência → evidência justifica item →
+    //   item precisa de decisão humana → só aprovado vira oficial.
+    //
+    // Se o schema da migration 003 não estiver aplicado, o helper retorna
+    // 'schema_not_ready' e seguimos respondendo /analyze normalmente.
+    // Nenhuma escrita em orcamento_itens acontece aqui.
+    // ─────────────────────────────────────────────────────────────────────
+    const fileReadsForPersist: AnalysisRunFileReadInput[] = sourceFiles.map((sf) => ({
+      clientTag: sf.id,
+      opportunityFileId: sf.id,
+      fileName: sf.nome ?? null,
+      mimeType: sf.mime_type ?? null,
+      storagePath: rawFiles.find((rf) => rf.id === sf.id)?.storage_path ?? null,
+      storagePathPresent: Boolean(sf.storage_path_present),
+      downloadStatus: sf.download_status ?? 'missing_storage_path',
+      readStatus: sf.read_status ?? null,
+      downloadedBytes: typeof sf.downloaded_bytes === 'number' ? sf.downloaded_bytes : null,
+      extractedChars: typeof sf.extracted_chars === 'number' ? sf.extracted_chars : null,
+      warning: null,
+    }));
+
+    const evidencesForPersist: AnalysisRunEvidenceInput[] = evidences.map((ev) => ({
+      fileReadTag: ev.fileId,
+      opportunityFileId: ev.fileId,
+      evidenceType: 'text_excerpt' as const,
+      contentExcerpt: ev.content,
+      page: null,
+      confidence: null,
+    }));
+
+    const analysisRunPersistResult = await persistAnalysisRun(bundle.client, {
+      opportunityId,
+      workspaceId,
+      status: responseStatus,
+      previewSource,
+      warnings,
+      pendenciasHitl,
+      safetyFlags: {
+        officialBudgetWrite: 'blocked',
+        canWriteConsolidationToBudget: false,
+        touchedBudgetItemsTable: false,
+      },
+      fileReads: fileReadsForPersist,
+      evidences: evidencesForPersist,
+      previewItems: [],
+    });
+
     const repository = createOrcamentistaPersistenceRepository(bundle.client);
     const snapshotResult = await persistContextSnapshot(repository, {
       opportunity_id: opportunityId,
@@ -329,6 +385,25 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
       });
     }
 
+    const analysisRunBlock =
+      analysisRunPersistResult.status === 'success'
+        ? {
+            schema_status: 'ready' as const,
+            run_id: analysisRunPersistResult.runId,
+            counts: analysisRunPersistResult.counts,
+          }
+        : analysisRunPersistResult.status === 'schema_not_ready'
+          ? {
+              schema_status: 'schema_not_ready' as const,
+              missing_table: analysisRunPersistResult.missingTable,
+              message: analysisRunPersistResult.message,
+            }
+          : {
+              schema_status: 'persistence_error' as const,
+              stage: analysisRunPersistResult.stage,
+              message: analysisRunPersistResult.message,
+            };
+
     return res.status(200).json({
       success: true,
       status: responseStatus,
@@ -351,6 +426,7 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
           id: snapshotResult.data.id,
           context_status: 'blocked' as const,
         },
+        analysis_run: analysisRunBlock,
       },
     });
   } catch (error: any) {
