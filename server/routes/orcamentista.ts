@@ -1001,6 +1001,54 @@ router.post('/analysis-runs/:runId/commit-approved-items', async (req: Request, 
   }
 });
 
+// GET /api/orcamentista/analysis-runs/:runId/commit-batches
+// Lista os batches de commit oficiais de um run. Defensivo: schema_not_ready
+// se migration 005 não estiver aplicada.
+router.get('/analysis-runs/:runId/commit-batches', async (req: Request, res: Response) => {
+  const runId = req.params.runId;
+  if (!runId || typeof runId !== 'string') {
+    return res.status(400).json({ success: false, erro: 'runId é obrigatório.' });
+  }
+
+  try {
+    const bundle = createStagingClientFromEnv();
+    const query = await (bundle.client.from('orc_commit_batches') as any)
+      .select(
+        'id, analysis_run_id, opportunity_id, orcamento_id, total_items_committed, total_items_skipped, committed_item_ids, skip_reasons_json, safety_flags_json, committed_by, created_at',
+      )
+      .eq('analysis_run_id', runId)
+      .order('created_at', { ascending: false });
+
+    if (query.error) {
+      const code = query.error.code;
+      const msg = `${query.error.message ?? ''} ${query.error.details ?? ''}`.toLowerCase();
+      const schemaMissing =
+        code === '42P01' ||
+        code === 'PGRST205' ||
+        msg.includes('could not find the table') ||
+        (msg.includes('relation') && msg.includes('does not exist'));
+
+      if (schemaMissing) {
+        return res.json({
+          success: true,
+          schema_status: 'schema_not_ready',
+          missing_table: 'orc_commit_batches',
+          data: [],
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        erro: query.error.message ?? 'Falha ao listar commit_batches.',
+      });
+    }
+
+    return res.json({ success: true, schema_status: 'ready', data: query.data ?? [] });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, erro: error?.message ?? 'Internal error' });
+  }
+});
+
 // POST /api/orcamentista/workspaces/:workspaceId/generate-official-budget
 router.post('/workspaces/:workspaceId/generate-official-budget', (_req, res) => {
   return res.status(410).json({

@@ -9,6 +9,7 @@ import { useOpportunityFiles } from '../../hooks/useOportunidades';
 import { analyzeKeys, type AnalyzeResponse } from '../../hooks/useAnalyzeOpportunity';
 import OrcamentistaPreviewItemsHitlPanel from './OrcamentistaPreviewItemsHitlPanel';
 import { useCommitApprovedItems } from '../../hooks/useCommitApprovedItems';
+import OrcamentistaCommitBatchesPanel from './OrcamentistaCommitBatchesPanel';
 import OrcamentistaManualItemsPanel from './OrcamentistaManualItemsPanel';
 import OrcamentistaContextStatePanel from './OrcamentistaContextStatePanel';
 import OrcamentistaInternalActionPanel from './OrcamentistaInternalActionPanel';
@@ -494,6 +495,7 @@ export default function OrcamentistaTab() {
                     )}
                   </div>
                 )}
+                <OrcamentistaCommitBatchesPanel runId={currentRunId} />
               </section>
             )}
 
