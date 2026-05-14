@@ -23,7 +23,9 @@ export const PERSISTENCE_ALLOWLIST = [
   'orc_analysis_runs',
   'orc_file_reads',
   'orc_evidences',
-  'orc_preview_items'
+  'orc_preview_items',
+  // ORCAMENTISTA_005 — commit batch audit trail
+  'orc_commit_batches',
 ] as const;
 
 /**

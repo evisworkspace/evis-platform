@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ChevronRight, FlaskConical } from 'lucide-react';
+import { ChevronRight, FlaskConical, Loader2, Upload } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import OrcamentistaChat from '../OrcamentistaChat';
 import { useAppContext } from '../../AppContext';
@@ -8,6 +8,7 @@ import { useOportunidadeOrcamento } from '../../hooks/useOportunidadeOrcamento';
 import { useOpportunityFiles } from '../../hooks/useOportunidades';
 import { analyzeKeys, type AnalyzeResponse } from '../../hooks/useAnalyzeOpportunity';
 import OrcamentistaPreviewItemsHitlPanel from './OrcamentistaPreviewItemsHitlPanel';
+import { useCommitApprovedItems } from '../../hooks/useCommitApprovedItems';
 import OrcamentistaManualItemsPanel from './OrcamentistaManualItemsPanel';
 import OrcamentistaContextStatePanel from './OrcamentistaContextStatePanel';
 import OrcamentistaInternalActionPanel from './OrcamentistaInternalActionPanel';
@@ -191,6 +192,7 @@ export default function OrcamentistaTab() {
     );
   }
 
+  const commitMutation = useCommitApprovedItems();
   const workspaceId = opportunity.orcamentista_workspace_id || `opp_${id}`;
   const totalItens   = itens.reduce((acc, item) => acc + item.valor_total, 0);
 
@@ -395,7 +397,7 @@ export default function OrcamentistaTab() {
               </p>
             </section>
 
-            {/* 5. Commit oficial — Itens manuais (real) */}
+            {/* 5. Commit oficial — Itens manuais (real) + Commit IA (Etapa 4) */}
             {orcamento && (
               <section className="space-y-4">
                 <SectionDivider
@@ -410,11 +412,88 @@ export default function OrcamentistaTab() {
                   atualizarItemManual={atualizarItemManual}
                   removerItemManual={removerItemManual}
                 />
-                <StagePlaceholder
-                  badge="ETAPA 4"
-                  title="Commit IA → orçamento oficial pendente"
-                  description="O endpoint POST /api/orcamentista/analysis-runs/:runId/commit-approved-items entra na Etapa 4. Ele exigirá flag EVIS_ORCAMENTISTA_ENABLE_OFFICIAL_COMMIT=true e recusará qualquer item sem evidência ou sem aprovação humana. Hoje apenas itens manuais alimentam o orçamento oficial."
-                />
+
+                {/* Commit IA → orçamento oficial (Etapa 4) */}
+                {currentRunId && (
+                  <div className="rounded-lg border border-b1 bg-s1/60 p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-semibold text-t1">
+                          Promover itens aprovados para o orçamento oficial
+                        </p>
+                        <p className="mt-0.5 text-xs text-t3">
+                          Apenas itens com decisão <strong>aprovado</strong> ou <strong>editado</strong> e
+                          com evidência rastreável serão gravados. Requer flag{' '}
+                          <span className="font-mono text-amber-400">EVIS_ORCAMENTISTA_ENABLE_OFFICIAL_COMMIT=true</span>.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          commitMutation.mutate({
+                            runId: currentRunId,
+                            orcamentoId: orcamento.id,
+                            opportunityId: id,
+                          })
+                        }
+                        disabled={commitMutation.isPending}
+                        className="shrink-0 inline-flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-2 text-xs font-bold text-green-400 transition-colors hover:bg-green-500/20 disabled:opacity-50"
+                      >
+                        {commitMutation.isPending ? (
+                          <>
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            Commitando…
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-3.5 w-3.5" />
+                            Commit IA → Oficial
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {commitMutation.isError && (
+                      <p className="text-xs text-red-400">
+                        Falha: {commitMutation.error?.message}
+                      </p>
+                    )}
+
+                    {commitMutation.data?.status === 'official_commit_disabled' && (
+                      <p className="rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+                        Flag desabilitada: {commitMutation.data.message}
+                      </p>
+                    )}
+
+                    {commitMutation.data?.status === 'no_approved_items' && (
+                      <p className="rounded border border-b1 bg-s2/40 px-3 py-2 text-xs text-t3">
+                        {commitMutation.data.message}
+                      </p>
+                    )}
+
+                    {commitMutation.data?.status === 'schema_not_ready' && (
+                      <p className="rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+                        Schema não pronto ({commitMutation.data.missing_table}). Aplicar migrations 003–005.
+                      </p>
+                    )}
+
+                    {commitMutation.data?.status === 'success' && (
+                      <div className="rounded border border-green-500/30 bg-green-500/10 px-3 py-2 text-xs text-green-300 space-y-1">
+                        <p className="font-semibold">
+                          {commitMutation.data.data.total_committed} item(ns) gravado(s) no orçamento oficial.
+                        </p>
+                        {commitMutation.data.data.total_skipped > 0 && (
+                          <p className="text-amber-400">
+                            {commitMutation.data.data.total_skipped} item(ns) pulado(s) por falta de evidência ou descrição.
+                          </p>
+                        )}
+                        <p className="text-t4">
+                          Batch ID: <span className="font-mono">{commitMutation.data.data.batch_id}</span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </section>
             )}
 

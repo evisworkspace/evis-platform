@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { runControlledManualOrcamentistaAction } from '../../platform/server/orcamentista/controlledManualAction';
 import { getOrcamentistaPipelineView } from '../../platform/server/orcamentista/pipelineView';
-import { createStagingClientFromEnv, downloadOpportunityFile } from '../../platform/server/orcamentista/persistence/stagingClient';
+import { createStagingClientFromEnv, createRawStagingClientFromEnv, downloadOpportunityFile } from '../../platform/server/orcamentista/persistence/stagingClient';
 import { createOrcamentistaPersistenceRepository } from '../../platform/server/orcamentista/persistence/repository';
 import { persistContextSnapshot } from '../../platform/server/orcamentista/persistence/hitlPersistence';
 import type { OrcamentistaPreview, OrcamentistaPreviewItem } from '../../platform/server/orcamentista/contracts';
@@ -20,6 +20,10 @@ import {
   persistHitlDecision,
   validateHitlDecisionInput,
 } from '../../platform/server/orcamentista/persistence/hitlDecisionPersistence';
+import {
+  persistCommitBatch,
+  validateCommitBatchInput,
+} from '../../platform/server/orcamentista/persistence/commitBatchPersistence';
 import {
   createOrcamentistaWorkspace,
   listOrcamentistaWorkspaces,
@@ -839,6 +843,107 @@ router.post('/preview-items/:id/decision', async (req: Request, res: Response) =
     });
   } catch (error: any) {
     console.error('Error persisting HITL decision:', error);
+    return res.status(500).json({ success: false, erro: error?.message ?? 'Internal error' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ETAPA 4 — Commit oficial controlado
+//
+// Regra central:
+//   Só itens com status 'approved' ou 'edited' são promovidos.
+//   Itens sem source_evidence_ids ou sem description são pulados.
+//   Cada batch é registrado em orc_commit_batches (append-only).
+//   Flag EVIS_ORCAMENTISTA_ENABLE_OFFICIAL_COMMIT=true é obrigatória.
+//
+// É a ÚNICA rota controlada de escrita em orcamento_itens por IA.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// POST /api/orcamentista/analysis-runs/:runId/commit-approved-items
+// Body: { orcamento_id: string, opportunity_id: string, committed_by?: string }
+router.post('/analysis-runs/:runId/commit-approved-items', async (req: Request, res: Response) => {
+  const flagEnabled = process.env['EVIS_ORCAMENTISTA_ENABLE_OFFICIAL_COMMIT'] === 'true';
+  if (!flagEnabled) {
+    return res.status(200).json({
+      success: true,
+      status: 'official_commit_disabled',
+      message:
+        'Commit oficial não habilitado neste ambiente. Defina EVIS_ORCAMENTISTA_ENABLE_OFFICIAL_COMMIT=true para habilitar.',
+    });
+  }
+
+  const runId = req.params.runId;
+  const body = (req.body ?? {}) as Record<string, unknown>;
+
+  const validation = validateCommitBatchInput({
+    runId,
+    orcamentoId: body.orcamento_id as string | undefined,
+    opportunityId: body.opportunity_id as string | undefined,
+    committedBy: body.committed_by as string | undefined,
+  });
+
+  if (!validation.ok) {
+    return res.status(400).json({
+      success: false,
+      status: 'validation_error',
+      erro: validation.message,
+      field: validation.field,
+    });
+  }
+
+  try {
+    const bundle = createStagingClientFromEnv();
+    const { client: rawClient } = createRawStagingClientFromEnv();
+
+    const result = await persistCommitBatch(bundle.client, rawClient, validation.data);
+
+    if (result.status === 'flag_disabled') {
+      return res.status(200).json({ success: true, status: 'official_commit_disabled', message: result.message });
+    }
+
+    if (result.status === 'no_approved_items') {
+      return res.status(200).json({ success: true, status: 'no_approved_items', message: result.message });
+    }
+
+    if (result.status === 'schema_not_ready') {
+      return res.status(200).json({
+        success: true,
+        status: 'schema_not_ready',
+        missing_table: result.missingTable,
+        message: result.message,
+      });
+    }
+
+    if (result.status === 'validation_error') {
+      return res.status(400).json({ success: false, status: 'validation_error', erro: result.message });
+    }
+
+    if (result.status === 'persistence_error') {
+      return res.status(500).json({
+        success: false,
+        status: 'persistence_error',
+        stage: result.stage,
+        erro: result.message,
+      });
+    }
+
+    return res.json({
+      success: true,
+      status: 'success',
+      data: {
+        batch_id: result.batchId,
+        total_committed: result.totalCommitted,
+        total_skipped: result.totalSkipped,
+        committed_item_ids: result.committedItemIds,
+        skip_reasons: result.skipReasons,
+        safety: {
+          officialBudgetWrite: 'executed_via_etapa4',
+          flag: 'EVIS_ORCAMENTISTA_ENABLE_OFFICIAL_COMMIT',
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error('Error in commit-approved-items endpoint:', error);
     return res.status(500).json({ success: false, erro: error?.message ?? 'Internal error' });
   }
 });
