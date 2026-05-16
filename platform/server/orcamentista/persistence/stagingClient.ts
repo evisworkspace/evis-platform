@@ -125,7 +125,25 @@ function tryReadJwtProjectRef(token: string): string | null {
 }
 // ------------------------------------------------------------
 /**
- * Securely download a file from the `opportunity-files` bucket.
+ * Creates a read-only Supabase client pointed at the main (production-like) project.
+ * Uses VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY — the same credentials the frontend uses.
+ * Intended ONLY for reading opportunity_files metadata and downloading from main Storage.
+ * Must NEVER be used for writing to any table.
+ */
+export function createMainReadClientFromEnv(): SupabaseClient {
+  const url = process.env.VITE_SUPABASE_URL;
+  const key = process.env.VITE_SUPABASE_ANON_KEY;
+  if (!url || !key) {
+    throw new Error('VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are required for main read client.');
+  }
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
+// ------------------------------------------------------------
+/**
+ * Securely download a file from the `opportunity-files` bucket on the MAIN Supabase project.
  *
  * - bucket is fixed to `opportunity-files` (no other bucket allowed)
  * - only the exact `storagePath` obtained from `opportunity_files` can be used
@@ -141,9 +159,7 @@ export async function downloadOpportunityFile(params: {
     return { error: 'Missing storage_path' };
   }
 
-  // Re‑use the environment validation to create a raw client with service‑role access.
-  const env = readAndValidateStagingEnv();
-  const rawClient = createClient(env.url, env.key);
+  const rawClient = createMainReadClientFromEnv();
 
   try {
     const { data, error } = await rawClient.storage.from(bucket).download(params.storagePath);

@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { runControlledManualOrcamentistaAction } from '../../platform/server/orcamentista/controlledManualAction';
 import { getOrcamentistaPipelineView } from '../../platform/server/orcamentista/pipelineView';
-import { createStagingClientFromEnv, createRawStagingClientFromEnv, downloadOpportunityFile } from '../../platform/server/orcamentista/persistence/stagingClient';
+import { createStagingClientFromEnv, createRawStagingClientFromEnv, createMainReadClientFromEnv, downloadOpportunityFile } from '../../platform/server/orcamentista/persistence/stagingClient';
 import { createOrcamentistaPersistenceRepository } from '../../platform/server/orcamentista/persistence/repository';
 import { persistContextSnapshot } from '../../platform/server/orcamentista/persistence/hitlPersistence';
 import type { OrcamentistaPreview, OrcamentistaPreviewItem } from '../../platform/server/orcamentista/contracts';
@@ -200,22 +200,17 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
 
   try {
     const bundle = createStagingClientFromEnv();
+    // opportunity_files lives in the MAIN Supabase — use the main read client for file validation.
+    const mainClient = createMainReadClientFromEnv();
 
-    const filesBuilder = bundle.client.from('opportunity_files') as unknown as {
-      select: (columns: string) => {
-        eq: (column: string, value: unknown) => {
-          in: (column: string, values: string[]) => Promise<{
-            data: AnalyzeFileRow[] | null;
-            error: { message?: string } | null;
-          }>;
-        };
-      };
-    };
-
-    const filesQuery = await filesBuilder
+    const filesQuery = await (mainClient
+      .from('opportunity_files')
       .select('id, opportunity_id, nome, categoria, mime_type, tamanho_bytes, storage_path, url')
       .eq('opportunity_id', opportunityId)
-      .in('id', fileIds);
+      .in('id', fileIds) as unknown as Promise<{
+        data: AnalyzeFileRow[] | null;
+        error: { message?: string } | null;
+      }>);
 
     const filesError = filesQuery.error;
     if (filesError) {
@@ -433,12 +428,9 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
       created_by: 'orcamentista_analyze_endpoint',
     });
 
+    // Snapshot is observability-only — a FK violation (cross-DB opportunity_id) must not block analysis.
     if (snapshotResult.status !== 'success') {
-      return res.status(500).json({
-        success: false,
-        status: snapshotResult.status,
-        erro: snapshotResult.message,
-      });
+      warnings.push(`Snapshot não persistido: ${snapshotResult.message}`);
     }
 
     const analysisRunBlock =
@@ -484,7 +476,7 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
           touchedBudgetItemsTable: false as const,
         },
         snapshot: {
-          id: snapshotResult.data.id,
+          id: snapshotResult.status === 'success' ? snapshotResult.data.id : null,
           context_status: 'blocked' as const,
         },
         analysis_run: analysisRunBlock,
