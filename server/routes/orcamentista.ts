@@ -4,7 +4,7 @@ import { analyzeWithGemini } from '../services/geminiOrcamentista';
 import path from 'path';
 import { runControlledManualOrcamentistaAction } from '../../platform/server/orcamentista/controlledManualAction';
 import { getOrcamentistaPipelineView } from '../../platform/server/orcamentista/pipelineView';
-import { createStagingClientFromEnv, downloadOpportunityFile, readAndValidateStagingEnv } from '../../platform/server/orcamentista/persistence/stagingClient';
+import { createStagingClientFromEnv, createMainReadClientFromEnv, downloadOpportunityFile, readAndValidateStagingEnv } from '../../platform/server/orcamentista/persistence/stagingClient';
 import { createOrcamentistaPersistenceRepository } from '../../platform/server/orcamentista/persistence/repository';
 import { persistContextSnapshot } from '../../platform/server/orcamentista/persistence/hitlPersistence';
 import type { OrcamentistaPreview, OrcamentistaPreviewItem } from '../../platform/server/orcamentista/contracts';
@@ -186,22 +186,17 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
 
   try {
     const bundle = createStagingClientFromEnv();
+    // opportunity_files lives in the MAIN Supabase — use the main read client for file validation.
+    const mainClient = createMainReadClientFromEnv();
 
-    const filesBuilder = bundle.client.from('opportunity_files') as unknown as {
-      select: (columns: string) => {
-        eq: (column: string, value: unknown) => {
-          in: (column: string, values: string[]) => Promise<{
-            data: AnalyzeFileRow[] | null;
-            error: { message?: string } | null;
-          }>;
-        };
-      };
-    };
-
-    const filesQuery = await filesBuilder
+    const filesQuery = await (mainClient
+      .from('opportunity_files')
       .select('id, opportunity_id, nome, categoria, mime_type, tamanho_bytes, storage_path, url')
       .eq('opportunity_id', opportunityId)
-      .in('id', fileIds);
+      .in('id', fileIds) as unknown as Promise<{
+        data: AnalyzeFileRow[] | null;
+        error: { message?: string } | null;
+      }>);
 
     const filesError = filesQuery.error;
     if (filesError) {
@@ -387,12 +382,9 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
       created_by: 'orcamentista_analyze_endpoint',
     });
 
+    // Snapshot is observability-only — a FK violation (cross-DB opportunity_id) must not block analysis.
     if (snapshotResult.status !== 'success') {
-      return res.status(500).json({
-        success: false,
-        status: snapshotResult.status,
-        erro: snapshotResult.message,
-      });
+      warnings.push(`Snapshot não persistido: ${snapshotResult.message}`);
     }
 
     return res.status(200).json({
@@ -414,7 +406,7 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
           touchedBudgetItemsTable: false as const,
         },
         snapshot: {
-          id: snapshotResult.data.id,
+          id: snapshotResult.status === 'success' ? snapshotResult.data.id : null,
           context_status: 'blocked' as const,
         },
       },
@@ -484,8 +476,9 @@ router.post('/opportunities/:opportunityId/files', express.raw({ type: '*/*', li
       throw new Error(`Erro no storage: ${storageError.message}`);
     }
 
-    // Registro no banco opportunity_files
-    const { data: fileRecord, error: dbError } = await bundle.client
+    // Create in MAIN Supabase
+    const mainClient = createMainReadClientFromEnv();
+    const { data: fileRecord, error: dbError } = await mainClient
       .from('opportunity_files')
       .insert({
         opportunity_id: opportunityId,
@@ -493,8 +486,7 @@ router.post('/opportunities/:opportunityId/files', express.raw({ type: '*/*', li
         mime_type: mimeType,
         tamanho_bytes: req.body.length,
         storage_path: storagePath,
-        categoria: 'lab_upload',
-        criado_por: 'orcamentista_lab_upload'
+        categoria: 'lab_upload'
       })
       .select()
       .single();
@@ -544,23 +536,33 @@ router.post('/manual-run', async (req, res) => {
 
 // GET /api/orcamentista/pipeline-view
 router.get('/pipeline-view', async (req, res) => {
+  const { opportunityId } = req.query;
+  if (!opportunityId || typeof opportunityId !== 'string') {
+    return res.status(400).json({ status: 'validation_error', message: 'opportunityId is required' });
+  }
+
+  let bundle: ReturnType<typeof createStagingClientFromEnv>;
   try {
-    const { opportunityId } = req.query;
-    if (!opportunityId || typeof opportunityId !== 'string') {
-      return res.status(400).json({ error: 'opportunityId is required' });
-    }
+    bundle = createStagingClientFromEnv();
+  } catch {
+    // Staging client not configured — return a non-error "not_configured" response so the
+    // frontend does not show a scary error message in the product UI.
+    return res.json({
+      status: 'not_configured',
+      message: 'Pipeline view indisponível: ambiente de staging não configurado.',
+      data: null,
+    });
+  }
 
-    const bundle = createStagingClientFromEnv();
+  try {
     const result = await getOrcamentistaPipelineView({ opportunityId }, bundle);
-
     if (result.status !== 'success') {
       return res.status(400).json(result);
     }
-
     return res.json(result);
   } catch (error: any) {
     console.error('Error fetching pipeline view:', error);
-    return res.status(500).json({ error: 'Internal server error', details: error.message });
+    return res.status(500).json({ status: 'error', message: error.message ?? 'Internal server error' });
   }
 });
 

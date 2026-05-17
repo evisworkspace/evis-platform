@@ -72,17 +72,24 @@ export default function OrcamentistaInternalActionPanel({
     setError(null);
     try {
       const res = await fetch(`/api/orcamentista/pipeline-view?opportunityId=${opportunityId}`);
-      const json = await res.json();
-      if (res.ok && json.status === 'success') {
-        setView(json.data);
-      } else {
-        if (json.status !== 'not_found' && json.status !== 'validation_error') {
-          setError(json.message || 'Erro ao carregar Pipeline View');
-        }
+      let json: Record<string, unknown> = {};
+      try {
+        json = await res.json();
+      } catch {
+        if (!res.ok) setError('Erro ao carregar diagnóstico interno');
+        return;
+      }
+      const status = json.status as string | undefined;
+      if (res.ok && status === 'success') {
+        setView(json.data as OrcamentistaInternalActionPipelineView);
+      } else if (status === 'not_configured' || status === 'not_found' || status === 'validation_error') {
+        // Silent — staging not available or no data yet; not an error for the user
+      } else if (!res.ok) {
+        setError((json.message as string) || 'Erro ao carregar diagnóstico interno');
       }
     } catch (err: any) {
       console.error(err);
-      setError('Falha de rede ao carregar Pipeline View');
+      setError('Falha de rede ao carregar diagnóstico interno');
     } finally {
       setLoading(false);
     }
