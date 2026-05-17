@@ -263,6 +263,21 @@ export default function OrcamentistaTab() {
 
   return (
     <div className="min-h-screen bg-bg text-t1">
+      {/* ── Header do Modo Lab ── */}
+      <div className="sticky top-0 z-20 border-b border-purple-500/30 bg-purple-950/80 backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
+          <Link
+            to={`/oportunidades/${id}/orcamentista`}
+            className="flex items-center gap-1.5 text-xs font-semibold text-purple-300 transition-colors hover:text-purple-100"
+          >
+            ← Voltar ao Orçamento
+          </Link>
+          <span className="rounded border border-purple-500/40 bg-purple-500/15 px-3 py-0.5 font-mono text-[10px] font-bold uppercase tracking-widest text-purple-200">
+            Modo Laboratório Técnico
+          </span>
+        </div>
+      </div>
+
       <div className="mx-auto max-w-5xl space-y-8 px-6 py-8">
 
         {/* ── A. CABEÇALHO OPERACIONAL ── */}

@@ -22,6 +22,7 @@ import PortalCliente from './pages/PortalCliente';
 import DashboardPage from './pages/DashboardPage';
 import OportunidadeDetalhePage from './pages/OportunidadeDetalhePage';
 import OrcamentistaTab from './pages/Oportunidade/OrcamentistaTab';
+import OrcamentistaProductView from './pages/Oportunidade/OrcamentistaProductView';
 import OportunidadesPage from './pages/OportunidadesPage';
 import OrcamentistaChat from './pages/OrcamentistaChat';
 import PropostaPage from './pages/PropostaPage';
@@ -538,7 +539,8 @@ export default function App() {
 
         {/* Rotas com layout próprio (sem sidebar global) */}
         <Route path="/oportunidades/:id" element={<OportunidadeDetalhePage />} />
-        <Route path="/oportunidades/:id/orcamentista" element={<OrcamentistaTab />} />
+        <Route path="/oportunidades/:id/orcamentista" element={<OrcamentistaProductView />} />
+        <Route path="/oportunidades/:id/orcamentista/lab" element={<OrcamentistaTab />} />
         <Route path="/orcamentista" element={<OrcamentistaChat />} />
         <Route path="/obras" element={<Main />} />
         <Route path="/obras/:obraId" element={<Main />} />
