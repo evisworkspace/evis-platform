@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Upload, FileText, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, ExternalLink, Upload, FileText, CheckCircle, Clock, AlertCircle, Loader2 } from 'lucide-react';
 import { useAppContext } from '../../AppContext';
 import { useOportunidadeOrcamento } from '../../hooks/useOportunidadeOrcamento';
-import { useOpportunityFiles } from '../../hooks/useOportunidades';
+import { useOpportunityFiles, useUpdateOportunidade, useCreateOpportunityEvent } from '../../hooks/useOportunidades';
+import { useCreateProposta } from '../../hooks/usePropostas';
+import { calcularTotais } from '../../hooks/useOrcamento';
 import { useAnalyzeOpportunity, type AnalyzeData, analyzeKeys } from '../../hooks/useAnalyzeOpportunity';
 import { useQueryClient } from '@tanstack/react-query';
 import OrcamentistaManualItemsPanel from './OrcamentistaManualItemsPanel';
@@ -46,9 +48,13 @@ function StatusBadge({ status }: { status: ProductStatus }) {
 
 export default function OrcamentistaProductView() {
   const { id = '' } = useParams();
+  const navigate = useNavigate();
   const { config } = useAppContext();
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
   const tanstackQc = useQueryClient();
+  const createProposta = useCreateProposta(config);
+  const updateOportunidade = useUpdateOportunidade(config);
+  const createEvent = useCreateOpportunityEvent(config);
 
   const {
     opportunity,
@@ -141,9 +147,82 @@ export default function OrcamentistaProductView() {
   const handleAnalyze = async () => {
     if (!canAnalyze) return;
     try {
-      await analyzeMutation.mutateAsync({ fileIds: selectedFileIds, workspaceId });
+      await analyzeMutation.mutateAsync({
+        fileIds: selectedFileIds,
+        workspaceId,
+        provider: (config as any).aiProvider || undefined,
+        model: (config as any).aiModel || undefined,
+      });
     } catch {
       // erro via analyzeMutation.error
+    }
+  };
+
+  const handleGerarProposta = async () => {
+    if (!opportunity || !orcamento || itens.length === 0) return;
+    
+    try {
+      const { total_bruto, total_final } = calcularTotais(itens, orcamento.bdi);
+      const hoje = new Date().toISOString().slice(0, 10);
+      const fimPrevisto = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+
+      const payload = {
+        obra: {
+          nome: opportunity.titulo,
+          cliente: opportunity.cliente_nome_snapshot || opportunity.titulo,
+          endereco: opportunity.endereco_resumo || '',
+          tipo_obra: opportunity.tipo_obra || '',
+          area_total_m2: opportunity.metragem_estimada ?? 0,
+          valor_custos_diretos: total_bruto,
+          valor_total_com_bdi: total_final,
+          bdi_percentual: orcamento.bdi,
+          bdi_valor: total_final - total_bruto,
+          prazo_dias_uteis: 0,
+          data_inicio_prevista: hoje,
+          data_fim_prevista: fimPrevisto,
+          observacoes: opportunity.observacao || undefined,
+        },
+        servicos: itens.map((it) => ({
+          nome: it.descricao,
+          descricao: it.descricao,
+          categoria: 'Serviços',
+          codigo_servico: it.codigo || '',
+          cod: it.codigo || '',
+          quantidade: it.quantidade,
+          unidade: it.unidade,
+          valor_unitario: it.valor_unitario,
+          valor_total: it.valor_total,
+          valor_total_direto: it.valor_total,
+        })),
+        equipes: [],
+        _meta: { status_orcamento: orcamento.status },
+      };
+
+      const proposta = await createProposta.mutateAsync({
+        opportunity_id: opportunity.id,
+        orcamento_id: orcamento.id,
+        titulo: `Proposta - ${opportunity.titulo}`,
+        cliente_nome_snapshot: opportunity.cliente_nome_snapshot || opportunity.titulo,
+        status: 'rascunho',
+        validade_dias: 10,
+        valor_total: total_final,
+        bdi: orcamento.bdi,
+        payload,
+        observacoes: opportunity.observacao || null,
+      });
+
+      await updateOportunidade.mutateAsync({ id: opportunity.id, patch: { proposta_id: proposta.id } });
+
+      await createEvent.mutateAsync({
+        opportunity_id: opportunity.id,
+        tipo: 'proposta_gerada',
+        descricao: 'Proposta gerada a partir do orçamentista IA.',
+        metadata: { proposta_id: proposta.id, orcamento_id: orcamento.id },
+      });
+
+      navigate(`/propostas?id=${proposta.id}`);
+    } catch (err) {
+      console.error('Erro ao gerar proposta:', err);
     }
   };
 
@@ -381,8 +460,23 @@ export default function OrcamentistaProductView() {
                     <p className="mt-1 text-xs text-white/40">
                       {itens.length === 0
                         ? 'Adicione pelo menos um item ao orçamento antes de gerar a proposta.'
-                        : 'Orçamento com itens. Gere a proposta pela página da oportunidade.'}
+                        : 'Orçamento com itens consolidado. Você já pode gerar a proposta oficial.'}
                     </p>
+                    {itens.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleGerarProposta}
+                        disabled={createProposta.isPending}
+                        className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg bg-green-500 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-green-400 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {createProposta.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <FileText className="h-4 w-4" />
+                        )}
+                        Gerar proposta a partir deste orçamento
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

@@ -66,7 +66,7 @@ export default function OrcamentoEditor({ orcamento, onBack, onOrcamentoChange }
         id: orcamento.id,
         patch: { total_bruto, total_final }
       });
-      toast('Totais sincronizados com sucesso!', 'success');
+      toast('Totais atualizados.', 'success');
     } catch {
       toast('Erro ao salvar totais', 'error');
     }
@@ -80,7 +80,7 @@ export default function OrcamentoEditor({ orcamento, onBack, onOrcamentoChange }
         patch: { status: 'aprovado' }
       });
       onOrcamentoChange?.({ ...orcamento, status: 'aprovado' });
-      toast('Orçamento aprovado!', 'success');
+      toast('Orçamento aprovado.', 'success');
     } catch {
       toast('Erro ao aprovar', 'error');
     }

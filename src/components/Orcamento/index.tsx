@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Plus, FileText, Trash2, ChevronRight, CheckCircle, Clock, FileEdit, AlertCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Plus, FileText, Trash2, ChevronRight, CheckCircle, Clock, FileEdit, AlertCircle, ExternalLink } from 'lucide-react';
 import { useAppContext } from '../../AppContext';
 import { Orcamento, OrcamentoStatus } from '../../types';
 import {
@@ -7,6 +8,7 @@ import {
   useCreateOrcamento,
   useDeleteOrcamento,
 } from '../../hooks/useOrcamento';
+import { useOportunidadeByObraId } from '../../hooks/useOportunidades';
 import OrcamentoEditor from './OrcamentoEditor';
 import { useSearchParams } from 'react-router-dom';
 
@@ -174,6 +176,9 @@ export default function OrcamentoTab() {
   const { data: orcamentos = [], isLoading, error } = useOrcamentos(obraId, config);
   const createMut = useCreateOrcamento(config);
   const deleteMut = useDeleteOrcamento(config);
+  const { data: oportunidade } = useOportunidadeByObraId(obraId, config);
+  const propostaId = oportunidade?.proposta_id ?? null;
+  const oportunidadeId = oportunidade?.id ?? null;
 
   const [showNovo, setShowNovo] = useState(false);
   const [obraAberta, setObraAberta] = useState<Orcamento | null>(null);
@@ -271,6 +276,34 @@ export default function OrcamentoTab() {
             <FileText size={40} className="text-white/10 mb-4" />
             <p className="text-white/40 text-sm">Nenhum orçamento cadastrado</p>
             <p className="text-white/20 text-xs mt-1">Clique em "Novo Orçamento" para começar</p>
+          </div>
+        )}
+
+        {/* Banner: Proposta vinculada à oportunidade de origem */}
+        {propostaId && (
+          <div className="flex items-center justify-between gap-4 mb-4 max-w-3xl rounded-xl border border-amber-500/20 bg-amber-500/8 px-4 py-3">
+            <div>
+              <p className="text-xs font-bold text-amber-400 uppercase tracking-wider">Proposta comercial disponível</p>
+              <p className="text-xs text-white/50 mt-0.5">Gerada a partir do orçamento da oportunidade de origem</p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {oportunidadeId && (
+                <Link
+                  to={`/oportunidades/${oportunidadeId}`}
+                  className="flex items-center gap-1 text-[10px] font-bold text-white/40 hover:text-white/70 transition-colors"
+                >
+                  Ver oportunidade
+                  <ExternalLink size={10} />
+                </Link>
+              )}
+              <Link
+                to={`/propostas?id=${propostaId}`}
+                className="flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-400 transition-colors hover:bg-amber-500/20"
+              >
+                <FileText size={12} />
+                Abrir proposta →
+              </Link>
+            </div>
           </div>
         )}
 

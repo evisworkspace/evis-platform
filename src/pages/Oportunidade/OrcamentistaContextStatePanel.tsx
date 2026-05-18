@@ -1,4 +1,6 @@
+import { useState, useRef } from 'react';
 import { AlertTriangle, CheckCircle2, Database, FileText, FolderOpen, Loader2, Lock, Upload } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import type { OpportunityFile } from '../../types';
 import {
   useOrcamentistaWorkspaceState,
@@ -61,6 +63,40 @@ export default function OrcamentistaContextStatePanel({
     }
     onSelectionChange?.(Array.from(next));
   };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const tanstackQc = useQueryClient();
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const response = await fetch(`/api/orcamentista/opportunities/${opportunityId}/files`, {
+        method: 'POST',
+        headers: {
+          'x-file-name': encodeURIComponent(file.name),
+          'x-file-type': file.type || 'application/octet-stream',
+          'Content-Type': 'application/octet-stream'
+        },
+        body: file
+      });
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.erro || 'Falha no upload');
+      }
+      tanstackQc.invalidateQueries({ queryKey: ['opportunity-files', opportunityId] });
+      alert('Arquivo adicionado com sucesso!');
+    } catch (err: any) {
+      alert(`Erro: ${err.message}`);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   const workspaceState = useOrcamentistaWorkspaceState(workspaceId, opportunityId);
   const state = workspaceState.data ?? null;
   const previewItems = state?.preview.data?.items ?? [];
@@ -156,12 +192,21 @@ export default function OrcamentistaContextStatePanel({
               <FileText size={14} className="text-blue-300" />
               <p className="text-xs font-bold uppercase tracking-widest text-white/50">Arquivos reais em opportunity_files</p>
             </div>
+            <input 
+              type="file" 
+              className="hidden" 
+              ref={fileInputRef} 
+              onChange={handleUpload} 
+              accept=".txt,.csv,.json,.md,.pdf" 
+            />
             <button
-              className="flex items-center gap-1.5 rounded border border-blue-500/30 bg-blue-500/10 px-2 py-1 text-[10px] font-bold text-blue-300 transition-colors hover:bg-blue-500/20"
+              className="flex items-center gap-1.5 rounded border border-blue-500/30 bg-blue-500/10 px-2 py-1 text-[10px] font-bold text-blue-300 transition-colors hover:bg-blue-500/20 disabled:opacity-50"
               title="Upload experimental"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
             >
-              <Upload size={10} />
-              UPLOAD LAB
+              {isUploading ? <Loader2 size={10} className="animate-spin" /> : <Upload size={10} />}
+              {isUploading ? 'ENVIANDO...' : 'UPLOAD LAB'}
             </button>
           </div>
           <div className="mb-3 rounded border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-[10px] leading-4 text-amber-200/70">

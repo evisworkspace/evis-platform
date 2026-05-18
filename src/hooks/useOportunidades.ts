@@ -70,6 +70,24 @@ export function useOportunidade(id: string, config: Config) {
   });
 }
 
+/** Finds the opportunity linked to an obra via obra_id field. */
+export function useOportunidadeByObraId(obraId: string, config: Config) {
+  return useQuery<Opportunity | null>({
+    queryKey: ['opportunities', 'by_obra', obraId],
+    queryFn: async () => {
+      const data = await sbFetch(
+        `opportunities?obra_id=eq.${obraId}&order=created_at.desc&limit=1`,
+        {},
+        config
+      );
+      const rows = Array.isArray(data) ? data : [];
+      return (rows[0] ?? null) as Opportunity | null;
+    },
+    enabled: !!(config.url && config.key && obraId),
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
 export function useCreateOportunidade(config: Config) {
   const qc = useQueryClient();
 

@@ -1,3 +1,6 @@
+import * as pdfParseModule from 'pdf-parse';
+const pdfParse = (typeof pdfParseModule === 'function' ? pdfParseModule : (pdfParseModule as any).default || pdfParseModule) as unknown as (buffer: Buffer) => Promise<{ text: string }>;
+
 export type FileReadStatus =
   | 'text_extracted'
   | 'text_empty'
@@ -104,25 +107,32 @@ function buildEvidenceChunks(params: {
   return evidences;
 }
 
-export function extractTextEvidenceFromFile(
+export async function extractTextEvidenceFromFile(
   input: FileTextExtractionInput
-): FileTextExtractionResult {
+): Promise<FileTextExtractionResult> {
   const mimeType = normalizeMimeType(input.mimeType);
   const extension = getFileExtension(input.fileName);
   const maxExtractedChars = input.maxExtractedChars ?? DEFAULT_MAX_EXTRACTED_CHARS;
   const maxEvidences = input.maxEvidences ?? DEFAULT_MAX_EVIDENCES;
   const maxEvidenceChars = input.maxEvidenceChars ?? DEFAULT_MAX_EVIDENCE_CHARS;
 
-  if (isPdfFile(mimeType, extension)) {
-    return {
-      read_status: 'pdf_parser_unavailable',
-      extracted_chars: 0,
-      evidences: [],
-      warning: 'PDF baixado, mas parser PDF não está habilitado nesta sprint.',
-    };
-  }
+  let rawText = '';
 
-  if (!isSupportedTextFile(mimeType, extension)) {
+  if (isPdfFile(mimeType, extension)) {
+    try {
+      const pdfData = await pdfParse(input.buffer);
+      rawText = pdfData.text;
+    } catch (err: any) {
+      return {
+        read_status: 'pdf_parser_unavailable',
+        extracted_chars: 0,
+        evidences: [],
+        warning: `Erro ao extrair texto do PDF: ${err.message}`,
+      };
+    }
+  } else if (isSupportedTextFile(mimeType, extension)) {
+    rawText = input.buffer.toString('utf8');
+  } else {
     return {
       read_status: 'unsupported_file_type',
       extracted_chars: 0,
@@ -131,7 +141,6 @@ export function extractTextEvidenceFromFile(
     };
   }
 
-  const rawText = input.buffer.toString('utf8');
   const text = normalizeText(rawText).slice(0, maxExtractedChars);
 
   if (!text) {

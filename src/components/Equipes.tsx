@@ -85,7 +85,7 @@ export default function Equipes() {
       });
       return { ...prev, equipes: merged };
     });
-    toast('Fornecedores originais injetados para Sincronização!', 'success');
+    toast('Equipes pré-carregadas. Salve para enviar ao servidor.', 'success');
   };
 
   return (

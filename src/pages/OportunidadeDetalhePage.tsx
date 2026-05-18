@@ -42,6 +42,13 @@ const priorityLabel: Record<string, string> = {
   urgente: 'Urgente',
 };
 
+const oportunidadeTabs = [
+  { id: 'resumo', label: 'Resumo' },
+  { id: 'orcamento_ia', label: 'Orçamento IA' },
+  { id: 'proposta', label: 'Proposta' },
+  { id: 'atividades', label: 'Atividades' },
+] as const;
+
 function formatDate(value?: string | null) {
   if (!value) return '-';
   return new Intl.DateTimeFormat('pt-BR', {
@@ -85,6 +92,9 @@ export default function OportunidadeDetalhePage() {
   const [eventType, setEventType] = useState('');
   const [eventDescription, setEventDescription] = useState('');
   const [isConvertingObra, setIsConvertingObra] = useState(false);
+  const [activeTab, setActiveTab] = useState<
+    'resumo' | 'orcamento_ia' | 'proposta' | 'atividades'
+  >('resumo');
 
   const oportunidade = useOportunidade(id, config);
   const events = useOpportunityEvents(id, config);
@@ -362,7 +372,7 @@ export default function OportunidadeDetalhePage() {
           : 'Oportunidade convertida em obra por ação manual.',
         'success'
       );
-      navigate(temOrcamento ? `/obras/${obraId}?tab=orcamento` : `/obras/${obraId}`);
+      navigate(temOrcamento ? `/obras/${obraId}?tab=financeiro` : `/obras/${obraId}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao converter oportunidade em obra.';
       toast(message, 'error');
@@ -513,122 +523,204 @@ export default function OportunidadeDetalhePage() {
         </header>
 
         {item && (
-          <div className="grid flex-1 gap-6 py-6 lg:grid-cols-[1fr_380px]">
-            <section className="space-y-6">
-              <div className="rounded-lg border border-b1 bg-s1 p-5">
-                <div className="mb-4 text-[10px] font-bold uppercase tracking-widest text-t3">
-                  Detalhes gerais
-                </div>
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  <DetailItem label="Origem" value={item.origem} />
-                  <DetailItem label="Cliente" value={item.cliente_nome_snapshot} />
-                  <DetailItem label="Telefone" value={item.telefone_snapshot} />
-                  <DetailItem label="Email" value={item.email_snapshot} />
-                  <DetailItem label="Endereço" value={item.endereco_resumo} />
-                  <DetailItem label="Tipo de obra" value={item.tipo_obra} />
-                  <DetailItem label="Metragem estimada" value={formatArea(item.metragem_estimada)} />
-                  <DetailItem label="Valor estimado" value={formatMoney(item.valor_estimado)} />
-                  <DetailItem label="Criada em" value={formatDate(item.created_at)} />
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-b1 bg-s1 p-5">
-                <div className="mb-3 text-[10px] font-bold uppercase tracking-widest text-t3">
-                  Observação
-                </div>
-                <p className="whitespace-pre-wrap text-sm leading-6 text-t2">
-                  {item.observacao || 'Nenhuma observação registrada.'}
-                </p>
-              </div>
-            </section>
-
-            <aside className="rounded-lg border border-b1 bg-s1 p-5">
-              <div className="mb-5 flex items-center justify-between gap-4">
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-t3">
-                    Resumo de atividades
-                  </div>
-                  <div className="mt-1 text-xs text-t4">Histórico da oportunidade</div>
-                </div>
-                {events.isFetching && <Loader2 className="h-4 w-4 animate-spin text-brand-green" />}
-              </div>
-
-              <form onSubmit={handleAddEvent} className="mb-6 rounded-lg border border-b1 bg-bg/50 p-4">
-                <div className="mb-3 flex items-center gap-2 text-sm font-bold text-t1">
-                  <MessageSquarePlus className="h-4 w-4 text-brand-green" />
-                  Nova atividade
-                </div>
-                <label className="mb-3 block">
-                  <span className="mb-1.5 block font-mono text-[9px] font-bold uppercase tracking-[0.1em] text-t3">
-                    Tipo
-                  </span>
-                  <input
-                    value={eventType}
-                    onChange={(event) => setEventType(event.target.value)}
-                    className="w-full rounded-md border border-b1 bg-bg px-3 py-2 text-sm text-t1 outline-none transition-colors placeholder:text-t4 focus:border-brand-green"
-                    placeholder="Ex: ligação, visita, nota"
-                  />
-                </label>
-                <label className="block">
-                  <span className="mb-1.5 block font-mono text-[9px] font-bold uppercase tracking-[0.1em] text-t3">
-                    Descrição
-                  </span>
-                  <textarea
-                    value={eventDescription}
-                    onChange={(event) => setEventDescription(event.target.value)}
-                    className="min-h-24 w-full resize-y rounded-md border border-b1 bg-bg px-3 py-2 text-sm text-t1 outline-none transition-colors placeholder:text-t4 focus:border-brand-green"
-                    placeholder="Resumo do contato ou próximo passo."
-                  />
-                </label>
+          <div className="flex flex-1 flex-col py-6">
+            <div className="mb-6 flex border-b border-white/10">
+              {oportunidadeTabs.map((tab) => (
                 <button
-                  type="submit"
-                  disabled={createEvent.isPending}
-                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md bg-brand-green px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-widest text-bg transition-colors hover:bg-brand-green2 disabled:cursor-not-allowed disabled:opacity-60"
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-4 py-3 text-sm font-medium transition-colors ${
+                    activeTab === tab.id
+                      ? 'border-b-2 border-green-400 text-white'
+                      : 'text-white/50 hover:text-white/80'
+                  }`}
                 >
-                  {createEvent.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                  Salvar atividade
+                  {tab.label}
                 </button>
-              </form>
+              ))}
+            </div>
 
-              {events.error ? (
-                <div className="rounded-lg border border-brand-red/30 bg-brand-red/10 px-4 py-3 text-sm text-brand-red">
-                  {events.error instanceof Error ? events.error.message : 'Erro ao carregar atividades.'}
-                </div>
-              ) : events.isLoading ? (
-                <div className="flex min-h-32 items-center justify-center gap-3 text-sm text-t3">
-                  <Loader2 className="h-5 w-5 animate-spin text-brand-green" />
-                  Carregando atividades
-                </div>
-              ) : !events.data?.length ? (
-                <div className="flex min-h-32 flex-col items-center justify-center rounded-lg border border-dashed border-b2 px-4 text-center">
-                  <CalendarDays className="mb-3 h-5 w-5 text-t4" />
-                  <div className="text-sm font-bold text-t2">Nenhuma atividade registrada</div>
-                  <div className="mt-1 text-xs leading-5 text-t4">
-                    Registre a primeira atividade para iniciar o histórico.
+            {activeTab === 'resumo' && (
+              <section className="space-y-6">
+                <div className="rounded-lg border border-b1 bg-s1 p-5">
+                  <div className="mb-4 text-[10px] font-bold uppercase tracking-widest text-t3">
+                    Detalhes gerais
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    <DetailItem label="Origem" value={item.origem} />
+                    <DetailItem label="Cliente" value={item.cliente_nome_snapshot} />
+                    <DetailItem label="Telefone" value={item.telefone_snapshot} />
+                    <DetailItem label="Email" value={item.email_snapshot} />
+                    <DetailItem label="Endereço" value={item.endereco_resumo} />
+                    <DetailItem label="Tipo de obra" value={item.tipo_obra} />
+                    <DetailItem label="Metragem estimada" value={formatArea(item.metragem_estimada)} />
+                    <DetailItem label="Valor estimado" value={formatMoney(item.valor_estimado)} />
+                    <DetailItem label="Criada em" value={formatDate(item.created_at)} />
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {events.data.map((event) => (
-                    <article key={event.id} className="rounded-lg border border-b1 bg-bg/50 p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="text-sm font-bold text-t1">{event.tipo}</div>
-                        <time className="shrink-0 font-mono text-[10px] text-t4">
-                          {formatDate(event.created_at)}
-                        </time>
-                      </div>
-                      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-t3">
-                        {event.descricao || '-'}
-                      </p>
-                    </article>
-                  ))}
+
+                <div className="rounded-lg border border-b1 bg-s1 p-5">
+                  <div className="mb-3 text-[10px] font-bold uppercase tracking-widest text-t3">
+                    Observação
+                  </div>
+                  <p className="whitespace-pre-wrap text-sm leading-6 text-t2">
+                    {item.observacao || 'Nenhuma observação registrada.'}
+                  </p>
                 </div>
-              )}
-            </aside>
+              </section>
+            )}
+
+            {activeTab === 'orcamento_ia' && (
+              <section className="flex flex-col gap-4">
+                {item.orcamento_id ? (
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                    <p className="text-sm text-white/60">Orçamento vinculado</p>
+                    <p className="font-medium text-green-400">Orçamento criado</p>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                    <p className="text-sm text-white/60">Nenhum orçamento ainda</p>
+                  </div>
+                )}
+                <button
+                  onClick={handleAbrirOrcamentista}
+                  disabled={isOpeningOrcamentista}
+                  className="w-fit rounded-lg bg-green-500 px-6 py-3 font-medium text-white transition-colors hover:bg-green-400 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isOpeningOrcamentista ? 'Abrindo Orçamentista IA...' : 'Abrir Orçamentista IA →'}
+                </button>
+              </section>
+            )}
+
+            {activeTab === 'proposta' && (
+              <section className="flex flex-col gap-4">
+                {item.proposta_id ? (
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+                    <p className="text-sm text-white/60">Proposta vinculada</p>
+                    <Link
+                      to={`/propostas?id=${item.proposta_id}`}
+                      className="mt-3 inline-flex w-fit items-center gap-2 rounded-lg border border-green-400/30 bg-white/5 px-4 py-2 text-sm font-bold text-green-400 transition-colors hover:bg-white/10"
+                    >
+                      <FileText className="h-4 w-4" />
+                      Abrir proposta comercial
+                    </Link>
+                  </div>
+                ) : item.orcamento_id ? (
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+                    <p className="text-sm text-white/60">
+                      Gere a proposta a partir do orçamento vinculado.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleGerarProposta}
+                      disabled={isGeneratingProposta}
+                      className="mt-3 inline-flex w-fit items-center justify-center gap-2 rounded-lg bg-green-500 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-green-400 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isGeneratingProposta ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <FileText className="h-4 w-4" />
+                      )}
+                      Gerar proposta
+                    </button>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center text-white/40">
+                    Adicione itens ao orçamento para gerar uma proposta
+                  </div>
+                )}
+              </section>
+            )}
+
+            {activeTab === 'atividades' && (
+              <section className="rounded-lg border border-b1 bg-s1 p-5">
+                <div className="mb-5 flex items-center justify-between gap-4">
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-t3">
+                      Resumo de atividades
+                    </div>
+                    <div className="mt-1 text-xs text-t4">Histórico da oportunidade</div>
+                  </div>
+                  {events.isFetching && <Loader2 className="h-4 w-4 animate-spin text-brand-green" />}
+                </div>
+
+                <form onSubmit={handleAddEvent} className="mb-6 rounded-lg border border-b1 bg-bg/50 p-4">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-bold text-t1">
+                    <MessageSquarePlus className="h-4 w-4 text-brand-green" />
+                    Nova atividade
+                  </div>
+                  <label className="mb-3 block">
+                    <span className="mb-1.5 block font-mono text-[9px] font-bold uppercase tracking-[0.1em] text-t3">
+                      Tipo
+                    </span>
+                    <input
+                      value={eventType}
+                      onChange={(event) => setEventType(event.target.value)}
+                      className="w-full rounded-md border border-b1 bg-bg px-3 py-2 text-sm text-t1 outline-none transition-colors placeholder:text-t4 focus:border-brand-green"
+                      placeholder="Ex: ligação, visita, nota"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="mb-1.5 block font-mono text-[9px] font-bold uppercase tracking-[0.1em] text-t3">
+                      Descrição
+                    </span>
+                    <textarea
+                      value={eventDescription}
+                      onChange={(event) => setEventDescription(event.target.value)}
+                      className="min-h-24 w-full resize-y rounded-md border border-b1 bg-bg px-3 py-2 text-sm text-t1 outline-none transition-colors placeholder:text-t4 focus:border-brand-green"
+                      placeholder="Resumo do contato ou próximo passo."
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    disabled={createEvent.isPending}
+                    className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md bg-brand-green px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-widest text-bg transition-colors hover:bg-brand-green2 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {createEvent.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                    Salvar atividade
+                  </button>
+                </form>
+
+                {events.error ? (
+                  <div className="rounded-lg border border-brand-red/30 bg-brand-red/10 px-4 py-3 text-sm text-brand-red">
+                    {events.error instanceof Error ? events.error.message : 'Erro ao carregar atividades.'}
+                  </div>
+                ) : events.isLoading ? (
+                  <div className="flex min-h-32 items-center justify-center gap-3 text-sm text-t3">
+                    <Loader2 className="h-5 w-5 animate-spin text-brand-green" />
+                    Carregando atividades
+                  </div>
+                ) : !events.data?.length ? (
+                  <div className="flex min-h-32 flex-col items-center justify-center rounded-lg border border-dashed border-b2 px-4 text-center">
+                    <CalendarDays className="mb-3 h-5 w-5 text-t4" />
+                    <div className="text-sm font-bold text-t2">Nenhuma atividade registrada</div>
+                    <div className="mt-1 text-xs leading-5 text-t4">
+                      Registre a primeira atividade para iniciar o histórico.
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {events.data.map((event) => (
+                      <article key={event.id} className="rounded-lg border border-b1 bg-bg/50 p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="text-sm font-bold text-t1">{event.tipo}</div>
+                          <time className="shrink-0 font-mono text-[10px] text-t4">
+                            {formatDate(event.created_at)}
+                          </time>
+                        </div>
+                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-t3">
+                          {event.descricao || '-'}
+                        </p>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
           </div>
         )}
       </section>

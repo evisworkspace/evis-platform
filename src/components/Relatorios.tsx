@@ -150,9 +150,9 @@ Responda APENAS com um JSON válido contendo as chaves acima. NÃO use markdown 
 
         markPending('relatorios_semanais', newRelatorio);
         
-        toast('Semana Fechada e Relatório Gerado!', 'success');
-    } catch (err: unknown) {
-        toast(`Erro ao fechar Semana: ${err}`, 'error');
+        toast('Relatório gerado.', 'success');
+    } catch {
+        toast('Não foi possível gerar o relatório. Tente novamente.', 'error');
     } finally {
         setIsClosing(false);
     }

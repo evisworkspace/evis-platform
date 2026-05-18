@@ -140,9 +140,57 @@ function buildPreviewFromWorkspace(workspace: OrcamentistaWorkspace): {
 // - Persiste somente em orc_context_snapshots (já existente na allowlist).
 // - Itens retornados são PREVIEW — nenhum é persistido sem aprovação humana.
 // ──────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────────────────────
+// GET /api/orcamentista/llm-providers
+// Returns available LLM providers and their configuration status.
+// Also queries Ollama for available local models.
+// ──────────────────────────────────────────────────────────────────────────────
+router.get('/llm-providers', async (_req, res) => {
+  const currentProvider = process.env.ORCAMENTISTA_LLM_PROVIDER || 'ollama';
+
+  const providers = {
+    gemini: {
+      available: !!process.env.GEMINI_API_KEY,
+      currentModel: process.env.ORCAMENTISTA_GEMINI_MODEL || 'gemini-2.5-flash',
+      models: ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-1.5-pro', 'gemini-2.5-pro-preview-03-25'],
+    },
+    ollama: {
+      available: false,
+      currentModel: process.env.ORCAMENTISTA_OLLAMA_MODEL || 'llama3.1',
+      models: [] as string[],
+      url: process.env.OLLAMA_URL || 'http://localhost:11434',
+    },
+    openrouter: {
+      available: !!process.env.OPENROUTER_API_KEY,
+      currentModel: process.env.ORCAMENTISTA_OPENROUTER_MODEL || 'minimax/minimax-01',
+      models: ['minimax/minimax-01', 'mistralai/mistral-7b-instruct', 'meta-llama/llama-3.1-8b-instruct:free', 'google/gemma-2-9b-it:free'],
+    },
+  };
+
+  // Probe Ollama
+  try {
+    const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
+    const { Ollama } = await import('ollama');
+    const client = new Ollama({ host: ollamaUrl });
+    const listResult = await client.list();
+    providers.ollama.models = (listResult.models || []).map((m: { name: string }) => m.name);
+    providers.ollama.available = true;
+  } catch {
+    providers.ollama.available = false;
+  }
+
+  return res.json({
+    success: true,
+    currentProvider,
+    providers,
+  });
+});
+
 type AnalyzeRequestBody = {
   fileIds?: unknown;
   workspaceId?: unknown;
+  provider?: unknown;
+  model?: unknown;
 };
 
 type AnalyzeFileRow = {
@@ -175,6 +223,13 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
     typeof body.workspaceId === 'string' && body.workspaceId.length > 0
       ? body.workspaceId
       : `opp_${opportunityId}`;
+  const VALID_PROVIDERS = ['gemini', 'ollama', 'openrouter'] as const;
+  type ValidProvider = typeof VALID_PROVIDERS[number];
+  const providerOverride: ValidProvider | undefined =
+    typeof body.provider === 'string' && (VALID_PROVIDERS as readonly string[]).includes(body.provider)
+      ? (body.provider as ValidProvider)
+      : undefined;
+  const modelOverride = typeof body.model === 'string' && body.model.length > 0 ? body.model : undefined;
 
   if (fileIds.length === 0) {
     return res.status(400).json({
@@ -263,7 +318,7 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
         entry.downloaded_bytes = size ?? 0;
 
         if (buffer) {
-          const extraction = extractTextEvidenceFromFile({
+          const extraction = await extractTextEvidenceFromFile({
             fileId: file.id,
             fileName: file.nome,
             mimeType: file.mime_type,
@@ -318,7 +373,12 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
     let responseStatus: string;
 
     if (isAiEnabled && hasExtractedText) {
-      const geminiResult = await analyzeWithGemini(extractedTextForAi, opportunityTitle, fileNames);
+      const geminiResult = await analyzeWithGemini(
+        extractedTextForAi,
+        opportunityTitle,
+        fileNames,
+        providerOverride || modelOverride ? { provider: providerOverride, model: modelOverride } : undefined
+      );
       geminiWarnings = geminiResult.warnings;
       geminiResumo = geminiResult.resumo;
 
@@ -446,11 +506,11 @@ router.post('/opportunities/:opportunityId/files', express.raw({ type: '*/*', li
 
   // Validação de tipo de arquivo (extensão)
   const ext = path.extname(fileName).toLowerCase();
-  const allowedExts = ['.txt', '.csv', '.json', '.md'];
+  const allowedExts = ['.txt', '.csv', '.json', '.md', '.pdf'];
   if (!allowedExts.includes(ext)) {
     return res.status(400).json({
       success: false,
-      erro: `Tipo de arquivo não permitido no LAB: ${ext}. Use .txt, .csv, .json ou .md.`
+      erro: `Tipo de arquivo não permitido no LAB: ${ext}. Use .txt, .csv, .json, .md ou .pdf.`
     });
   }
 

@@ -88,9 +88,13 @@ export type AnalyzeResponse = {
   data: AnalyzeData;
 };
 
+export type LLMProviderOption = 'gemini' | 'ollama' | 'openrouter';
+
 export type AnalyzeInput = {
   fileIds: string[];
   workspaceId: string;
+  provider?: LLMProviderOption;
+  model?: string;
 };
 
 export const analyzeKeys = {
@@ -101,13 +105,18 @@ export function useAnalyzeOpportunity(opportunityId: string) {
   const queryClient = useQueryClient();
 
   return useMutation<AnalyzeResponse, Error, AnalyzeInput>({
-    mutationFn: async ({ fileIds, workspaceId }) => {
+    mutationFn: async ({ fileIds, workspaceId, provider, model }) => {
       const response = await fetch(
         `/api/orcamentista/opportunities/${encodeURIComponent(opportunityId)}/analyze`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fileIds, workspaceId }),
+          body: JSON.stringify({
+            fileIds,
+            workspaceId,
+            ...(provider ? { provider } : {}),
+            ...(model ? { model } : {}),
+          }),
         }
       );
 

@@ -301,7 +301,7 @@ export default function Diario() {
               return { ...prev, diario: nd };
             })}
             onLoading={setIsProcessing}
-            onError={(msg) => toast('Erro IA: ' + msg, 'error')}
+            onError={() => toast('O processamento encontrou um problema. Tente novamente.', 'error')}
           />
 
           <button className="px-2.5 py-1.5 rounded-md text-[11px] font-bold tracking-[0.05em] text-t2 border border-b2 hover:border-b3 hover:text-t1 transition-colors" onClick={() => saveDiaryLocal('')}>Limpar</button>
