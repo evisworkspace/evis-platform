@@ -1,21 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AppProvider, useAppContext } from './AppContext';
-import { Servico, Pendencia, Equipe, Nota, Foto, DiarioEntry, PendingChange } from './types';
+import { Servico, Pendencia, Equipe, Nota, Foto, DiarioEntry } from './types';
 import { 
-  Book, CheckSquare, FileText, Image as ImageIcon, FileBarChart, Settings, CloudDownload, CloudUpload, Calendar, TrendingUp, MessageSquare,
-  Building2, MapPin, Users, Camera, BarChart, Activity, AlertTriangle, ChevronRight
+  Book, CheckSquare, FileText, FileBarChart, Settings, CloudDownload, CloudUpload, Calendar, TrendingUp,
+  Activity, ChevronRight, TrendingUp as TrendingUpIcon
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import Diario from './components/Diario';
 import Equipes from './components/Equipes';
-import Servicos from './components/Servicos';
 import OrcamentoTab from './components/Orcamento';
-import Notas from './components/Notas';
-import Fotos from './components/Fotos';
 import Relatorios from './components/Relatorios';
 import ConfigPage from './components/ConfigPage';
 import Cronograma from './components/Cronograma';
+import ObraVisaoGeral from './components/ObraVisaoGeral';
+import DocumentosTab from './components/DocumentosTab';
 
 import Login from './pages/Login';
 import PortalCliente from './pages/PortalCliente';
@@ -27,6 +26,17 @@ import OportunidadesPage from './pages/OportunidadesPage';
 import OrcamentistaChat from './pages/OrcamentistaChat';
 import PropostaPage from './pages/PropostaPage';
 import GlobalLayout from './components/GlobalLayout';
+
+// Novas páginas da espinha dorsal Vobi
+import ProjetosPage from './pages/ProjetosPage';
+import PreObraPage from './pages/PreObraPage';
+import TarefasPage from './pages/TarefasPage';
+import ComprasPage from './pages/ComprasPage';
+import FinanceiroPage from './pages/FinanceiroPage';
+import RelatoriosPage from './pages/RelatoriosPage';
+import CadastrosPage from './pages/CadastrosPage';
+import ConfiguracoesPage from './pages/ConfiguracoesPage';
+
 import { useAuth } from './hooks/useAuth';
 import { Loader2 } from 'lucide-react';
 import { useSupabaseQuery } from './hooks/useSupabaseQuery';
@@ -36,11 +46,12 @@ import { useRealtimeSync } from './hooks/useRealtimeSync';
 
 function Main() {
   const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'diario');
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'planejamento');
   const { state, setState, config, setConfig, toast } = useAppContext();
   const [syncing, setSyncing] = useState(false);
   const queryClient = useQueryClient();
   const { obraId: urlObraId } = useParams();
+  const obraId = urlObraId || config.obraId;
   const navigate = useNavigate();
   const [loadingInitial, setLoadingInitial] = useState(false);
   const [obraPickerOpen, setObraPickerOpen] = useState(false);
@@ -88,10 +99,7 @@ function Main() {
     }
     setLoadingObras(true);
     try {
-      const res = await fetch(`${config.url}/rest/v1/obras?select=id,nome,status&order=nome`, {
-        headers: { 'apikey': config.key, 'Authorization': `Bearer ${config.key}` }
-      });
-      const data = await res.json();
+      const data = await sbFetch('obras?select=id,nome,status&order=nome', {}, config);
       setObras(Array.isArray(data) ? data : []);
     } catch {
       toast('Erro ao buscar obras.', 'error');
@@ -106,55 +114,54 @@ function Main() {
     toast(`Obra "${obra.nome}" selecionada.`, 'success');
   };
 
-
   // React Query hooks for caching data
   const servicos = useSupabaseQuery<Servico[]>(
     ['servicos', config.obraId],
-    `servicos?obra_id=eq.${config.obraId}&select=id,id_servico,nome,categoria,avanco_atual,status,data_prevista,data_conclusao,equipe&order=data_prevista`,
+    `servicos?obra_id=eq.${config.obraId}&select=id,nome,categoria,avanco_atual,status,data_prevista,data_conclusao,equipe&order=data_prevista`,
     config,
-    { staleTime: 5 * 60 * 1000 }
+    { enabled: !!(config.url && config.key && config.obraId), staleTime: 5 * 60 * 1000 }
   );
 
   const pendencias = useSupabaseQuery<Pendencia[]>(
     ['pendencias', config.obraId],
     `pendencias?obra_id=eq.${config.obraId}&status=eq.ABERTA&order=created_at.desc`,
     config,
-    { staleTime: 5 * 60 * 1000 }
+    { enabled: !!(config.url && config.key && config.obraId), staleTime: 5 * 60 * 1000 }
   );
 
   const diario = useSupabaseQuery<{ id: string, created_at: string, transcricao: string, narrativa?: string }[]>(
     ['diario_obra', config.obraId],
     `diario_obra?obra_id=eq.${config.obraId}&order=created_at.desc&limit=30`,
     config,
-    { staleTime: 5 * 60 * 1000 }
+    { enabled: !!(config.url && config.key && config.obraId), staleTime: 5 * 60 * 1000 }
   );
 
   const notas = useSupabaseQuery<Nota[]>(
     ['notas', config.obraId],
     `notas?obra_id=eq.${config.obraId}&order=data_nota.desc`,
     config,
-    { staleTime: 5 * 60 * 1000 }
+    { enabled: !!(config.url && config.key && config.obraId), staleTime: 5 * 60 * 1000 }
   );
 
   const equipes = useSupabaseQuery<Equipe[]>(
     ['equipes_cadastro', config.obraId],
     `equipes_cadastro?obra_id=eq.${config.obraId}&order=nome`,
     config,
-    { staleTime: 5 * 60 * 1000 }
+    { enabled: !!(config.url && config.key && config.obraId), staleTime: 5 * 60 * 1000 }
   );
 
   const presencaData = useSupabaseQuery<{ data_presenca: string, equipe_cod: string }[]>(
     ['equipes_presenca', config.obraId],
     `equipes_presenca?obra_id=eq.${config.obraId}&order=data_presenca.desc`,
     config,
-    { staleTime: 5 * 60 * 1000 }
+    { enabled: !!(config.url && config.key && config.obraId), staleTime: 5 * 60 * 1000 }
   );
 
   const fotosData = useSupabaseQuery<Foto[]>(
     ['fotos', config.obraId],
     `fotos?obra_id=eq.${config.obraId}&order=data_foto.desc`,
     config,
-    { staleTime: 5 * 60 * 1000 }
+    { enabled: !!(config.url && config.key && config.obraId), staleTime: 5 * 60 * 1000 }
   );
 
   // Effect to sync React Query data to App Context
@@ -214,10 +221,9 @@ function Main() {
         equipes.refetch(),
         presencaData.refetch(),
       ]);
-      toast('Dados carregados com sucesso!', 'success');
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      toast('Erro ao carregar: ' + msg, 'error');
+      toast('Dados carregados.', 'success');
+    } catch {
+      toast('Não foi possível carregar os dados da obra.', 'error');
     } finally {
       setLoadingInitial(false);
     }
@@ -230,7 +236,6 @@ function Main() {
       return;
     }
     if (!state.pendingChanges.length) {
-      toast('Nada a sincronizar.', 'info');
       return;
     }
     setSyncing(true);
@@ -279,7 +284,6 @@ function Main() {
         }
         if (ch.table === 'equipes_presenca') {
           const dPresenca = ch.data as unknown as { equipe: string, dia: string };
-          // Conforme Regra 3 do RULES.md: on_conflict usa nomes de colunas, não nomes de constraints.
           await sbFetch('equipes_presenca?on_conflict=obra_id,equipe_cod,data_presenca', { 
             method: 'POST', 
             body: JSON.stringify({ 
@@ -295,7 +299,7 @@ function Main() {
           if (e.id) {
              await sbFetch(`equipes_cadastro?id=eq.${e.id}`, { method: 'PATCH', body: JSON.stringify(e) }, config);
           } else {
-             await sbFetch('equipes_cadastro', { method: 'POST', body: JSON.stringify({ ...e, obra_id: config.obraId }) }, config);
+             await sbFetch('equipes_cadastro', { method: 'POST', body: JSON.stringify({ ...e, ...{obra_id: config.obraId} }) }, config);
           }
         }
         if (ch.table === 'notas') {
@@ -312,8 +316,6 @@ function Main() {
           }, config);
         }
         if (ch.table === 'relatorios_semanais') {
-          // Persistência da Snapshot do Relatório Semanal no BD
-          // OBS: A tabela relatorios_semanais deve ser criada no Supabase para uso em produção, caso ainda não exista.
           await sbFetch('relatorios_semanais', { 
              method: 'POST', 
              body: JSON.stringify({ obra_id: config.obraId, data_snapshot: ch.data, semana: (ch.data as Record<string, any>).id }) 
@@ -328,51 +330,43 @@ function Main() {
      setState(prev => ({ ...prev, pendingChanges: [] }));
      setSyncing(false);
      
-     // Invalidate React Query caches for the modified tables to trigger refetch
+     // Invalidate React Query caches
      if (ok > 0) {
        const tablesToInvalidate = new Set(state.pendingChanges.map(ch => ch.table));
        
-       if (tablesToInvalidate.has('servicos')) {
-         queryClient.invalidateQueries({ queryKey: ['servicos', config.obraId] });
-       }
-       if (tablesToInvalidate.has('pendencias')) {
-         queryClient.invalidateQueries({ queryKey: ['pendencias', config.obraId] });
-       }
-       if (tablesToInvalidate.has('diario_obra') || tablesToInvalidate.has('narrativas')) {
-         queryClient.invalidateQueries({ queryKey: ['diario_obra', config.obraId] });
-       }
-       if (tablesToInvalidate.has('notas')) {
-         queryClient.invalidateQueries({ queryKey: ['notas', config.obraId] });
-       }
-       if (tablesToInvalidate.has('equipes_cadastro')) {
-         queryClient.invalidateQueries({ queryKey: ['equipes_cadastro', config.obraId] });
-       }
-if (tablesToInvalidate.has('equipes_presenca')) {
-          queryClient.invalidateQueries({ queryKey: ['equipes_presenca', config.obraId] });
-        }
-        if (tablesToInvalidate.has('fotos')) {
-          queryClient.invalidateQueries({ queryKey: ['fotos', config.obraId] });
-        }
-      }
+       if (tablesToInvalidate.has('servicos')) queryClient.invalidateQueries({ queryKey: ['servicos', config.obraId] });
+       if (tablesToInvalidate.has('pendencias')) queryClient.invalidateQueries({ queryKey: ['pendencias', config.obraId] });
+       if (tablesToInvalidate.has('diario_obra') || tablesToInvalidate.has('narrativas')) queryClient.invalidateQueries({ queryKey: ['diario_obra', config.obraId] });
+       if (tablesToInvalidate.has('notas')) queryClient.invalidateQueries({ queryKey: ['notas', config.obraId] });
+       if (tablesToInvalidate.has('equipes_cadastro')) queryClient.invalidateQueries({ queryKey: ['equipes_cadastro', config.obraId] });
+       if (tablesToInvalidate.has('equipes_presenca')) queryClient.invalidateQueries({ queryKey: ['equipes_presenca', config.obraId] });
+       if (tablesToInvalidate.has('fotos')) queryClient.invalidateQueries({ queryKey: ['fotos', config.obraId] });
+     }
      
-     toast(`Sync concluído: ${ok} enviado(s).${fail ? ' Falhas: ' + fail : ''}`, fail ? 'error' : 'success');
+     if (fail === 0) {
+       toast('Dados enviados.', 'success');
+     } else if (ok === 0) {
+       toast('Não foi possível enviar as alterações. Tente novamente.', 'error');
+     } else {
+       toast(`Enviado com falhas. ${fail} ${fail === 1 ? 'item não enviado' : 'itens não enviados'}.`, 'error');
+     }
    };
 
   const tabs = [
-    { id: 'diario', label: 'Diário', icon: Book },
-    { id: 'equipes', label: 'Equipes', icon: CheckSquare },
-    { id: 'orcamento', label: 'Orçamento', icon: FileText },
-    { id: 'cronograma', label: 'Cronograma', icon: Calendar },
-    { id: 'notas', label: 'Notas', icon: MessageSquare },
-    { id: 'fotos', label: 'Fotos', icon: ImageIcon },
-    { id: 'relatorios', label: 'Relatórios', icon: FileBarChart },
-    { id: 'config', label: 'Config', icon: Settings },
+    { id: 'visao_geral', label: 'Visão Geral', icon: Activity, component: <ObraVisaoGeral obraId={obraId} /> },
+    { id: 'planejamento', label: 'Planejamento', icon: Calendar, component: <Cronograma /> },
+    { id: 'diario', label: 'Diário', icon: Book, component: <Diario /> },
+    { id: 'equipes', label: 'Equipes', icon: CheckSquare, component: <Equipes /> },
+    { id: 'financeiro', label: 'Financeiro', icon: FileText, component: <OrcamentoTab /> },
+    { id: 'documentos', label: 'Documentos', icon: FileText, component: <DocumentosTab /> },
+    { id: 'relatorios', label: 'Relatórios', icon: FileBarChart, component: <Relatorios /> },
   ];
+  const activeTabContent = tabs.find(tab => tab.id === activeTab)?.component;
 
   const pendingCount = state.pendingChanges?.length || 0;
 
   return (
-    <div className="flex flex-col h-screen bg-bg text-t1 font-sans overflow-hidden">
+    <div className="flex flex-col h-full flex-1 bg-bg text-t1 font-sans overflow-hidden min-w-0">
       {/* Skip to Content Link (WCAG AA) */}
       <a 
         href="#main-content"
@@ -389,13 +383,13 @@ if (tablesToInvalidate.has('equipes_presenca')) {
             className="flex items-center gap-3 border-r border-b1 pr-6 h-[56px] hover:bg-s2 transition-colors px-2 rounded-sm group"
           >
             <div className="bg-brand-green/10 p-1.5 rounded-md group-hover:bg-brand-green/20 transition-colors">
-              <TrendingUp className="w-5 h-5 text-brand-green" />
+              <TrendingUpIcon className="w-5 h-5 text-brand-green" />
             </div>
-            <div className="flex flex-col justify-center text-left">
-              <div className="font-mono text-[9px] text-brand-green tracking-[0.15em] uppercase font-bold">Obra ativa</div>
-              <h1 className="text-[14px] font-bold text-t1 leading-tight flex items-center gap-1.5">
+            <div className="flex flex-col justify-center text-left min-w-0">
+              <div className="font-mono text-[9px] text-brand-green tracking-[0.15em] uppercase font-bold truncate">Obra ativa</div>
+              <h1 className="text-[14px] font-bold text-t1 leading-tight flex items-center gap-1.5 truncate max-w-[180px]">
                 {config.obraId ? (obras.find(o => o.id === config.obraId)?.nome || 'Obra Carregada') : 'Obra Pendente'}
-                <ChevronRight className="w-3 h-3 text-t4 group-hover:text-t2 transition-colors rotate-90" />
+                <ChevronRight className="w-3 h-3 text-t4 group-hover:text-t2 transition-colors rotate-90 shrink-0" />
               </h1>
             </div>
           </button>
@@ -420,12 +414,12 @@ if (tablesToInvalidate.has('equipes_presenca')) {
                     className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-s2 transition-colors border-b border-b1/50 last:border-0 ${config.obraId === obra.id ? 'bg-brand-green/5' : ''}`}
                   >
                     <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${config.obraId === obra.id ? 'bg-brand-green' : 'bg-t4'}`} />
-                    <div>
-                      <div className="text-[13px] font-bold text-t1">{obra.nome}</div>
-                      <div className="text-[9px] font-mono text-t4">{obra.id}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[13px] font-bold text-t1 truncate">{obra.nome}</div>
+                      <div className="text-[9px] font-mono text-t4 truncate">{obra.id}</div>
                     </div>
                     {config.obraId === obra.id && (
-                      <div className="ml-auto text-[9px] font-bold text-brand-green uppercase">Ativa</div>
+                      <div className="ml-auto text-[9px] font-bold text-brand-green uppercase shrink-0">Ativa</div>
                     )}
                   </button>
                 ))}
@@ -434,7 +428,7 @@ if (tablesToInvalidate.has('equipes_presenca')) {
           )}
         </div>
         
-        <nav className="flex h-full flex-1 overflow-x-auto no-scrollbar px-2" aria-label="Navegação Principal">
+        <nav className="flex h-full flex-1 overflow-x-auto no-scrollbar px-2" aria-label="Navegação do Cockpit">
           <ul className="flex h-full list-none p-0 m-0">
             {tabs.map(t => (
               <li key={t.id} className="h-full">
@@ -480,13 +474,11 @@ if (tablesToInvalidate.has('equipes_presenca')) {
         </div>
       </header>
 
-
-
       {/* Pages */}
       <main 
         id="main-content" 
         tabIndex={-1} 
-        className="overflow-y-auto p-8 flex-1 bg-[radial-gradient(circle_at_top_right,rgba(63,185,80,0.03),transparent_40%)] outline-none"
+        className="overflow-y-auto p-8 flex-1 bg-[radial-gradient(circle_at_top_right,rgba(63,185,80,0.03),transparent_40%)] outline-none min-w-0"
       >
         {/* Guard: sem obraId, todas as abas (exceto Config) ficam bloqueadas */}
         {!config.obraId && activeTab !== 'config' ? (
@@ -510,13 +502,7 @@ if (tablesToInvalidate.has('equipes_presenca')) {
           </div>
         ) : (
           <>
-            {activeTab === 'diario' && <Diario />}
-            {activeTab === 'equipes' && <Equipes />}
-            {activeTab === 'orcamento' && <OrcamentoTab />}
-            {activeTab === 'cronograma' && <Cronograma />}
-            {activeTab === 'notas' && <Notas />}
-            {activeTab === 'fotos' && <Fotos />}
-            {activeTab === 'relatorios' && <Relatorios />}
+            {activeTabContent}
             {activeTab === 'config' && <ConfigPage />}
           </>
         )}
@@ -529,21 +515,31 @@ export default function App() {
   return (
     <AppProvider>
       <Routes>
-        {/* Rotas com sidebar global */}
+        {/* Rotas externas */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/portal/:id" element={<PortalCliente />} />
+
+        {/* Rotas com sidebar global (Espinha Dorsal EVIS Plataforma) */}
         <Route element={<GlobalLayout />}>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/oportunidades" element={<OportunidadesPage />} />
+          <Route path="/oportunidades/:id" element={<OportunidadeDetalhePage />} />
+          <Route path="/oportunidades/:id/orcamentista" element={<OrcamentistaProductView />} />
+          <Route path="/oportunidades/:id/orcamentista/lab" element={<OrcamentistaTab />} />
+          <Route path="/projetos" element={<ProjetosPage />} />
+          <Route path="/orcamentista" element={<OrcamentistaChat />} />
           <Route path="/propostas" element={<PropostaPage />} />
+          <Route path="/pre-obra" element={<PreObraPage />} />
+          <Route path="/obras" element={<Main />} />
+          <Route path="/obras/:obraId" element={<Main />} />
+          <Route path="/tarefas" element={<TarefasPage />} />
+          <Route path="/compras" element={<ComprasPage />} />
+          <Route path="/financeiro" element={<FinanceiroPage />} />
+          <Route path="/relatorios" element={<RelatoriosPage />} />
+          <Route path="/cadastros" element={<CadastrosPage />} />
+          <Route path="/config" element={<ConfiguracoesPage />} />
         </Route>
-
-        {/* Rotas com layout próprio (sem sidebar global) */}
-        <Route path="/oportunidades/:id" element={<OportunidadeDetalhePage />} />
-        <Route path="/oportunidades/:id/orcamentista" element={<OrcamentistaProductView />} />
-        <Route path="/oportunidades/:id/orcamentista/lab" element={<OrcamentistaTab />} />
-        <Route path="/orcamentista" element={<OrcamentistaChat />} />
-        <Route path="/obras" element={<Main />} />
-        <Route path="/obras/:obraId" element={<Main />} />
       </Routes>
     </AppProvider>
   );

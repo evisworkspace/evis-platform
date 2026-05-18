@@ -10,6 +10,7 @@ Sistema de gestão de obras com IA. React 19 + TypeScript + Vite + Supabase + Ta
 - API: SEMPRE usar sbFetch de src/lib/api.ts — nunca fetch direto
 - Config: SEMPRE obter via useAppContext() — nunca props manuais
 - Campo do item de orçamento: `codigo` (não `codigo_referencia`)
+- Campo do serviço: `codigo_servico` (não `id_servico` — esse é legado e não existe no banco)
 - obra_id nas tabelas: tipo TEXT (não UUID com FK)
 - Tailwind v4: não usar @apply com classes que não existem (ex: leading-relaxed)
 - Código entregue: zero links Markdown dentro de expressões TypeScript

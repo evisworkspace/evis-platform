@@ -67,7 +67,10 @@
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
       "Bash(ls -la docs/TEMPLATE*.json docs/PROMPT_PADRONIZACAO_ORCAMENTO.md)",
-      "Bash(git check-ignore *)"
+      "Bash(git check-ignore *)",
+      "Bash(grep -r \"ollama\\\\|minimax\" 'C:\\\\Users\\\\User\\\\Evis AI' --include=*.ts --include=*.tsx)",
+      "Bash(find 'C:\\\\Users\\\\User\\\\Evis AI\\\\platform\\\\server' -path *orcamentista* -name *.ts -type f)",
+      "Bash(grep -r \"gemini\\\\|Gemini\" 'C:\\\\Users\\\\User\\\\Evis AI\\\\server' --include=*.ts)"
     ]
   }
 }

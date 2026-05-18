@@ -50,18 +50,22 @@ export async function sbFetch(path: string, opts: SbFetchOptions = {}, cfg: Conf
     }
   });
   if (!res.ok) {
-    let errorMessage = `Erro na requisição (${res.status})`;
-    try {
-      const errorData = await res.json();
-      if (errorData.code === 'PGRST301') {
-        errorMessage = 'Erro de Permissão (RLS): Você não tem autorização.';
-      } else {
-        errorMessage = errorData.message || errorData.hint || JSON.stringify(errorData);
-      }
-    } catch {
-      errorMessage = await res.text() || res.statusText;
+    if (res.status === 401 || res.status === 403) {
+      throw new Error('Sem permissão para acessar estes dados.');
     }
-    throw new Error(errorMessage);
+    if (res.status === 404) {
+      throw new Error('Registro não encontrado.');
+    }
+    if (res.status === 409) {
+      throw new Error('Este registro já existe.');
+    }
+    if (res.status === 422) {
+      throw new Error('Os dados enviados são inválidos. Verifique as informações.');
+    }
+    if (res.status >= 500) {
+      throw new Error('O servidor encontrou um erro. Tente novamente em instantes.');
+    }
+    throw new Error('Não foi possível completar a operação. Tente novamente.');
   }
   if (opts.method === 'PATCH' && opts.prefer === 'return=minimal') return null;
   return res.json().catch(() => null);

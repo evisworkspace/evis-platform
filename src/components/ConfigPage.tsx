@@ -1,9 +1,33 @@
 import React from 'react';
 import { useAppContext } from '../AppContext';
+import { LLMProviderOption } from '../hooks/useAnalyzeOpportunity';
 
 export default function ConfigPage() {
   const { config, setConfig, resetState, toast } = useAppContext();
   const [testStatus, setTestStatus] = React.useState('');
+  const [ollamaModels, setOllamaModels] = React.useState<string[]>([]);
+  const [loadingModels, setLoadingModels] = React.useState(false);
+  const [providerStatus, setProviderStatus] = React.useState<Record<string, boolean>>({});
+
+  const fetchLLMProviders = async () => {
+    setLoadingModels(true);
+    try {
+      const res = await fetch('/api/orcamentista/llm-providers');
+      const data = await res.json();
+      if (data.success) {
+        setOllamaModels(data.providers?.ollama?.models ?? []);
+        setProviderStatus({
+          gemini: data.providers?.gemini?.available ?? false,
+          ollama: data.providers?.ollama?.available ?? false,
+          openrouter: data.providers?.openrouter?.available ?? false,
+        });
+      }
+    } catch {
+      setOllamaModels([]);
+    } finally {
+      setLoadingModels(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setConfig({ ...config, [e.target.name]: e.target.value });
@@ -134,14 +158,14 @@ export default function ConfigPage() {
         });
       }
 
-      toast('IMPORTAÇÃO CONCLUÍDA: Dados salvos diretamente no Supabase.', 'success');
+      toast('Dados importados.', 'success');
       setJsonText('');
       
       // Auto-refresh do estado local para refletir o que foi enviado
       window.location.reload(); 
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      toast('Erro na Importação Direta: ' + msg, 'error');
+      toast('Não foi possível importar os dados. Tente novamente.', 'error');
     }
   };
 
@@ -224,6 +248,89 @@ export default function ConfigPage() {
           </div>
           <input name="minimax" type="password" value={config.minimax || ''} onChange={handleChange} className="bg-s2 border border-b1 rounded-md text-t1 font-mono text-[11px] px-3 py-2 outline-none w-[300px] focus:border-b3 transition-colors" placeholder="sk-or-v1-..." />
         </div>
+      </div>
+
+      <div className="bg-s1 border border-b1 rounded-[10px] p-5 mb-3">
+        <div className="font-mono text-[10px] text-t3 uppercase tracking-[0.1em] mb-3.5 pb-2.5 border-b border-b1 flex items-center justify-between">
+          <span>Orçamentista IA — Motor de Análise</span>
+          <button
+            onClick={fetchLLMProviders}
+            disabled={loadingModels}
+            className="text-[9px] font-bold text-brand-green hover:text-green-300 transition-colors disabled:opacity-50"
+          >
+            {loadingModels ? 'Verificando...' : 'Verificar disponibilidade'}
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between py-2.5 border-b border-b1">
+          <div>
+            <div className="text-[13px] text-t1 font-semibold">Provedor ativo</div>
+            <div className="font-mono text-[10px] text-t3 mt-0.5">Motor usado na análise de documentos</div>
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              name="aiProvider"
+              value={(config as any).aiProvider || 'ollama'}
+              onChange={handleChange}
+              className="bg-s2 border border-b1 rounded-md text-t1 font-mono text-[11px] px-3 py-2 outline-none w-[200px] focus:border-b3 transition-colors"
+            >
+              <option value="ollama">Ollama (local, gratuito)</option>
+              <option value="gemini">Gemini (Google AI)</option>
+              <option value="openrouter">OpenRouter (Minimax/Llama)</option>
+            </select>
+            {Object.keys(providerStatus).length > 0 && (
+              <div className={`w-2 h-2 rounded-full shrink-0 ${providerStatus[(config as any).aiProvider || 'ollama'] ? 'bg-green-400' : 'bg-red-400'}`} />
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between py-2.5 border-b border-b1">
+          <div>
+            <div className="text-[13px] text-t1 font-semibold">Modelo</div>
+            <div className="font-mono text-[10px] text-t3 mt-0.5">
+              {(config as any).aiProvider === 'ollama' ? 'Modelos disponíveis no Ollama local' : 'Nome exato do modelo'}
+            </div>
+          </div>
+          {(config as any).aiProvider === 'ollama' && ollamaModels.length > 0 ? (
+            <select
+              name="aiModel"
+              value={(config as any).aiModel || ''}
+              onChange={handleChange}
+              className="bg-s2 border border-b1 rounded-md text-t1 font-mono text-[11px] px-3 py-2 outline-none w-[280px] focus:border-b3 transition-colors"
+            >
+              <option value="">— padrão do servidor —</option>
+              {ollamaModels.map(m => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          ) : (
+            <input
+              name="aiModel"
+              value={(config as any).aiModel || ''}
+              onChange={handleChange}
+              className="bg-s2 border border-b1 rounded-md text-t1 font-mono text-[11px] px-3 py-2 outline-none w-[280px] focus:border-b3 transition-colors"
+              placeholder={
+                (config as any).aiProvider === 'gemini' ? 'gemini-2.5-flash' :
+                (config as any).aiProvider === 'openrouter' ? 'minimax/minimax-01' :
+                'llama3.1'
+              }
+            />
+          )}
+        </div>
+
+        {(config as any).aiProvider === 'ollama' && (
+          <div className="pt-2.5 text-[11px] text-t3">
+            {providerStatus.ollama === true && (
+              <span className="text-green-400">Ollama online · {ollamaModels.length} modelo{ollamaModels.length !== 1 ? 's' : ''} disponível{ollamaModels.length !== 1 ? 'is' : ''}</span>
+            )}
+            {providerStatus.ollama === false && (
+              <span className="text-amber-400">Ollama offline — inicie com: <code className="font-mono bg-s2 px-1 rounded">ollama serve</code></span>
+            )}
+            {!Object.keys(providerStatus).length && (
+              <span>Clique em "Verificar disponibilidade" para listar modelos locais.</span>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="bg-s1 border border-b1 rounded-[10px] p-5 mb-3">
