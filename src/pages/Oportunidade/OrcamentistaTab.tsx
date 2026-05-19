@@ -8,6 +8,7 @@ import { useAnalyzeOpportunity, type AnalyzeData, analyzeKeys } from '../../hook
 import { useQueryClient } from '@tanstack/react-query';
 import OrcamentistaManualItemsPanel from './OrcamentistaManualItemsPanel';
 import OrcamentistaAiReviewPanel from './OrcamentistaAiReviewPanel';
+import OrcamentistaCommitBatchesPanel from './OrcamentistaCommitBatchesPanel';
 import OrcamentistaAiPipelinePanel from './OrcamentistaAiPipelinePanel';
 import OrcamentistaAiPreviewPanel from './OrcamentistaAiPreviewPanel';
 import OrcamentistaDocumentsPanel from './OrcamentistaDocumentsPanel';
@@ -18,6 +19,7 @@ import OrcamentistaAgentDispatchPanel from './OrcamentistaAgentDispatchPanel';
 import { OrcamentistaConsolidatedPreviewPanel } from './OrcamentistaConsolidatedPreviewPanel';
 import OrcamentistaConsolidationGatePanel from './OrcamentistaConsolidationGatePanel';
 import OrcamentistaPayloadReviewPanel from './OrcamentistaPayloadReviewPanel';
+import OrcamentistaPreviewItemsHitlPanel from './OrcamentistaPreviewItemsHitlPanel';
 import OrcamentistaRealReaderSandboxPanel from './OrcamentistaRealReaderSandboxPanel';
 import OrcamentistaMissingProjectFallbackPanel from './OrcamentistaMissingProjectFallbackPanel';
 import OrcamentistaGuidedIntakePanel from './OrcamentistaGuidedIntakePanel';
@@ -244,6 +246,9 @@ export default function OrcamentistaTab() {
 
   // Determine stepper position
   const analyzeResult = cachedAnalyzeResult?.data ?? (analyzeMutation.data?.data ?? null);
+  const analysisRun = analyzeResult?.analysis_run ?? null;
+  const analysisRunId = analysisRun?.schema_status === 'ready' ? analysisRun.run_id : null;
+  const analysisRunSchemaStatus = analysisRun?.schema_status ?? null;
   const hasAiItems = (analyzeResult?.items?.length ?? 0) > 0;
   
   let stepperStep = 0;
@@ -398,6 +403,11 @@ export default function OrcamentistaTab() {
                   analyzedFileCount={analyzeResult.source_files?.length ?? 0}
                   criarItemManual={criarItemManual}
                 />
+                <OrcamentistaPreviewItemsHitlPanel
+                  runId={analysisRunId}
+                  schemaStatusFromAnalyze={analysisRunSchemaStatus}
+                />
+                <OrcamentistaCommitBatchesPanel runId={analysisRunId} />
               </section>
             )}
 
