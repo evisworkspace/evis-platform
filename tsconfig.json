@@ -1,5 +1,6 @@
 {
-  "exclude": ["scratch", "node_modules"],
+  "include": ["src/**/*", "server/**/*", "platform/server/**/*"],
+  "exclude": ["scratch", "node_modules", "dist", "scripts", "testes_qa", "domains"],
   "compilerOptions": {
     "target": "ES2022",
     "experimentalDecorators": true,
