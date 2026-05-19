@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   Ban,
@@ -129,9 +129,35 @@ function issueTypeLabel(issueType: OrcamentistaHitlIssue['issue_type']) {
   }
 }
 
-export default function OrcamentistaHitlPanel() {
-  const [issues, setIssues] = useState<OrcamentistaHitlIssue[]>(mockOrcamentistaHitlIssues);
-  const [selectedId, setSelectedId] = useState(mockOrcamentistaHitlIssues[0]?.id ?? '');
+interface OrcamentistaHitlPanelProps {
+  // Quando fornecidas (via useOrcamentistaAnalyzeResult + analyzeDataToHitlIssues),
+  // o painel exibe as pendências REAIS extraídas do backend.
+  // Quando omitidas, cai no mock para preservar a demo visual.
+  issues?: OrcamentistaHitlIssue[];
+  // Marca explicitamente a origem do dado para badge correto.
+  isRealData?: boolean;
+}
+
+export default function OrcamentistaHitlPanel({
+  issues: issuesProp,
+  isRealData = false,
+}: OrcamentistaHitlPanelProps = {}) {
+  const initialIssues = issuesProp && issuesProp.length > 0 ? issuesProp : mockOrcamentistaHitlIssues;
+  const usingRealData = isRealData && !!issuesProp && issuesProp.length > 0;
+  const [issues, setIssues] = useState<OrcamentistaHitlIssue[]>(initialIssues);
+  const [selectedId, setSelectedId] = useState(initialIssues[0]?.id ?? '');
+
+  // Quando o dado real chega depois da montagem (mutation conclui após render inicial),
+  // sincroniza o estado local. Decisões já tomadas localmente são perdidas, o que é
+  // o comportamento correto: o backend é a fonte de verdade.
+  useEffect(() => {
+    if (issuesProp && issuesProp.length > 0) {
+      setIssues(issuesProp);
+      setSelectedId((current) =>
+        issuesProp.some((issue) => issue.id === current) ? current : issuesProp[0].id
+      );
+    }
+  }, [issuesProp]);
   const queueSummary = useMemo(() => summarizeHitlQueue(issues), [issues]);
   const groupedBySeverity = useMemo(() => groupHitlIssuesBySeverity(issues), [issues]);
   const blockingIssues = useMemo(() => getBlockingIssues(issues), [issues]);
@@ -159,15 +185,22 @@ export default function OrcamentistaHitlPanel() {
         <div>
           <div className="flex items-center gap-2">
             <ClipboardCheck className="h-5 w-5 text-amber-300" />
-            <h2 className="text-sm font-bold text-t1">HITL Orçamentista — mock local</h2>
+            <h2 className="text-sm font-bold text-t1">
+              {usingRealData ? 'HITL Orçamentista — pendências reais' : 'HITL Orçamentista — mock local'}
+            </h2>
           </div>
           <p className="mt-1 max-w-3xl text-xs leading-5 text-t3">
-            Preview de validação humana pré-orçamento com dados mockados. Este HITL é separado do
-            Diário de Obra, ainda não está conectado ao banco e altera apenas estado local.
+            {usingRealData
+              ? 'Validação humana das pendências REAIS extraídas pelo backend ao analisar os arquivos da oportunidade. Decisões alteram estado local; persistência no banco virá em fase futura.'
+              : 'Preview de validação humana pré-orçamento com dados mockados. Rode "Analisar arquivos" acima para popular este painel com pendências reais.'}
           </p>
         </div>
-        <span className="w-fit rounded border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-amber-200">
-          MOCK · Estado local
+        <span className={`w-fit rounded border px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest ${
+          usingRealData
+            ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
+            : 'border-amber-500/30 bg-amber-500/10 text-amber-200'
+        }`}>
+          {usingRealData ? 'REAL · do backend' : 'MOCK · Estado local'}
         </span>
       </header>
 
@@ -387,13 +420,14 @@ export default function OrcamentistaHitlPanel() {
           <button
             type="button"
             onClick={() => {
-              setIssues(mockOrcamentistaHitlIssues);
-              setSelectedId(mockOrcamentistaHitlIssues[0]?.id ?? '');
+              const reset = usingRealData && issuesProp ? issuesProp : mockOrcamentistaHitlIssues;
+              setIssues(reset);
+              setSelectedId(reset[0]?.id ?? '');
             }}
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-widest text-t3 transition hover:bg-white/10"
           >
             <RotateCcw className="h-4 w-4" />
-            Reset mock
+            {usingRealData ? 'Resetar para pendências do backend' : 'Reset mock'}
           </button>
         </div>
       </div>

@@ -22,6 +22,12 @@ import OrcamentistaInternalActionPanel from './OrcamentistaInternalActionPanel';
 import OrcamentistaContextStatePanel from './OrcamentistaContextStatePanel';
 import { buildMockDocumentIntakeFiles } from '../../lib/orcamentista/documentIntakeMock';
 import { mockPipelineSteps, mockAiPreview } from '../../lib/orcamentista/mockPipeline';
+import { useOrcamentistaAnalyzeResult } from '../../hooks/useOrcamentistaAnalyzeResult';
+import {
+  analyzeDataToAiPreview,
+  analyzeDataToHitlIssues,
+  analyzeDataToPipelineSteps,
+} from '../../lib/orcamentista/analyzeAdapters';
 
 // ──────────────────────────────────────────────
 // OrcamentistaTab — Fase 1F
@@ -119,6 +125,17 @@ export default function OrcamentistaTab() {
     removerItemManual,
   } = useOportunidadeOrcamento(id, config);
   const opportunityFiles = useOpportunityFiles(id, config);
+
+  // Selector da "planilha-base" — lê o resultado real do analyze quando existir.
+  // Os painéis-filtro abaixo consomem slices desta fonte única de verdade.
+  const analyzeResult = useOrcamentistaAnalyzeResult(id);
+  const realHitlIssues = analyzeDataToHitlIssues(analyzeResult.data);
+  const derivedPipelineSteps = analyzeResult.hasData
+    ? analyzeDataToPipelineSteps(analyzeResult.data)
+    : mockPipelineSteps;
+  const derivedAiPreview = analyzeResult.hasData
+    ? analyzeDataToAiPreview(analyzeResult.data)
+    : mockAiPreview;
 
   // Limpa a seleção quando a oportunidade muda.
   useEffect(() => {
@@ -386,8 +403,11 @@ export default function OrcamentistaTab() {
               {/* E6. Reader + Verifier mockado */}
               <OrcamentistaReaderVerifierPanel />
 
-              {/* E7. HITL do Orçamentista mockado */}
-              <OrcamentistaHitlPanel />
+              {/* E7. HITL do Orçamentista — REAL quando analyze rodou */}
+              <OrcamentistaHitlPanel
+                issues={analyzeResult.hasData ? realHitlIssues : undefined}
+                isRealData={analyzeResult.hasData}
+              />
 
               {/* E8. Dispatch mockado para agentes especialistas */}
               <OrcamentistaAgentDispatchPanel />
@@ -404,11 +424,11 @@ export default function OrcamentistaTab() {
               {/* E12. Sandbox de primeira leitura real controlada */}
               <OrcamentistaRealReaderSandboxPanel />
 
-              {/* E13. Pipeline IA mockado */}
-              <OrcamentistaAiPipelinePanel steps={mockPipelineSteps} />
+              {/* E13. Pipeline IA — REAL quando analyze rodou (derivado) */}
+              <OrcamentistaAiPipelinePanel steps={derivedPipelineSteps} />
 
-              {/* E14. Prévia IA mockada (legado) */}
-              <OrcamentistaAiPreviewPanel preview={mockAiPreview} />
+              {/* E14. Prévia IA — REAL quando analyze rodou (adaptado) */}
+              <OrcamentistaAiPreviewPanel preview={derivedAiPreview} />
 
               {/* E15. Chat do Orçamentista (staging/preview separado) */}
               <div className="rounded-lg border border-white/10 bg-white/5 p-4">
