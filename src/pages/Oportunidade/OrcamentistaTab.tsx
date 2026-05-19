@@ -360,9 +360,29 @@ export default function OrcamentistaTab() {
           <section>
             <SectionDivider
               label="Workspace IA"
-              badge="PRÉVIA — NÃO CONSOLIDADA"
-              badgeVariant="purple"
+              badge={analyzeResult.hasData ? 'ANÁLISE REAL ATIVA' : 'PRÉVIA — NÃO CONSOLIDADA'}
+              badgeVariant={analyzeResult.hasData ? 'green' : 'purple'}
             />
+            {analyzeResult.hasData && (
+              <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-xs text-emerald-200">
+                <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-emerald-300">
+                  Planilha-base ativa
+                </span>
+                <span className="text-white/40">·</span>
+                <span>
+                  {analyzeResult.data?.source_files.length ?? 0} arquivo(s) analisado(s)
+                </span>
+                <span className="text-white/40">·</span>
+                <span>{analyzeResult.data?.items.length ?? 0} item(ns) sugerido(s)</span>
+                <span className="text-white/40">·</span>
+                <span>{analyzeResult.data?.pendencias_hitl.length ?? 0} pendência(s) HITL</span>
+                <span className="text-white/40">·</span>
+                <span>{analyzeResult.data?.evidences.length ?? 0} evidência(s)</span>
+                <span className="ml-auto rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-emerald-300">
+                  HITL · AiPipeline · AiPreview agora reais
+                </span>
+              </div>
+            )}
             <div className="mt-4 space-y-6">
 
               {/* E0. Estado contextual real — read-only com seleção de arquivos */}
