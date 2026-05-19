@@ -24,13 +24,13 @@
 - [x] Vite build: verde (3783 módulos transformados, 7.62s)
 
 ## Validação pendente (Fase 5 — humano)
-- [ ] Sidebar navega para todas as rotas (Dashboard, Oportunidades, Orçamentista, Propostas, Obras...)
-- [ ] Dashboard carrega sem erro (mesmo sem dados, mostra estado "em ordem")
-- [ ] OportunidadeDetalhePage mostra 4 tabs: Resumo, Orçamento IA, Proposta, Atividades
-- [ ] OrcamentistaProductView abre em /oportunidades/:id/orcamentista
-- [ ] Botão "Voltar ao HUB" funciona
-- [ ] Link "Diagnóstico técnico" abre o Lab
-- [ ] Console limpo (zero 500 no fluxo principal)
+- [x] Sidebar navega para todas as rotas (Dashboard, Oportunidades, Orçamentista, Propostas, Obras...)
+- [x] Dashboard carrega sem erro (mesmo sem dados, mostra estado "em ordem")
+- [x] OportunidadeDetalhePage mostra 4 tabs: Resumo, Orçamento IA, Proposta, Atividades
+- [x] OrcamentistaProductView abre em /oportunidades/:id/orcamentista
+- [x] Botão "Voltar ao HUB" funciona
+- [x] Link "Diagnóstico técnico" abre o Lab
+- [x] Console limpo (zero 500 no fluxo principal)
 
 ## Fase 2 SQL — Ainda aguardando confirmação
 Script: platform/docs/sql_proposals/ORCAMENTISTA_CLEANUP_TEST_DATA.sql
