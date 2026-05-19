@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAppContext } from '../AppContext';
 import { LLMProviderOption } from '../hooks/useAnalyzeOpportunity';
+import { sbFetch } from '../lib/api';
 
 export default function ConfigPage() {
   const { config, setConfig, resetState, toast } = useAppContext();
@@ -36,10 +37,7 @@ export default function ConfigPage() {
   const testConn = async () => {
     setTestStatus('Testando...');
     try {
-      const res = await fetch(`${config.url}/rest/v1/servicos?limit=1`, {
-        headers: { 'apikey': config.key, 'Authorization': `Bearer ${config.key}` }
-      });
-      if (!res.ok) throw new Error(await res.text());
+      await sbFetch('servicos?limit=1', {}, config);
       setTestStatus('✓ Supabase conectado');
       toast('Conexão bem-sucedida!', 'success');
     } catch (e: unknown) {
@@ -65,13 +63,8 @@ export default function ConfigPage() {
     try {
       const data = JSON.parse(jsonText);
       toast('Iniciando importação direta para o Supabase...', 'info');
-      
-      const headers = {
-        'apikey': config.key,
-        'Authorization': `Bearer ${config.key}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates'
-      };
+
+      const upsert = 'resolution=merge-duplicates,return=minimal';
 
       // 1. IMPORTAR SERVIÇOS
       const services = (data.servicos || []).map((s: Record<string, any>) => ({
@@ -88,12 +81,7 @@ export default function ConfigPage() {
 
       if (services.length > 0) {
         toast(`Enviando ${services.length} serviços...`, 'info');
-        const res = await fetch(`${config.url}/rest/v1/servicos`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(services)
-        });
-        if (!res.ok) throw new Error('Falha ao enviar serviços: ' + res.statusText);
+        await sbFetch('servicos', { method: 'POST', body: JSON.stringify(services), prefer: upsert }, config);
       }
 
       // 2. IMPORTAR EQUIPES
@@ -104,11 +92,7 @@ export default function ConfigPage() {
       }));
 
       if (teams.length > 0) {
-        await fetch(`${config.url}/rest/v1/equipes_cadastro`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(teams)
-        });
+        await sbFetch('equipes_cadastro', { method: 'POST', body: JSON.stringify(teams), prefer: upsert }, config);
       }
 
       // 3. IMPORTAR NOTAS (Anotações/Observações)
@@ -121,25 +105,21 @@ export default function ConfigPage() {
 
       if (notes.length > 0) {
         toast(`Enviando ${notes.length} notas/anotações...`, 'info');
-        await fetch(`${config.url}/rest/v1/notas`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(notes)
-        });
+        await sbFetch('notas', { method: 'POST', body: JSON.stringify(notes), prefer: upsert }, config);
       }
 
       // 4. IMPORTAR DIÁRIO (Narrativas)
       if (data.narrativa_visita) {
-        await fetch(`${config.url}/rest/v1/diario_obra`, {
+        await sbFetch('diario_obra', {
           method: 'POST',
-          headers,
           body: JSON.stringify({
             obra_id: config.obraId,
             narrativa: data.narrativa_visita,
             transcricao: 'Importação inicial JSON',
             created_at: new Date().toISOString()
-          })
-        });
+          }),
+          prefer: upsert,
+        }, config);
       }
 
       // 5. IMPORTAR PENDÊNCIAS
@@ -151,11 +131,7 @@ export default function ConfigPage() {
       }));
 
       if (pendings.length > 0) {
-        await fetch(`${config.url}/rest/v1/pendencias`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(pendings)
-        });
+        await sbFetch('pendencias', { method: 'POST', body: JSON.stringify(pendings), prefer: upsert }, config);
       }
 
       toast('Dados importados.', 'success');
@@ -175,7 +151,7 @@ export default function ConfigPage() {
     <div>
 
       <div className="bg-s1 border border-b1 rounded-[10px] p-5 mb-3">
-        <div className="font-mono text-[10px] text-t3 uppercase tracking-[0.1em] mb-3.5 pb-2.5 border-b border-b1">Supabase</div>
+        <div className="font-mono text-[10px] text-t3 uppercase tracking-widest mb-3.5 pb-2.5 border-b border-b1">Supabase</div>
         
         <div className="flex items-center justify-between py-2.5 border-b border-b1">
           <div>
@@ -203,7 +179,7 @@ export default function ConfigPage() {
       </div>
 
       <div className="bg-s1 border border-b1 rounded-[10px] p-5 mb-3">
-        <div className="font-mono text-[10px] text-t3 uppercase tracking-[0.1em] mb-3.5 pb-2.5 border-b border-b1">Gemini API</div>
+        <div className="font-mono text-[10px] text-t3 uppercase tracking-widest mb-3.5 pb-2.5 border-b border-b1">Gemini API</div>
         
         <div className="flex items-center justify-between py-2.5 border-b border-b1">
           <div>
@@ -227,7 +203,7 @@ export default function ConfigPage() {
       </div>
 
       <div className="bg-s1 border border-b1 rounded-[10px] p-5 mb-3">
-        <div className="font-mono text-[10px] text-t3 uppercase tracking-[0.1em] mb-3.5 pb-2.5 border-b border-b1">Ollama (Soldado Local)</div>
+        <div className="font-mono text-[10px] text-t3 uppercase tracking-widest mb-3.5 pb-2.5 border-b border-b1">Ollama (Soldado Local)</div>
         
         <div className="flex items-center justify-between py-2.5 border-b border-b1">
           <div>
@@ -239,7 +215,7 @@ export default function ConfigPage() {
       </div>
 
       <div className="bg-s1 border border-b1 rounded-[10px] p-5 mb-3">
-        <div className="font-mono text-[10px] text-t3 uppercase tracking-[0.1em] mb-3.5 pb-2.5 border-b border-b1">Minimax / OpenRouter</div>
+        <div className="font-mono text-[10px] text-t3 uppercase tracking-widest mb-3.5 pb-2.5 border-b border-b1">Minimax / OpenRouter</div>
         
         <div className="flex items-center justify-between py-2.5">
           <div>
@@ -251,7 +227,7 @@ export default function ConfigPage() {
       </div>
 
       <div className="bg-s1 border border-b1 rounded-[10px] p-5 mb-3">
-        <div className="font-mono text-[10px] text-t3 uppercase tracking-[0.1em] mb-3.5 pb-2.5 border-b border-b1 flex items-center justify-between">
+        <div className="font-mono text-[10px] text-t3 uppercase tracking-widest mb-3.5 pb-2.5 border-b border-b1 flex items-center justify-between">
           <span>Orçamentista IA — Motor de Análise</span>
           <button
             onClick={fetchLLMProviders}
@@ -334,7 +310,7 @@ export default function ConfigPage() {
       </div>
 
       <div className="bg-s1 border border-b1 rounded-[10px] p-5 mb-3">
-        <div className="font-mono text-[10px] text-t3 uppercase tracking-[0.1em] mb-3.5 pb-2.5 border-b border-b1">Contexto e Ferramentas (MCP)</div>
+        <div className="font-mono text-[10px] text-t3 uppercase tracking-widest mb-3.5 pb-2.5 border-b border-b1">Contexto e Ferramentas (MCP)</div>
         
         <div className="flex items-center justify-between py-2.5">
           <div>
@@ -346,7 +322,7 @@ export default function ConfigPage() {
       </div>
 
       <div className="bg-s1 border border-b1 rounded-[10px] p-5 mb-3">
-        <div className="font-mono text-[10px] text-t3 uppercase tracking-[0.1em] mb-3.5 pb-2.5 border-b border-b1">ImgBB API (Fotos)</div>
+        <div className="font-mono text-[10px] text-t3 uppercase tracking-widest mb-3.5 pb-2.5 border-b border-b1">ImgBB API (Fotos)</div>
         
         <div className="flex items-center justify-between py-2.5">
           <div>
@@ -359,7 +335,7 @@ export default function ConfigPage() {
 
 
       <div className="bg-s1 border border-b1 rounded-[10px] p-5 mb-3">
-        <div className="font-mono text-[10px] text-t3 uppercase tracking-[0.1em] mb-3.5 pb-2.5 border-b border-b1">Inicializar Projeto (JSON)</div>
+        <div className="font-mono text-[10px] text-t3 uppercase tracking-widest mb-3.5 pb-2.5 border-b border-b1">Inicializar Projeto (JSON)</div>
         <div className="text-[12px] text-t3 mb-3">
           Cole o JSON gerado pelo agente de orçamento para popular o sistema. Isso substituirá os dados atuais.
         </div>

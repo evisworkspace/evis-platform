@@ -32,15 +32,21 @@ export function useDashboardCentral(config: Config) {
   const hitlsQ = useQuery<HitlRow[]>({
     queryKey: ['dashboard_hitls'],
     queryFn: async () => {
-      const data = await sbFetch(
-        'orcamentista_hitls?status=eq.pendente&limit=30',
-        {},
-        config
-      );
-      return (Array.isArray(data) ? data : []) as HitlRow[];
+      try {
+        const data = await sbFetch(
+          'orcamentista_hitls?status=eq.pendente&limit=30',
+          {},
+          config
+        );
+        return (Array.isArray(data) ? data : []) as HitlRow[];
+      } catch {
+        // tabela ainda não existe em produção — retorna vazio sem quebrar o dashboard
+        return [];
+      }
     },
     enabled,
     staleTime: 1000 * 60 * 2,
+    retry: false,
   });
 
   const pendenciasQ = useQuery<Pendencia[]>({
