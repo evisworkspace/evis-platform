@@ -61,6 +61,23 @@ export type AnalyzePreviewItem = {
   observacoes: string | null;
 };
 
+export type AnalyzeAnalysisRunBlock =
+  | {
+      schema_status: 'ready';
+      run_id: string;
+      counts: { fileReads: number; evidences: number; previewItems: number };
+    }
+  | {
+      schema_status: 'schema_not_ready';
+      missing_table: string;
+      message: string;
+    }
+  | {
+      schema_status: 'persistence_error';
+      stage: 'analysis_run' | 'file_reads' | 'evidences' | 'preview_items';
+      message: string;
+    };
+
 export type AnalyzeData = {
   opportunity_id: string;
   workspace_id: string;
@@ -80,6 +97,13 @@ export type AnalyzeData = {
     id: string;
     context_status: 'blocked' | 'pending' | 'incomplete' | 'validated';
   };
+  /**
+   * Etapa 2: persistência run-scoped do /analyze.
+   * - 'ready' = grava em orc_analysis_runs/file_reads/evidences/preview_items.
+   * - 'schema_not_ready' = migration 003 ainda não aplicada; /analyze segue funcionando.
+   * - 'persistence_error' = erro inesperado em alguma das 4 tabelas.
+   */
+  analysis_run: AnalyzeAnalysisRunBlock;
 };
 
 export type AnalyzeResponse = {

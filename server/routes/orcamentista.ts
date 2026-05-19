@@ -1,10 +1,15 @@
 import express, { Router, type Request, type Response } from 'express';
 import fs from 'fs';
-import { analyzeWithGemini } from '../services/geminiOrcamentista';
 import path from 'path';
 import { runControlledManualOrcamentistaAction } from '../../platform/server/orcamentista/controlledManualAction';
 import { getOrcamentistaPipelineView } from '../../platform/server/orcamentista/pipelineView';
-import { createStagingClientFromEnv, createMainReadClientFromEnv, downloadOpportunityFile, readAndValidateStagingEnv } from '../../platform/server/orcamentista/persistence/stagingClient';
+import {
+  createStagingClientFromEnv,
+  createRawStagingClientFromEnv,
+  createMainReadClientFromEnv,
+  downloadOpportunityFile,
+  readAndValidateStagingEnv,
+} from '../../platform/server/orcamentista/persistence/stagingClient';
 import { createOrcamentistaPersistenceRepository } from '../../platform/server/orcamentista/persistence/repository';
 import { persistContextSnapshot } from '../../platform/server/orcamentista/persistence/hitlPersistence';
 import type { OrcamentistaPreview, OrcamentistaPreviewItem } from '../../platform/server/orcamentista/contracts';
@@ -12,6 +17,21 @@ import {
   extractTextEvidenceFromFile,
   type FileTextEvidence,
 } from '../../platform/server/orcamentista/fileTextExtraction';
+import { extractItemsWithAi } from '../../platform/server/orcamentista/aiItemExtractor';
+import { embedEvidences } from '../../platform/server/orcamentista/persistence/embeddingPersistence';
+import {
+  persistAnalysisRun,
+  type AnalysisRunFileReadInput,
+  type AnalysisRunEvidenceInput,
+} from '../../platform/server/orcamentista/persistence/analysisRunPersistence';
+import {
+  persistHitlDecision,
+  validateHitlDecisionInput,
+} from '../../platform/server/orcamentista/persistence/hitlDecisionPersistence';
+import {
+  persistCommitBatch,
+  validateCommitBatchInput,
+} from '../../platform/server/orcamentista/persistence/commitBatchPersistence';
 import {
   createOrcamentistaWorkspace,
   listOrcamentistaWorkspaces,
@@ -343,82 +363,109 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
       sourceFiles.push(entry);
     }
 
-    const isAiEnabled = process.env.EVIS_ORCAMENTISTA_ENABLE_AI_ANALYZE === 'true';
-    const hasExtractedText = evidences.length > 0;
-
-    // Build extracted text from evidences for Gemini prompt
-    const extractedTextForAi = evidences
-      .map((ev) => `[${ev.fileName ?? 'arquivo'}]\n${ev.content}`)
-      .join('\n\n---\n\n');
-
-    // Fetch opportunity title for prompt context
-    let opportunityTitle = `Oportunidade ${opportunityId}`;
-    try {
-      const oppQuery = await (bundle.client.from('opportunities') as any)
-        .select('titulo')
-        .eq('id', opportunityId)
-        .single();
-      if (oppQuery.data?.titulo) {
-        opportunityTitle = oppQuery.data.titulo;
-      }
-    } catch { /* fallback title is fine */ }
-
-    const fileNames = rawFiles.map((f) => f.nome ?? f.id);
-
-    // Call Gemini or fallback
-    let items: OrcamentistaPreviewItem[] = [];
-    let geminiWarnings: string[] = [];
-    let geminiResumo: string | null = null;
-    let previewSource: string;
-    let responseStatus: string;
-
-    if (isAiEnabled && hasExtractedText) {
-      const geminiResult = await analyzeWithGemini(
-        extractedTextForAi,
-        opportunityTitle,
-        fileNames,
-        providerOverride || modelOverride ? { provider: providerOverride, model: modelOverride } : undefined
-      );
-      geminiWarnings = geminiResult.warnings;
-      geminiResumo = geminiResult.resumo;
-
-      if (geminiResult.ok && geminiResult.items.length > 0) {
-        items = geminiResult.items.map((gi) => ({
-          codigo: null,
-          descricao: gi.descricao,
-          unidade: gi.unidade,
-          quantidade: gi.quantidade,
-          valor_unitario: gi.valor_unitario,
-          valor_total: gi.quantidade * gi.valor_unitario,
-          categoria: gi.categoria,
-          origem: 'ia_gemini',
-          confianca: gi.confianca,
-          observacoes: gi.observacoes,
-          evidencia: gi.evidencia,
-        }));
-        previewSource = 'ai_extracted';
-        responseStatus = 'ai_items_generated';
-      } else {
-        previewSource = 'file_text_extracted';
-        responseStatus = 'review_required';
-      }
-    } else if (hasExtractedText) {
-      previewSource = 'file_text_extracted';
-      responseStatus = 'review_required';
-    } else {
-      previewSource = 'file_access_only';
-      responseStatus = 'ai_lab_disabled';
+    // ── Etapa B: extração IA de itens preliminares (gated por flag) ──────────
+    const aiResult = await extractItemsWithAi(evidences);
+    const aiPreviewItems =
+      aiResult.status === 'success' ? aiResult.items : [];
+    const aiWarnings: string[] = [];
+    if (aiResult.status === 'ai_error' || aiResult.status === 'parse_error') {
+      aiWarnings.push(`IA: ${aiResult.message}`);
     }
 
-    const pendenciasHitl = items.length > 0
-      ? ['Itens gerados por IA. Revisão humana obrigatória antes da consolidação.']
-      : isAiEnabled && hasExtractedText
-        ? ['IA ativada mas nenhum item identificado. Verifique os arquivos ou adicione itens manualmente.']
-        : hasExtractedText
-          ? ['Texto extraído localmente. IA desativada (EVIS_ORCAMENTISTA_ENABLE_AI_ANALYZE=false).']
-          : ['Arquivo físico acessado. Extração textual local indisponível para os arquivos selecionados.'];
+    const hasExtractedText = evidences.length > 0;
+    const hasPdfImages = sourceFiles.some(
+      (sf) => sf.read_status === 'pdf_image_detected',
+    );
+    const hasAiItems = aiPreviewItems.length > 0;
+    const previewSource = hasAiItems
+      ? 'ai_extracted'
+      : hasExtractedText
+        ? 'file_text_extracted'
+        : 'file_access_only';
+    const responseStatus =
+      hasAiItems || hasExtractedText ? 'review_required' : 'backend_ai_not_configured';
+    const pendenciasHitl = hasAiItems
+      ? [`${aiPreviewItems.length} item(ns) preliminar(es) gerado(s) pela IA. Revisar no painel HITL antes do commit oficial.`]
+      : hasExtractedText
+        ? ['Texto extraído. IA de análise desabilitada — quantitativos exigem validação humana.']
+        : hasPdfImages
+          ? ['PDF sem camada de texto detectado (scan/desenho técnico). Habilite EVIS_ORCAMENTISTA_ENABLE_AI_ANALYZE para leitura multimodal.']
+          : ['Arquivo físico acessado pelo backend. Extração textual local indisponível para os arquivos selecionados.'];
 
-    warnings.push(...geminiWarnings);
+    // ─────────────────────────────────────────────────────────────────────
+    // ETAPA 2 — Persistência run-scoped defensiva (orc_analysis_runs &c).
+    //
+    // Regra central:
+    //   Arquivo gera evidência → evidência justifica item →
+    //   item precisa de decisão humana → só aprovado vira oficial.
+    //
+    // Se o schema da migration 003 não estiver aplicado, o helper retorna
+    // 'schema_not_ready' e seguimos respondendo /analyze normalmente.
+    // Nenhuma escrita em orcamento_itens acontece aqui.
+    // ─────────────────────────────────────────────────────────────────────
+    const fileReadsForPersist: AnalysisRunFileReadInput[] = sourceFiles.map((sf) => ({
+      clientTag: sf.id,
+      opportunityFileId: sf.id,
+      fileName: sf.nome ?? null,
+      mimeType: sf.mime_type ?? null,
+      storagePath: rawFiles.find((rf) => rf.id === sf.id)?.storage_path ?? null,
+      storagePathPresent: Boolean(sf.storage_path_present),
+      downloadStatus: sf.download_status ?? 'missing_storage_path',
+      readStatus: sf.read_status ?? null,
+      downloadedBytes: typeof sf.downloaded_bytes === 'number' ? sf.downloaded_bytes : null,
+      extractedChars: typeof sf.extracted_chars === 'number' ? sf.extracted_chars : null,
+      warning: null,
+    }));
+
+    const evidencesForPersist: AnalysisRunEvidenceInput[] = evidences.map((ev) => ({
+      fileReadTag: ev.fileId,
+      opportunityFileId: ev.fileId,
+      evidenceType: 'text_excerpt' as const,
+      contentExcerpt: ev.content,
+      page: null,
+      confidence: null,
+    }));
+
+    const allWarnings = [...warnings, ...aiWarnings];
+    const analysisRunPersistResult = await persistAnalysisRun(bundle.client, {
+      opportunityId,
+      workspaceId,
+      status: responseStatus,
+      previewSource,
+      warnings: allWarnings,
+      pendenciasHitl,
+      safetyFlags: {
+        officialBudgetWrite: 'blocked',
+        canWriteConsolidationToBudget: false,
+        touchedBudgetItemsTable: false,
+      },
+      fileReads: fileReadsForPersist,
+      evidences: evidencesForPersist,
+      previewItems: aiPreviewItems,
+    });
+
+    // ── Etapa C: embed evidences into pgvector (gated by EVIS_ORCAMENTISTA_ENABLE_RAG) ──
+    if (
+      analysisRunPersistResult.status === 'success' &&
+      evidences.length > 0
+    ) {
+      // Fetch the inserted evidence IDs from the run to correlate with excerpts.
+      const evQuery = await (bundle.client.from('orc_evidences') as any)
+        .select('id, content_excerpt')
+        .eq('analysis_run_id', analysisRunPersistResult.runId)
+        .order('created_at', { ascending: true });
+
+      if (!evQuery.error && Array.isArray(evQuery.data)) {
+        const { client: rawClient } = createRawStagingClientFromEnv();
+        await embedEvidences(rawClient, {
+          evidences: (evQuery.data as Array<{ id: string; content_excerpt: string }>).map((r) => ({
+            id: r.id,
+            contentExcerpt: r.content_excerpt ?? '',
+          })),
+        });
+        // Fire-and-forget: embed errors don't block the /analyze response.
+      }
+    }
 
     const repository = createOrcamentistaPersistenceRepository(bundle.client);
     const snapshotResult = await persistContextSnapshot(repository, {
@@ -433,11 +480,11 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
         analyzed_file_ids: fileIds,
         source_files: sourceFiles,
         preview_source: previewSource,
-        items,
+        items: aiPreviewItems,
         evidences,
         pendencias_hitl: pendenciasHitl,
-        warnings,
-        backend_ai_configured: isAiEnabled,
+        warnings: allWarnings,
+        backend_ai_configured: aiResult.status === 'success',
       },
       created_by: 'orcamentista_analyze_endpoint',
     });
@@ -446,6 +493,25 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
     if (snapshotResult.status !== 'success') {
       warnings.push(`Snapshot não persistido: ${snapshotResult.message}`);
     }
+
+    const analysisRunBlock =
+      analysisRunPersistResult.status === 'success'
+        ? {
+            schema_status: 'ready' as const,
+            run_id: analysisRunPersistResult.runId,
+            counts: analysisRunPersistResult.counts,
+          }
+        : analysisRunPersistResult.status === 'schema_not_ready'
+          ? {
+              schema_status: 'schema_not_ready' as const,
+              missing_table: analysisRunPersistResult.missingTable,
+              message: analysisRunPersistResult.message,
+            }
+          : {
+              schema_status: 'persistence_error' as const,
+              stage: analysisRunPersistResult.stage,
+              message: analysisRunPersistResult.message,
+            };
 
     return res.status(200).json({
       success: true,
@@ -457,9 +523,14 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
         preview_source: previewSource,
         source_files: sourceFiles,
         evidences,
-        items,
-        warnings,
+        items: [] as OrcamentistaPreviewItem[],
+        warnings: allWarnings,
         pendencias_hitl: pendenciasHitl,
+        ai_extraction: {
+          status: aiResult.status,
+          items_generated: aiPreviewItems.length,
+          model: aiResult.status === 'success' ? aiResult.model : null,
+        },
         safety: {
           officialBudgetWrite: 'blocked' as const,
           canWriteConsolidationToBudget: false as const,
@@ -469,6 +540,7 @@ router.post('/opportunities/:opportunityId/analyze', async (req: Request, res: R
           id: snapshotResult.status === 'success' ? snapshotResult.data.id : null,
           context_status: 'blocked' as const,
         },
+        analysis_run: analysisRunBlock,
       },
     });
   } catch (error: any) {
@@ -833,6 +905,296 @@ router.post('/chat/stream', (req, res) => {
   });
 
   res.end();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ETAPA 3 — HITL real sobre preview_items
+//
+// Regra central:
+//   Arquivo gera evidência → evidência justifica item →
+//   item precisa de decisão humana → só aprovado vira oficial.
+//
+// NESTAS ROTAS o item aprovado NÃO vira orcamento_itens.
+// O commit oficial é responsabilidade da Etapa 4 (endpoint separado, com flag).
+// ─────────────────────────────────────────────────────────────────────────────
+
+// GET /api/orcamentista/analysis-runs/:runId/preview-items
+// Lista os preview_items de um run para a UI HITL. Defensivo:
+// se schema 003 não existir, retorna lista vazia + schema_status='schema_not_ready'.
+router.get('/analysis-runs/:runId/preview-items', async (req: Request, res: Response) => {
+  const runId = req.params.runId;
+  if (!runId || typeof runId !== 'string') {
+    return res.status(400).json({ success: false, erro: 'runId é obrigatório.' });
+  }
+
+  try {
+    const bundle = createStagingClientFromEnv();
+    const query = await (bundle.client.from('orc_preview_items') as any)
+      .select(
+        'id, analysis_run_id, opportunity_id, codigo, description, unit, quantity, unit_price, total_price, categoria, origem, confidence, status, source_evidence_ids, observacoes, created_at, updated_at',
+      )
+      .eq('analysis_run_id', runId)
+      .order('created_at', { ascending: true });
+
+    if (query.error) {
+      const code = query.error.code;
+      const msg = `${query.error.message ?? ''} ${query.error.details ?? ''}`.toLowerCase();
+      const schemaMissing =
+        code === '42P01' ||
+        code === 'PGRST205' ||
+        msg.includes('could not find the table') ||
+        (msg.includes('relation') && msg.includes('does not exist'));
+
+      if (schemaMissing) {
+        return res.json({
+          success: true,
+          schema_status: 'schema_not_ready',
+          missing_table: 'orc_preview_items',
+          data: [],
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        erro: query.error.message ?? 'Falha ao listar preview_items.',
+      });
+    }
+
+    return res.json({
+      success: true,
+      schema_status: 'ready',
+      data: query.data ?? [],
+    });
+  } catch (error: any) {
+    console.error('Error listing preview items:', error);
+    return res.status(500).json({ success: false, erro: error?.message ?? 'Internal error' });
+  }
+});
+
+// POST /api/orcamentista/preview-items/:id/decision
+// Persiste decisão humana sobre preview_item.
+// Body: { decision: approve|edit|reject|request_review, edited_payload?, reason?, decided_by? }
+router.post('/preview-items/:id/decision', async (req: Request, res: Response) => {
+  const previewItemId = req.params.id;
+  const body = (req.body ?? {}) as Record<string, unknown>;
+
+  const validation = validateHitlDecisionInput({
+    previewItemId,
+    decision: body.decision as any,
+    editedPayload:
+      body.editedPayload != null
+        ? (body.editedPayload as Record<string, unknown>)
+        : (body.edited_payload as Record<string, unknown> | undefined) ?? null,
+    reason: body.reason as string | null | undefined,
+    decidedBy: (body.decidedBy ?? body.decided_by) as string | undefined,
+  });
+
+  if (!validation.ok) {
+    return res.status(400).json({
+      success: false,
+      status: 'validation_error',
+      erro: validation.message,
+      field: validation.field,
+    });
+  }
+
+  try {
+    const bundle = createStagingClientFromEnv();
+    const result = await persistHitlDecision(bundle.client, validation.data);
+
+    if (result.status === 'schema_not_ready') {
+      return res.status(200).json({
+        success: true,
+        status: 'schema_not_ready',
+        missing_table: result.missingTable,
+        message: result.message,
+      });
+    }
+
+    if (result.status === 'not_found') {
+      return res.status(404).json({ success: false, status: 'not_found', erro: result.message });
+    }
+
+    if (result.status === 'validation_error') {
+      return res.status(400).json({ success: false, status: 'validation_error', erro: result.message });
+    }
+
+    if (result.status === 'persistence_error') {
+      return res.status(500).json({
+        success: false,
+        status: 'persistence_error',
+        stage: result.stage,
+        erro: result.message,
+      });
+    }
+
+    return res.json({
+      success: true,
+      status: 'success',
+      data: {
+        decision_id: result.decisionId,
+        preview_item_id: validation.data.previewItemId,
+        preview_item_status_after: result.previewItemStatusAfter,
+        safety: {
+          officialBudgetWrite: 'blocked' as const,
+          canWriteConsolidationToBudget: false as const,
+          touchedBudgetItemsTable: false as const,
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error('Error persisting HITL decision:', error);
+    return res.status(500).json({ success: false, erro: error?.message ?? 'Internal error' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ETAPA 4 — Commit oficial controlado
+//
+// Regra central:
+//   Só itens com status 'approved' ou 'edited' são promovidos.
+//   Itens sem source_evidence_ids ou sem description são pulados.
+//   Cada batch é registrado em orc_commit_batches (append-only).
+//   Flag EVIS_ORCAMENTISTA_ENABLE_OFFICIAL_COMMIT=true é obrigatória.
+//
+// É a ÚNICA rota controlada de escrita em orcamento_itens por IA.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// POST /api/orcamentista/analysis-runs/:runId/commit-approved-items
+// Body: { orcamento_id: string, opportunity_id: string, committed_by?: string }
+router.post('/analysis-runs/:runId/commit-approved-items', async (req: Request, res: Response) => {
+  const flagEnabled = process.env['EVIS_ORCAMENTISTA_ENABLE_OFFICIAL_COMMIT'] === 'true';
+  if (!flagEnabled) {
+    return res.status(200).json({
+      success: true,
+      status: 'official_commit_disabled',
+      message:
+        'Commit oficial não habilitado neste ambiente. Defina EVIS_ORCAMENTISTA_ENABLE_OFFICIAL_COMMIT=true para habilitar.',
+    });
+  }
+
+  const runId = req.params.runId;
+  const body = (req.body ?? {}) as Record<string, unknown>;
+
+  const validation = validateCommitBatchInput({
+    runId,
+    orcamentoId: body.orcamento_id as string | undefined,
+    opportunityId: body.opportunity_id as string | undefined,
+    committedBy: body.committed_by as string | undefined,
+  });
+
+  if (!validation.ok) {
+    return res.status(400).json({
+      success: false,
+      status: 'validation_error',
+      erro: validation.message,
+      field: validation.field,
+    });
+  }
+
+  try {
+    const bundle = createStagingClientFromEnv();
+    const { client: rawClient } = createRawStagingClientFromEnv();
+
+    const result = await persistCommitBatch(bundle.client, rawClient, validation.data);
+
+    if (result.status === 'flag_disabled') {
+      return res.status(200).json({ success: true, status: 'official_commit_disabled', message: result.message });
+    }
+
+    if (result.status === 'no_approved_items') {
+      return res.status(200).json({ success: true, status: 'no_approved_items', message: result.message });
+    }
+
+    if (result.status === 'schema_not_ready') {
+      return res.status(200).json({
+        success: true,
+        status: 'schema_not_ready',
+        missing_table: result.missingTable,
+        message: result.message,
+      });
+    }
+
+    if (result.status === 'validation_error') {
+      return res.status(400).json({ success: false, status: 'validation_error', erro: result.message });
+    }
+
+    if (result.status === 'persistence_error') {
+      return res.status(500).json({
+        success: false,
+        status: 'persistence_error',
+        stage: result.stage,
+        erro: result.message,
+      });
+    }
+
+    return res.json({
+      success: true,
+      status: 'success',
+      data: {
+        batch_id: result.batchId,
+        total_committed: result.totalCommitted,
+        total_skipped: result.totalSkipped,
+        committed_item_ids: result.committedItemIds,
+        skip_reasons: result.skipReasons,
+        safety: {
+          officialBudgetWrite: 'executed_via_etapa4',
+          flag: 'EVIS_ORCAMENTISTA_ENABLE_OFFICIAL_COMMIT',
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error('Error in commit-approved-items endpoint:', error);
+    return res.status(500).json({ success: false, erro: error?.message ?? 'Internal error' });
+  }
+});
+
+// GET /api/orcamentista/analysis-runs/:runId/commit-batches
+// Lista os batches de commit oficiais de um run. Defensivo: schema_not_ready
+// se migration 005 não estiver aplicada.
+router.get('/analysis-runs/:runId/commit-batches', async (req: Request, res: Response) => {
+  const runId = req.params.runId;
+  if (!runId || typeof runId !== 'string') {
+    return res.status(400).json({ success: false, erro: 'runId é obrigatório.' });
+  }
+
+  try {
+    const bundle = createStagingClientFromEnv();
+    const query = await (bundle.client.from('orc_commit_batches') as any)
+      .select(
+        'id, analysis_run_id, opportunity_id, orcamento_id, total_items_committed, total_items_skipped, committed_item_ids, skip_reasons_json, safety_flags_json, committed_by, created_at',
+      )
+      .eq('analysis_run_id', runId)
+      .order('created_at', { ascending: false });
+
+    if (query.error) {
+      const code = query.error.code;
+      const msg = `${query.error.message ?? ''} ${query.error.details ?? ''}`.toLowerCase();
+      const schemaMissing =
+        code === '42P01' ||
+        code === 'PGRST205' ||
+        msg.includes('could not find the table') ||
+        (msg.includes('relation') && msg.includes('does not exist'));
+
+      if (schemaMissing) {
+        return res.json({
+          success: true,
+          schema_status: 'schema_not_ready',
+          missing_table: 'orc_commit_batches',
+          data: [],
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        erro: query.error.message ?? 'Falha ao listar commit_batches.',
+      });
+    }
+
+    return res.json({ success: true, schema_status: 'ready', data: query.data ?? [] });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, erro: error?.message ?? 'Internal error' });
+  }
 });
 
 // POST /api/orcamentista/workspaces/:workspaceId/generate-official-budget

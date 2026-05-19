@@ -52,6 +52,22 @@ export function createStagingClientFromEnv(): StagingClientBundle {
   };
 }
 
+/**
+ * Returns a raw (unguarded) Supabase client for the authorized staging project.
+ * Use ONLY for the official commit path (Etapa 4) — the only controlled write
+ * to orcamento_itens. All other persistence must use createStagingClientFromEnv().
+ */
+export function createRawStagingClientFromEnv(): {
+  client: SupabaseClient;
+  projectRef: string;
+} {
+  const env = readAndValidateStagingEnv();
+  const client = createClient(env.url, env.key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  return { client, projectRef: env.projectRef };
+}
+
 export function readAndValidateStagingEnv(): StagingEnv {
   const allowMainDev = process.env.EVIS_ALLOW_MAIN_SUPABASE_DEV_MODE === 'true';
   // 1. Tentar ler variáveis de staging
